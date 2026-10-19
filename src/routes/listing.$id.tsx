@@ -33,7 +33,7 @@ function ListingPage() {
   const now = useNow();
   const [bidOpen, setBidOpen] = useState(false);
   const l = s.listings.find((x) => x.id === id);
-  if (!l) return <div className="mx-auto max-w-3xl px-4 py-16"><Empty title="Listing not found" body="It may have been removed." action={<Link to="/browse" className={buttonVariants({ variant: "outline" })}>Back to marketplace</Link>} /></div>;
+  if (!l) return <div className="mx-auto max-w-3xl px-4 py-16"><Empty title="Listing not found" body="It may have been removed." action={<Link to="/browse" search={{ q: "" }} className={buttonVariants({ variant: "outline" })}>Back to marketplace</Link>} /></div>;
 
   const deal = s.deals.find((d) => d.listingId === l.id);
   const watched = s.watchlist.includes(l.id);
@@ -49,7 +49,7 @@ function ListingPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
       <div className="mb-4 text-sm text-muted-foreground">
-        <Link to="/browse" className="hover:text-foreground">Marketplace</Link> / {l.genre}
+        <Link to="/browse" search={{ q: "" }} className="hover:text-foreground">Marketplace</Link> / {l.genre}
       </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="min-w-0 space-y-6">
