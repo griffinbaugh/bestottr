@@ -8,7 +8,7 @@ import { usd } from "@/lib/format";
 import { img } from "@/lib/images";
 import { actions, useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import mark from "@/assets/mark-black.png";
+import mark from "@/assets/mark-white.png";
 
 export const Route = createFileRoute("/sell")({
   head: () => ({

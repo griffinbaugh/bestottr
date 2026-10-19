@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import mark from "@/assets/mark-black.png";
+import mark from "@/assets/mark-white.png";
 import { BadgeCheck, Heart, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { actions, useAppState } from "@/lib/store";
