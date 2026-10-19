@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import { DD_ITEMS, ME, TRANSFER_ITEMS, seedState, type AdminItem, type Deal, type Listing, type State } from "./data";
 import { buyerPremium, minNextBid } from "./pricing";
 
-const KEY = "studiobid-demo-v1";
+const KEY = "bestottr-demo-v1";
 const initial = seedState();
 let state: State = initial;
 const listeners = new Set<() => void>();

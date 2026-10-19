@@ -10,9 +10,9 @@ export const Route = createFileRoute("/dashboard")({
   validateSearch: (s: Record<string, unknown>): { tab?: Tab } => ({ tab: (s["tab"] as Tab) || undefined }),
   head: () => ({
     meta: [
-      { title: "Buyer dashboard — StudioBid" },
+      { title: "Buyer dashboard — bestottr" },
       { name: "description", content: "Your active bids, won auctions, watchlist and transactions." },
-      { property: "og:title", content: "Buyer dashboard — StudioBid" },
+      { property: "og:title", content: "Buyer dashboard — bestottr" },
       { property: "og:description", content: "Track bids and acquisitions." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

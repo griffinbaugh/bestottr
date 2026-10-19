@@ -12,9 +12,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/sell")({
   head: () => ({
     meta: [
-      { title: "Sell your experience — StudioBid" },
+      { title: "Sell your experience — bestottr" },
       { name: "description", content: "Verify your Roblox experience and list it for auction or buy-now." },
-      { property: "og:title", content: "Sell your experience — StudioBid" },
+      { property: "og:title", content: "Sell your experience — bestottr" },
       { property: "og:description", content: "List a verified Roblox experience." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

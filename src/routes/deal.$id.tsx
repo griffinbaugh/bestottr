@@ -11,10 +11,10 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/deal/$id")({
   head: () => ({
     meta: [
-      { title: "Deal room — StudioBid" },
+      { title: "Deal room — bestottr" },
       { name: "description", content: "Private acquisition room: agreement, escrow, due diligence and Roblox ownership transfer." },
-      { property: "og:title", content: "Deal room — StudioBid" },
-      { property: "og:description", content: "Private acquisition room for a StudioBid transaction." },
+      { property: "og:title", content: "Deal room — bestottr" },
+      { property: "og:description", content: "Private acquisition room for a bestottr transaction." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

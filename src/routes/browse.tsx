@@ -9,9 +9,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/browse")({
   head: () => ({
     meta: [
-      { title: "Marketplace — StudioBid" },
+      { title: "Marketplace — bestottr" },
       { name: "description", content: "Search verified Roblox experiences for sale by price, revenue, genre and auction format." },
-      { property: "og:title", content: "Marketplace — StudioBid" },
+      { property: "og:title", content: "Marketplace — bestottr" },
       { property: "og:description", content: "Search verified Roblox experiences for sale." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

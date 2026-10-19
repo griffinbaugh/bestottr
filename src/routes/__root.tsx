@@ -69,9 +69,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "StudioBid — Buy and sell Roblox businesses" },
+      { title: "bestottr — Buy and sell Roblox businesses" },
       { name: "description", content: "Verified listings, competitive auctions and managed ownership transfers for Roblox experiences." },
-      { property: "og:title", content: "StudioBid — Buy and sell Roblox businesses" },
+      { property: "og:title", content: "bestottr — Buy and sell Roblox businesses" },
       { property: "og:description", content: "Verified listings, competitive auctions and managed ownership transfers for Roblox experiences." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -81,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" },
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -118,7 +118,7 @@ function RootComponent() {
       </main>
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-xs text-muted-foreground md:px-6">
-          <span>© 2026 StudioBid · Demo environment — no real funds or Roblox accounts are used.</span>
+          <span>© 2026 bestottr · Demo environment — no real funds or Roblox accounts are used.</span>
           <span>Not affiliated with Roblox Corporation.</span>
         </div>
       </footer>
