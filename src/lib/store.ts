@@ -1,3 +1,4 @@
+import { editExperience, type ExperienceChanges } from "./listing-edit";
 import { useSyncExternalStore } from "react";
 import { DD_ITEMS, FILE_STAGES, ME, TRANSFER_ITEMS, seedState, type AdminItem, type Deal, type Listing, type State } from "./data";
 import { applyPurchase, isSoldOut } from "./inventory";
@@ -248,6 +249,15 @@ export const actions = {
   },
   publishListing(l: Listing) {
     set((s) => ({ ...s, listings: [l, ...s.listings] }));
+  },
+  updateExperience(id: string, changes: ExperienceChanges): { ok: boolean; error?: string } {
+    const listing = state.listings.find((l) => l.id === id);
+    if (!listing) return { ok: false, error: "Listing not found." };
+    try {
+      const edited = editExperience(listing, ME, changes);
+      set((s) => patchListing(s, id, () => edited));
+      return { ok: true };
+    } catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Couldn't save changes." }; }
   },
   setListingStatus(id: string, status: Listing["status"]) {
     set((s) => patchListing(s, id, (l) => ({ ...l, status })));
