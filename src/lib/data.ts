@@ -103,7 +103,7 @@ function bids(base: number, list: [string, number, number][]): Bid[] {
   return list.map(([bidder, amount, hoursAgo], i) => ({ id: `b${i}`, bidder, amount, at: base - hoursAgo * H }));
 }
 
-const sellers: Record<string, Seller> = {
+const sellers = {
   brickforge: { handle: "brickforge", name: "Brickforge Studios", rating: 4.9, sales: 7, joined: "2019", verified: true, responseTime: "< 2h" },
   hollow: { handle: "hollowlight", name: "Hollowlight Games", rating: 4.8, sales: 3, joined: "2020", verified: true, responseTime: "< 6h" },
   skyline: { handle: "skylinedev", name: "Skyline Dev Co.", rating: 4.6, sales: 2, joined: "2021", verified: true, responseTime: "< 12h" },
