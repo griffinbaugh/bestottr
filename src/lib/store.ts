@@ -244,6 +244,14 @@ export const actions = {
 
 export function stageDone(d: Deal) {
   const every = (r: Record<string, boolean>) => Object.values(r).every(Boolean);
+  if (d.kind === "file") {
+    switch (d.stage) {
+      case 0: return d.funded;
+      case 1: return d.delivery.released;
+      case 2: return d.delivery.confirmed;
+      default: return false;
+    }
+  }
   switch (d.stage) {
     case 0: return d.agreement.buyer && d.agreement.seller;
     case 1: return d.funded;
