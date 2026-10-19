@@ -131,7 +131,7 @@ function RootComponent() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground md:px-6">
           <img src={mark} alt="bestottr" width={591} height={187} loading="lazy" className="h-auto w-[120px] object-contain" />
           <span>© 2026 bestottr · Demo environment — no real funds or Roblox accounts are used.</span>
-          <span>Not affiliated with Roblox Corporation.</span>
+          <span className="flex flex-wrap gap-4"><Link to="/support" className="hover:text-foreground">Support</Link><span>Not affiliated with Roblox Corporation.</span></span>
         </div>
       </footer>
       <Toaster position="top-center" richColors />

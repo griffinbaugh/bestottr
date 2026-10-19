@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import lockup from "@/assets/bestottr-primary-white.png";
-import { BadgeCheck, Heart, RotateCcw } from "lucide-react";
+import { BadgeCheck, Heart, LifeBuoy, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { actions, useAppState } from "@/lib/store";
 
@@ -30,6 +30,9 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-1">
           <Link to="/dashboard" search={{ tab: "watchlist" }} className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Watchlist">
             <Heart className="h-4 w-4" />
+          </Link>
+          <Link to="/support" className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Help & support" title="Help & support">
+            <LifeBuoy className="h-4 w-4" />
           </Link>
           {s.roblox.connected && (
             <span className="hidden items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand sm:inline-flex">
