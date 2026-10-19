@@ -161,8 +161,7 @@ function DealRoom() {
                   <p className="mt-1 text-sm text-muted-foreground">Ownership transferred and {usd(d.price)} released to the seller.</p>
                 </div>
               )}
-            </>
-          )}
+          </>
 
           {d.stage < last && (
             <div className="mt-6 flex flex-wrap gap-2 border-t border-border pt-4">
