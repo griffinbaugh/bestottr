@@ -39,4 +39,16 @@ describe("auction end scheduling", () => {
     expect(isFutureEnd(NOW - 1000, NOW)).toBe(false);
     expect(isFutureEnd(null, NOW)).toBe(false);
   });
+  it("stores the exact selected local date and time as an absolute timestamp", () => {
+    const selected = "2026-10-21T16:45";
+    expect(validateAuctionEnd("datetime", 7, selected, NOW)).toEqual({
+      ok: true,
+      endsAt: new Date(2026, 9, 21, 16, 45).getTime(),
+    });
+  });
+  it("rejects an end that has elapsed while the seller is reviewing", () => {
+    const selected = toLocalInputValue(NOW + 60000);
+    expect(validateAuctionEnd("datetime", 7, selected, NOW).ok).toBe(true);
+    expect(validateAuctionEnd("datetime", 7, selected, NOW + 60000).ok).toBe(false);
+  });
 });

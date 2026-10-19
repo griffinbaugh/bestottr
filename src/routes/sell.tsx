@@ -3,6 +3,7 @@ import { BadgeCheck, Building2, Check, FileUp, Link2, ShieldX, Upload } from "lu
 import { useState } from "react";
 import { toast } from "sonner";
 import { CurrencyInput } from "@/components/sb/CurrencyInput";
+import { useNow } from "@/components/sb/Countdown";
 import { Button, PageHeader } from "@/components/sb/ui";
 import { computeEndsAt, defaultEndLocal, formatAuctionEnd, localTimezone, toLocalInputValue, validateAuctionEnd, type EndMode } from "@/lib/auction-end";
 import { centsToDollars } from "@/lib/currency";
@@ -64,9 +65,13 @@ function Sell() {
   const fup = (p: Partial<typeof fd>) => setFd((x) => ({ ...x, ...p }));
 
   const steps = kind === "file" ? FILE_STEPS : EXP_STEPS;
+  const now = useNow();
 
-  const expEnd = validateAuctionEnd(d.endMode, d.days, d.endAtLocal);
-  const fileEnd = validateAuctionEnd(fd.endMode, fd.days, fd.endAtLocal);
+  const expEnd = validateAuctionEnd(d.endMode, d.days, d.endAtLocal, now ?? Date.now());
+  const fileEnd = validateAuctionEnd(fd.endMode, fd.days, fd.endAtLocal, now ?? Date.now());
+  const publishable = kind === "file"
+    ? !!file && (fd.format !== "auction" || fileEnd.ok)
+    : !!verified && s.roblox.connected && (d.format !== "auction" || expEnd.ok);
   const expCanNext = [kind !== null, s.roblox.connected, !!verified, d.title.length > 2, d.rev > 0, d.format === "auction" ? d.start > 0 && expEnd.ok : d.buyNow > 0, d.assets.length > 0, true][step];
   const fileCanNext = [kind !== null, !!file, fd.title.length > 2 && fd.compatibility.length > 2, fd.format === "auction" ? fd.start > 0 && fileEnd.ok : fd.buyNow > 0, fd.license.length > 5 && fd.attested, true][step];
   const canNext = kind === "file" ? fileCanNext : expCanNext;
@@ -110,9 +115,17 @@ function Sell() {
   }
 
   function publishExperience() {
+    if (!verified || !s.roblox.connected) return;
+    const end = validateAuctionEnd(d.endMode, d.days, d.endAtLocal);
+    if (d.format === "auction" && !end.ok) {
+      toast.error(end.error ?? "Choose a valid auction end.");
+      setStep(5);
+      return;
+    }
     const id = `new-${Date.now()}`;
-    const exp = verified!.exp;
-    const endsAt = d.format === "auction" ? (computeEndsAt(d.endMode, d.days, d.endAtLocal) ?? Date.now() + d.days * 86400000) : Date.now() + d.days * 86400000;
+    const exp = verified.exp;
+    const endsAt = d.format === "auction" ? end.endsAt : computeEndsAt("duration", d.days, "");
+    if (endsAt === null) return;
     const l: Listing = {
       id, kind: "experience", title: d.title, tagline: d.tagline, description: d.description, genre: exp.genre, image: exp.image, format: d.format,
       startingBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow), currentBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow),
@@ -128,15 +141,23 @@ function Sell() {
   }
 
   function publishFile() {
+    if (!file) return;
+    const end = validateAuctionEnd(fd.endMode, fd.days, fd.endAtLocal);
+    if (fd.format === "auction" && !end.ok) {
+      toast.error(end.error ?? "Choose a valid auction end.");
+      setStep(3);
+      return;
+    }
     const id = `new-${Date.now()}`;
     const meta: FileMeta = {
-      fileName: file!.fileName, fileType: file!.fileType, fileSize: file!.fileSize,
+      fileName: file.fileName, fileType: file.fileType, fileSize: file.fileSize,
       version: fd.version, category: fd.category, compatibility: fd.compatibility,
       includedFiles: fd.includedFiles.split("\n").map((x) => x.trim()).filter(Boolean),
       license: fd.license, sellerNotes: fd.sellerNotes,
       inventory: fd.format === "auction" ? { mode: "limited", total: 1, remaining: 1 } : fd.invMode === "unlimited" ? { mode: "unlimited" } : { mode: "limited", total: fd.quantity, remaining: fd.quantity },
     };
-    const endsAt = fd.format === "auction" ? (computeEndsAt(fd.endMode, fd.days, fd.endAtLocal) ?? Date.now() + fd.days * 86400000) : Date.now() + fd.days * 86400000;
+    const endsAt = fd.format === "auction" ? end.endsAt : computeEndsAt("duration", fd.days, "");
+    if (endsAt === null) return;
     const l: Listing = {
       id, kind: "file", title: fd.title, tagline: fd.tagline, description: fd.description, genre: fd.category, image: fd.image, format: fd.format,
       startingBid: centsToDollars(fd.format === "auction" ? fd.start : fd.buyNow), currentBid: centsToDollars(fd.format === "auction" ? fd.start : fd.buyNow),
@@ -362,14 +383,14 @@ function Sell() {
               ? `Auction from ${usdPrecise(centsToDollars(fd.start))}, reserve ${usdPrecise(centsToDollars(fd.reserve))} · ends ${fd.endMode === "datetime" ? formatAuctionEnd(new Date(fd.endAtLocal).getTime()) : `in ${fd.days} days`} · single exclusive copy`
               : `Buy now ${usdPrecise(centsToDollars(fd.buyNow))} · ${fd.invMode === "unlimited" ? "unlimited sales" : `${fd.quantity} copies`}`}
           </div>
-          <div className="rounded-md bg-secondary p-3 text-xs text-muted-foreground">Delivery: buyer pays into escrow, you release file access in the deal room, funds release on buyer confirmation.</div>
+          <div className="rounded-md bg-secondary p-3 text-xs text-muted-foreground">Demo delivery: file access is granted instantly after payment or an auction win. No seller release or buyer confirmation is required.</div>
         </div>}
 
         <div className="mt-8 flex justify-between border-t border-border pt-4">
           <Button variant="outline" disabled={step === 0} onClick={() => setStep(step - 1)}>Back</Button>
           {step < steps.length - 1
             ? (step === 0 ? null : <Button disabled={!canNext} onClick={() => setStep(step + 1)}>Continue</Button>)
-            : <Button variant="brand" onClick={kind === "file" ? publishFile : publishExperience}>Publish listing</Button>}
+            : <Button variant="brand" disabled={!publishable} onClick={kind === "file" ? publishFile : publishExperience}>Publish listing</Button>}
         </div>
       </div>
     </div>
@@ -379,7 +400,8 @@ function Sell() {
 type SaleState = { format: "auction" | "buy_now"; start: number; reserve: number; buyNow: number; endMode: EndMode; days: number; endAtLocal: string };
 
 function SaleFormat({ d, up, showInventory }: { d: SaleState; up: (p: Partial<SaleState>) => void; showInventory: boolean }) {
-  const end = validateAuctionEnd(d.endMode, d.days, d.endAtLocal);
+  const now = useNow();
+  const end = validateAuctionEnd(d.endMode, d.days, d.endAtLocal, now ?? Date.now());
   const tz = localTimezone();
   return (
     <div className="space-y-4">
