@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import mark from "@/assets/bestottr-icon-white.png";
+import lockup from "@/assets/bestottr-primary-white.png";
 import { BadgeCheck, Heart, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { actions, useAppState } from "@/lib/store";
