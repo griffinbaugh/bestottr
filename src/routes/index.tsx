@@ -1,7 +1,9 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowRight, BadgeCheck, FileSignature, Search, ShieldCheck, Workflow } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, BadgeCheck, FileSignature, Workflow } from "lucide-react";
 import { useState } from "react";
+import { CountUpStat } from "@/components/sb/CountUpStat";
 import { ListingCard } from "@/components/sb/ListingCard";
+import { SearchBox } from "@/components/sb/SearchBox";
 import { buttonVariants } from "@/components/sb/ui";
 import { useAppState } from "@/lib/store";
 import markWhite from "@/assets/mark-white.png";
@@ -22,7 +24,6 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const { listings } = useAppState();
-  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const live = listings.filter((l) => l.status === "live");
   const auctions = live.filter((l) => l.format === "auction");
@@ -40,53 +41,39 @@ function Home() {
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
             Verified experiences, scripts, maps and UI kits — with competitive auctions, escrowed funds and managed delivery.
           </p>
-          <form
-            className="relative mx-auto mt-8 max-w-xl"
-            onSubmit={(e) => {
-              e.preventDefault();
-              navigate({ to: "/browse", search: { q } });
-            }}
-          >
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              className="field h-13 pl-11 pr-32 text-base"
-              placeholder="Search experiences, files, genres, studios…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              aria-label="Search the marketplace"
-            />
-            <button type="submit" className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/88">
-              Search
-            </button>
-          </form>
+          <SearchBox
+            value={q}
+            onChange={setQ}
+            placeholder="Search experiences, files, genres, studios…"
+            submitLabel="Search"
+            className="mx-auto mt-8 max-w-xl"
+            inputClassName="h-13 text-base"
+          />
           <dl className="mx-auto mt-10 grid max-w-md grid-cols-3 gap-4 text-center">
-            {[["$14.2M", "Closed volume"], ["312", "Verified sellers"], ["9.4 days", "Avg. to close"]].map(([v, l]) => (
-              <div key={l}>
-                <dd className="num text-lg font-semibold">{v}</dd>
-                <dt className="mt-0.5 text-xs text-muted-foreground">{l}</dt>
-              </div>
-            ))}
+            <CountUpStat target={14.2} prefix="$" suffix="M" decimals={1} label="Closed volume" />
+            <CountUpStat target={312} label="Verified sellers" delay={120} />
+            <CountUpStat target={9.4} decimals={1} suffix=" days" label="Avg. to close" delay={240} />
           </dl>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 md:px-6">
         <SectionHead title="Live auctions" link="/browse" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {auctions.slice(0, 6).map((l) => <ListingCard key={l.id} listing={l} />)}
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-10 md:px-6">
         <SectionHead title="Buy now" link="/browse" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {buyNow.map((l) => <ListingCard key={l.id} listing={l} />)}
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 pb-10 md:px-6">
         <SectionHead title="Creator files" link="/browse" />
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {files.slice(0, 6).map((l) => <ListingCard key={l.id} listing={l} />)}
         </div>
       </section>
