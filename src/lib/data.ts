@@ -22,7 +22,7 @@ export type Listing = {
   format: "auction" | "buy_now";
   startingBid: number;
   currentBid: number;
-  reserve?: number;
+  reserve?: number | undefined;
   buyNow?: number;
   endsAt: number;
   bids: Bid[];

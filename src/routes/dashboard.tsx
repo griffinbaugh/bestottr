@@ -7,7 +7,7 @@ import { useAppState } from "@/lib/store";
 
 type Tab = "bids" | "won" | "watchlist" | "transactions";
 export const Route = createFileRoute("/dashboard")({
-  validateSearch: (s: Record<string, unknown>): { tab?: Tab } => ({ tab: (s.tab as Tab) || undefined }),
+  validateSearch: (s: Record<string, unknown>): { tab?: Tab } => ({ tab: (s["tab"] as Tab) || undefined }),
   head: () => ({
     meta: [
       { title: "Buyer dashboard — StudioBid" },
@@ -46,7 +46,7 @@ function Buyer() {
           <div className="grid gap-3">{bidOn.map((l) => (
             <Link key={l.id} to="/listing/$id" params={{ id: l.id }} className="surface lift flex items-center justify-between p-4">
               <div><div className="font-medium">{l.title}</div><div className="num text-sm text-muted-foreground">Current {usd(l.currentBid)}</div></div>
-              {l.bids[0].bidder === ME ? <Badge tone="brand">Winning</Badge> : <Badge tone="live">Outbid</Badge>}
+              {l.bids[0]?.bidder === ME ? <Badge tone="brand">Winning</Badge> : <Badge tone="live">Outbid</Badge>}
             </Link>))}</div>
         ) : <Empty title="No active bids" body="Place a bid on any live auction." action={<Link to="/listing/$id" params={{ id: "factory-tycoon" }} className={buttonVariants({ variant: "outline" })}>Try Factory Tycoon</Link>} />)}
         {tab === "watchlist" && (watch.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{watch.map((l) => <ListingCard key={l.id} listing={l} />)}</div> : <Empty title="Watchlist is empty" body="Tap the heart on any listing." />)}
