@@ -6,6 +6,7 @@ import { Badge, buttonVariants } from "@/components/sb/ui";
 import { usd, usdCompact, compact } from "@/lib/format";
 import { img } from "@/lib/images";
 import { useAppState } from "@/lib/store";
+import markWhite from "@/assets/mark-white.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,6 +33,7 @@ function Home() {
       <section className="dark hero-grid bg-background text-foreground">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:px-6 lg:grid-cols-[1.1fr_1fr] lg:py-20">
           <div className="flex flex-col justify-center">
+            <img src={markWhite} alt="" width={44} height={44} className="mb-6 h-11 w-11" />
             <Badge tone="brand" className="self-start">
               <ShieldCheck className="h-3.5 w-3.5" /> Ownership-verified marketplace
             </Badge>

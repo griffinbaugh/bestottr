@@ -8,6 +8,7 @@ import { usd } from "@/lib/format";
 import { img } from "@/lib/images";
 import { actions, useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import mark from "@/assets/mark-black.png";
 
 export const Route = createFileRoute("/sell")({
   head: () => ({
@@ -67,7 +68,7 @@ function Sell() {
         {step === 0 && (s.roblox.connected ? (
           <div className="flex items-center gap-3 text-brand"><BadgeCheck className="h-6 w-6" /><div><div className="font-semibold">Connected as @{s.roblox.username}</div><div className="text-sm text-muted-foreground">Ownership of your experiences is verified.</div></div></div>
         ) : (
-          <div><p className="text-sm text-muted-foreground">Connect your Roblox account so we can verify ownership and pull analytics. (Demo — no credentials needed.)</p>
+          <div><img src={mark} alt="" width={40} height={40} loading="lazy" className="mb-3 h-10 w-10" /><p className="text-sm text-muted-foreground">Connect your Roblox account so we can verify ownership and pull analytics. (Demo — no credentials needed.)</p>
             <Button className="mt-4" disabled={busy} onClick={() => { setBusy(true); setTimeout(() => { actions.connectRoblox(); setBusy(false); }, 900); }}>{busy ? "Verifying…" : "Connect Roblox (demo)"}</Button></div>
         ))}
         {step === 1 && <div className="grid gap-3 sm:grid-cols-3">{OWNED.map((o) => (
