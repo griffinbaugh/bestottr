@@ -80,13 +80,38 @@ function Sell() {
     }, 900);
   }
 
+  function runVerify() {
+    setVerifying(true);
+    setVerr(null);
+    setVerified(null);
+    // Simulated network latency — the real implementation will call the Roblox API here.
+    setTimeout(() => {
+      const r = verifyOwnership(url, s.roblox);
+      if (r.ok) {
+        setVerified({ exp: r.exp, via: r.via });
+        up({ title: r.exp.title, rev: r.exp.monthlyRevenue, profit: r.exp.monthlyProfit });
+      } else {
+        setVerr(r.reason);
+      }
+      setVerifying(false);
+    }, 900);
+  }
+
+  function disconnect() {
+    actions.disconnectRoblox();
+    setVerified(null);
+    setVerr(null);
+    setUrl("");
+  }
+
   function publishExperience() {
     const id = `new-${Date.now()}`;
+    const exp = verified!.exp;
     const l: Listing = {
-      id, kind: "experience", title: d.title, tagline: d.tagline, description: d.description, genre: exp!.genre, image: exp!.image, format: d.format,
+      id, kind: "experience", title: d.title, tagline: d.tagline, description: d.description, genre: exp.genre, image: exp.image, format: d.format,
       startingBid: d.format === "auction" ? d.start : d.buyNow, currentBid: d.format === "auction" ? d.start : d.buyNow,
       reserve: d.format === "auction" ? d.reserve : undefined, buyNow: d.buyNow, endsAt: Date.now() + d.days * 86400000, bids: [], status: "review",
-      monthlyRevenue: d.rev, monthlyProfit: d.profit, monthlyVisits: exp!.visits, ccu: exp!.ccu, favorites: 12000, ageMonths: 10,
+      monthlyRevenue: d.rev, monthlyProfit: d.profit, monthlyVisits: exp.monthlyVisits, ccu: exp.ccu, favorites: 12000, ageMonths: 10,
       monetization: [{ label: "Game passes", pct: 60 }, { label: "Developer products", pct: 40 }],
       seller: meSeller,
       assets: d.assets, risks: [], verified: { ownership: true, revenue: true, traffic: true }, hasGroup: d.assets.includes("Roblox group"), createdAt: Date.now(),
