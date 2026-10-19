@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { DD_ITEMS, FILE_STAGES, ME, TRANSFER_ITEMS, seedState, type AdminItem, type Deal, type Listing, type State } from "./data";
 import { applyPurchase, isSoldOut } from "./inventory";
 import { buyerPremium, minNextBid } from "./pricing";
+import { DEMO_USER_ID } from "./roblox";
 
 const KEY = "bestottr-demo-v2";
 const initial = seedState();
@@ -240,7 +241,10 @@ export const actions = {
     });
   },
   connectRoblox() {
-    set((s) => ({ ...s, roblox: { connected: true, username: "alexr_dev" } }));
+    set((s) => ({ ...s, roblox: { connected: true, username: "alexr_dev", userId: DEMO_USER_ID } }));
+  },
+  disconnectRoblox() {
+    set((s) => ({ ...s, roblox: { connected: false } }));
   },
   publishListing(l: Listing) {
     set((s) => ({ ...s, listings: [l, ...s.listings] }));

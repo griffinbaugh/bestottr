@@ -94,7 +94,7 @@ export type State = {
   listings: Listing[];
   watchlist: string[];
   deals: Deal[];
-  roblox: { connected: boolean; username?: string };
+  roblox: { connected: boolean; username?: string; userId?: string };
   admin: { users: AdminItem[]; disputes: AdminItem[]; flags: AdminItem[]; txn: Record<string, "approved" | "held"> };
 };
 
