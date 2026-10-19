@@ -209,7 +209,6 @@ function FileListing({ l, ended, mine, watched, deal, goDeal }: {
   deal: { id: string } | undefined;
   goDeal: (id: string) => void;
 }) {
-  const navigate = useNavigate();
   const [bidOpen, setBidOpen] = useState(false);
   const f = l.file!;
   const inv = f.inventory;
@@ -366,7 +365,6 @@ function FileListing({ l, ended, mine, watched, deal, goDeal }: {
         </aside>
       </div>
       <BidDialog listing={l} open={bidOpen} onOpenChange={setBidOpen} />
-      <span className="hidden">{navigate.length}</span>
     </div>
   );
 }
