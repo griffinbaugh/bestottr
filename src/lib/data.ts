@@ -32,7 +32,7 @@ export type FileMeta = {
 
 export type Listing = {
   kind: ListingKind;
-  file?: FileMeta;
+  file?: FileMeta | undefined;
   id: string;
   title: string;
   tagline: string;
@@ -43,7 +43,7 @@ export type Listing = {
   startingBid: number;
   currentBid: number;
   reserve?: number | undefined;
-  buyNow?: number;
+  buyNow?: number | undefined;
   endsAt: number;
   bids: Bid[];
   status: ListingStatus;

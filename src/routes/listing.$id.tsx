@@ -202,7 +202,7 @@ function ListingPage() {
 type ListingT = NonNullable<ReturnType<typeof useAppState>["listings"][number]>;
 
 function FileListing({ l, ended, mine, watched, deal, goDeal }: {
-  l: ListingT & { kind: "file" };
+  l: ListingT;
   ended: boolean;
   mine: boolean;
   watched: boolean;

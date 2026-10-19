@@ -222,7 +222,7 @@ function Sell() {
         </div>}
         {kind === "file" && step === 3 && (
           <div className="space-y-4">
-            <SaleFormat d={{ ...fd, rev: 0, profit: 0, assets: [] }} up={(p) => fup(p)} showInventory />
+            <SaleFormat d={fd} up={(p) => fup(p)} showInventory />
             {fd.format === "buy_now" && (
               <div>
                 <div className="eyebrow mb-2">Inventory</div>
