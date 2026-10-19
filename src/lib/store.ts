@@ -185,6 +185,19 @@ export const actions = {
         })),
       );
     }
+    // File auctions: single exclusive copy — close the listing and grant access instantly.
+    if (l.kind === "file") {
+      const id = actions.fulfillFileDeal(listingId, price);
+      set((s) =>
+        patchListing(s, listingId, (x) => ({
+          ...x,
+          status: "sold",
+          endsAt: Math.min(x.endsAt, Date.now()),
+          file: x.file ? { ...x.file, inventory: { ...x.file.inventory, remaining: 0 } } : x.file,
+        })),
+      );
+      return id;
+    }
     return actions.createDeal(listingId, price);
   },
   signAgreement(dealId: string, party: "buyer" | "seller") {
@@ -215,14 +228,7 @@ export const actions = {
     if (!d) return;
     const all = (items: { id: string }[]) => Object.fromEntries(items.map((i) => [i.id, true]));
     patchDeal(dealId, (x) => {
-      if (x.kind === "file") {
-        switch (x.stage) {
-          case 0: return x.funded ? x : log({ ...x, funded: true }, "Demo: payment received");
-          case 1: return x.delivery.released ? x : log({ ...x, delivery: { ...x.delivery, released: true } }, "Demo: seller released file access");
-          case 2: return x.delivery.confirmed ? x : log({ ...x, delivery: { ...x.delivery, confirmed: true } }, "Demo: buyer confirmed download");
-          default: return x;
-        }
-      }
+      if (x.kind === "file") return x; // file deals are fulfilled instantly — nothing to complete
       switch (x.stage) {
         case 0: return x.agreement.buyer && x.agreement.seller ? x : log({ ...x, agreement: { buyer: true, seller: true } }, "Demo: both parties signed");
         case 1: return x.funded ? x : log({ ...x, funded: true }, "Demo: escrow funded");
