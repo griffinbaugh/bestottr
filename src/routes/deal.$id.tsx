@@ -104,7 +104,7 @@ function DealRoom() {
       <div className="flex flex-wrap items-center gap-4">
         <img src={img(l.image)} alt="" className="h-16 w-28 rounded-md object-cover" />
         <div className="flex-1">
-          <div className="eyebrow">{isFile ? "File delivery room" : "Deal room"} · #{d.id}</div>
+          <div className="eyebrow">Deal room · #{d.id}</div>
           <h1 className="text-2xl font-semibold tracking-tight">{l.title}</h1>
         </div>
         <div className="flex rounded-md bg-secondary p-1 text-sm">
