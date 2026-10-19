@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import mark from "@/assets/bestottr-icon-white.png";
+import lockup from "@/assets/bestottr-primary-white.png";
 import { BadgeCheck, Heart, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { actions, useAppState } from "@/lib/store";
@@ -17,9 +17,8 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 md:px-6">
-        <Link to="/" className="flex items-center gap-2.5 font-semibold tracking-tight" aria-label="bestottr home">
-          <img src={mark} alt="" width={31} height={28} className="h-7 w-auto" />
-          <span className="text-[17px]">bestottr</span>
+        <Link to="/" className="mr-2 flex shrink-0 items-center py-2" aria-label="bestottr home">
+          <img src={lockup} alt="bestottr" width={591} height={187} className="h-auto w-[118px] object-contain lg:w-[140px]" />
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           {nav.map((n) => (
