@@ -191,13 +191,14 @@ export const actions = {
   advance(dealId: string) {
     const d = state.deals.find((x) => x.id === dealId);
     if (!d || !stageDone(d)) return;
-    const next = Math.min(5, d.stage + 1);
+    const last = d.kind === "file" ? FILE_STAGES.length - 1 : 5;
+    const next = Math.min(last, d.stage + 1);
     set((s) => {
       let n: State = {
         ...s,
-        deals: s.deals.map((x) => (x.id === dealId ? log({ ...x, stage: next }, next === 5 ? "Transaction complete — funds released to seller" : `Advanced to stage ${next + 1}`) : x)),
+        deals: s.deals.map((x) => (x.id === dealId ? log({ ...x, stage: next }, next === last ? "Transaction complete — funds released to seller" : `Advanced to stage ${next + 1}`) : x)),
       };
-      if (next === 5) n = patchListing(n, d.listingId, (l) => ({ ...l, status: "sold" }));
+      if (next === last) n = patchListing(n, d.listingId, (l) => ({ ...l, status: "sold" }));
       return n;
     });
   },
@@ -206,6 +207,14 @@ export const actions = {
     if (!d) return;
     const all = (items: { id: string }[]) => Object.fromEntries(items.map((i) => [i.id, true]));
     patchDeal(dealId, (x) => {
+      if (x.kind === "file") {
+        switch (x.stage) {
+          case 0: return log({ ...x, funded: true }, "Demo: payment received");
+          case 1: return log({ ...x, delivery: { ...x.delivery, released: true } }, "Demo: seller released file access");
+          case 2: return log({ ...x, delivery: { ...x.delivery, confirmed: true } }, "Demo: buyer confirmed download");
+          default: return x;
+        }
+      }
       switch (x.stage) {
         case 0: return log({ ...x, agreement: { buyer: true, seller: true } }, "Demo: both parties signed");
         case 1: return log({ ...x, funded: true }, "Demo: escrow funded");
