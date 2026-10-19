@@ -18,11 +18,8 @@ export function CountUpStat({
   duration?: number;
 }) {
   const [v, setV] = useState(0);
-  const started = useRef(false);
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setV(target);
       return;
