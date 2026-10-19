@@ -9,10 +9,10 @@ import markWhite from "@/assets/mark-white.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "bestottr — Buy and sell Roblox businesses with confidence" },
-      { name: "description", content: "Verified Roblox experience listings, competitive auctions, escrowed deal rooms and managed ownership transfers." },
-      { property: "og:title", content: "bestottr — Buy and sell Roblox businesses with confidence" },
-      { property: "og:description", content: "Verified listings, competitive bidding, secure transactions and managed transfers." },
+      { title: "bestottr — Buy and sell Roblox businesses and creator assets" },
+      { name: "description", content: "Verified Roblox experience listings, creator files, competitive auctions, escrowed deal rooms and managed transfers." },
+      { property: "og:title", content: "bestottr — Buy and sell Roblox businesses and creator assets" },
+      { property: "og:description", content: "Verified listings, creator files, competitive bidding, secure transactions and managed transfers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -26,7 +26,8 @@ function Home() {
   const [q, setQ] = useState("");
   const live = listings.filter((l) => l.status === "live");
   const auctions = live.filter((l) => l.format === "auction");
-  const buyNow = live.filter((l) => l.format === "buy_now");
+  const buyNow = live.filter((l) => l.kind === "experience" && l.format === "buy_now");
+  const files = live.filter((l) => l.kind === "file");
 
   return (
     <>
@@ -34,10 +35,10 @@ function Home() {
         <div className="mx-auto max-w-3xl px-4 py-16 text-center md:py-24">
           <img src={markWhite} alt="" width={40} height={40} className="mx-auto mb-6 h-10 w-10" />
           <h1 className="text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
-            Buy and sell Roblox businesses with confidence.
+            Buy and sell Roblox businesses and creator assets.
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Verified metrics, competitive auctions, escrowed funds and a managed transfer of every asset.
+            Verified experiences, scripts, maps and UI kits — with competitive auctions, escrowed funds and managed delivery.
           </p>
           <form
             className="relative mx-auto mt-8 max-w-xl"
@@ -49,7 +50,7 @@ function Home() {
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               className="field h-13 pl-11 pr-32 text-base"
-              placeholder="Search experiences, genres, studios…"
+              placeholder="Search experiences, files, genres, studios…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               aria-label="Search the marketplace"
@@ -83,6 +84,13 @@ function Home() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-7xl px-4 pb-10 md:px-6">
+        <SectionHead title="Creator files" link="/browse" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {files.slice(0, 6).map((l) => <ListingCard key={l.id} listing={l} />)}
+        </div>
+      </section>
+
       <section className="border-t border-border">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:grid-cols-3 md:px-6">
           {[
@@ -104,8 +112,8 @@ function Home() {
       <section className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-10 md:px-6">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Selling an experience?</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Connect Roblox, verify ownership and list in minutes.</p>
+            <h2 className="text-lg font-semibold tracking-tight">Selling an experience or a file?</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Verify ownership, set your price and list in minutes.</p>
           </div>
           <Link to="/sell" className={buttonVariants({ variant: "outline" })}>
             Start a listing <ArrowRight className="h-4 w-4" />

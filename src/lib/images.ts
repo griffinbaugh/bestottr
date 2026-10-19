@@ -6,6 +6,12 @@ import g5 from "@/assets/g5.jpg";
 import g6 from "@/assets/g6.jpg";
 import g7 from "@/assets/g7.jpg";
 import g8 from "@/assets/g8.jpg";
+import f1 from "@/assets/f1.jpg";
+import f2 from "@/assets/f2.jpg";
+import f3 from "@/assets/f3.jpg";
+import f4 from "@/assets/f4.jpg";
+import f5 from "@/assets/f5.jpg";
+import f6 from "@/assets/f6.jpg";
 
-export const IMAGES: Record<string, string> = { g1, g2, g3, g4, g5, g6, g7, g8 };
+export const IMAGES: Record<string, string> = { g1, g2, g3, g4, g5, g6, g7, g8, f1, f2, f3, f4, f5, f6 };
 export const img = (key: string) => IMAGES[key] ?? g1;

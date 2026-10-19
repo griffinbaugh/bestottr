@@ -12,7 +12,27 @@ export type Seller = {
   responseTime: string;
 };
 export type ListingStatus = "live" | "ended" | "sold" | "review" | "rejected";
+export type ListingKind = "experience" | "file";
+
+export const FILE_CATEGORIES = ["Scripts", "Systems", "Models", "UI Kits", "Maps", "Vehicles", "Animations", "Audio", "Plugins", "Templates", "Other"] as const;
+export type FileCategory = (typeof FILE_CATEGORIES)[number];
+
+export type FileMeta = {
+  fileName: string;
+  fileType: string;
+  fileSize: string;
+  version: string;
+  category: FileCategory;
+  compatibility: string;
+  includedFiles: string[];
+  license: string;
+  sellerNotes: string;
+  inventory: { mode: "unlimited" } | { mode: "limited"; total: number; remaining: number };
+};
+
 export type Listing = {
+  kind: ListingKind;
+  file?: FileMeta | undefined;
   id: string;
   title: string;
   tagline: string;
@@ -23,7 +43,7 @@ export type Listing = {
   startingBid: number;
   currentBid: number;
   reserve?: number | undefined;
-  buyNow?: number;
+  buyNow?: number | undefined;
   endsAt: number;
   bids: Bid[];
   status: ListingStatus;
@@ -45,6 +65,7 @@ export type Listing = {
 export type Deal = {
   id: string;
   listingId: string;
+  kind: ListingKind;
   buyer: string;
   seller: string;
   price: number;
@@ -55,6 +76,8 @@ export type Deal = {
   dd: Record<string, boolean>;
   transfer: Record<string, boolean>;
   received: Record<string, boolean>;
+  /** File deals only: seller released access, buyer confirmed download. */
+  delivery: { released: boolean; confirmed: boolean };
   log: { at: number; text: string }[];
   createdAt: number;
 };
@@ -76,6 +99,12 @@ export type State = {
 };
 
 export const STAGES = ["Agreement", "Funding", "Due Diligence", "Roblox Transfer", "Final Verification", "Complete"];
+export const FILE_STAGES = ["Payment", "File Access", "Buyer Confirmation", "Complete"];
+export const dealStages = (d: Pick<Deal, "kind">) => (d.kind === "file" ? FILE_STAGES : STAGES);
+export const lastStage = (d: Pick<Deal, "kind">) => dealStages(d).length - 1;
+
+export const LICENSE_TERMS =
+  "Purchases grant only the license stated on this listing. They do not transfer ownership of the underlying work or any third-party IP.";
 
 export const DD_ITEMS = [
   { id: "analytics", label: "Read-only analytics access reviewed", detail: "Creator Dashboard retention, sessions and traffic sources" },
@@ -120,6 +149,7 @@ const stdAssets = ["Experience & all places", "Full source code", "Private packa
 export function seedState(): State {
   const now = Date.now();
   const L = (p: Partial<Listing> & Pick<Listing, "id" | "title">): Listing => ({
+    kind: "experience",
     tagline: "",
     description: "",
     genre: "Simulator",
@@ -382,6 +412,187 @@ export function seedState(): State {
       seller: sellers.neon,
       verified: { ownership: true, revenue: false, traffic: false },
     }),
+    // ---- Creator file listings ----
+    L({
+      id: "datastore-pro",
+      kind: "file",
+      title: "DataStore Pro — Full Source System",
+      tagline: "Battle-tested data layer: session locking, retries, migrations, backups",
+      description:
+        "The complete source package behind a top-500 simulator's data infrastructure. Session-locked DataStores with automatic retry queues, schema migrations, cross-server messaging hooks and a full test harness. Sold once, exclusively — the winner receives full source and resale rights per the license.",
+      genre: "Systems",
+      image: "f1",
+      startingBid: 1200,
+      currentBid: 2450,
+      reserve: 2000,
+      endsAt: now + 18 * H,
+      bids: bids(now, [
+        ["kairo_cap", 1200, 30],
+        ["m.chen", 1500, 22],
+        ["northpeak", 1900, 9],
+        ["kairo_cap", 2450, 2],
+      ]).reverse(),
+      seller: sellers.kenzo,
+      verified: { ownership: true, revenue: false, traffic: false },
+      file: {
+        fileName: "datastore-pro_v4.1.rbxm",
+        fileType: ".rbxm",
+        fileSize: "1.8 MB",
+        version: "4.1.0",
+        category: "Systems",
+        compatibility: "Roblox Studio 2024+, Luau strict mode",
+        includedFiles: ["datastore-pro_v4.1.rbxm", "MIGRATIONS.md", "test-harness.rbxl", "API reference (PDF)"],
+        license: "Exclusive single-buyer license. Full source included; buyer may use, modify and ship in unlimited own experiences. Resale of the unmodified package is not permitted.",
+        sellerNotes: "Used in production for 26 months across 3 titles. Happy to answer integration questions for 30 days after sale.",
+        inventory: { mode: "limited", total: 1, remaining: 1 },
+      },
+    }),
+    L({
+      id: "neon-ui-kit",
+      kind: "file",
+      title: "Neon Dark UI Kit",
+      tagline: "140+ interface components, fully themed and resolution-safe",
+      description:
+        "A complete dark UI component library for Roblox: buttons, sliders, modals, inventory grids, notifications and tab systems. Built on UIStroke/UIGradient with a single theme module so recolors take minutes.",
+      genre: "UI Kits",
+      image: "f2",
+      format: "buy_now",
+      startingBid: 89,
+      currentBid: 89,
+      buyNow: 89,
+      endsAt: now + 30 * 24 * H,
+      seller: sellers.hollow,
+      verified: { ownership: true, revenue: false, traffic: false },
+      file: {
+        fileName: "neon-ui-kit_v2.3.rbxm",
+        fileType: ".rbxm",
+        fileSize: "6.4 MB",
+        version: "2.3.0",
+        category: "UI Kits",
+        compatibility: "Roblox Studio 2023+, all screen sizes",
+        includedFiles: ["neon-ui-kit_v2.3.rbxm", "Theme module", "Icon set (96 icons)", "Setup guide"],
+        license: "Standard license: use in unlimited own experiences, commercial or free. Redistribution or resale of the kit itself is not permitted.",
+        sellerNotes: "Free updates for all 2.x releases. Join the support Discord after purchase.",
+        inventory: { mode: "unlimited" },
+      },
+    }),
+    L({
+      id: "drift-vehicle-pack",
+      kind: "file",
+      title: "Low Poly Drift Cars — Vehicle Pack",
+      tagline: "3 tuned drift cars with handling scripts and custom wheels",
+      description:
+        "Three low-poly drift cars (coupe, hatch, widebody) with a custom chassis, drift handling module, tire smoke and working lights. Optimized under 4k tris each.",
+      genre: "Vehicles",
+      image: "f3",
+      format: "buy_now",
+      startingBid: 149,
+      currentBid: 149,
+      buyNow: 149,
+      endsAt: now + 21 * 24 * H,
+      seller: sellers.apex,
+      verified: { ownership: true, revenue: false, traffic: false },
+      file: {
+        fileName: "drift-cars-pack_v1.6.zip",
+        fileType: ".zip",
+        fileSize: "22 MB",
+        version: "1.6.0",
+        category: "Vehicles",
+        compatibility: "Roblox Studio 2024+, A-Chassis compatible",
+        includedFiles: ["3 vehicle .rbxm files", "Drift handling module", "Tire smoke & light scripts", "Tuning guide"],
+        license: "Standard license: use in unlimited own experiences. Not for resale as a standalone asset.",
+        sellerNotes: "Limited run of 20 licenses to keep the pack rare in the wild.",
+        inventory: { mode: "limited", total: 20, remaining: 7 },
+      },
+    }),
+    L({
+      id: "island-map-bundle",
+      kind: "file",
+      title: "Floating Islands Map Bundle",
+      tagline: "5 modular low-poly islands, terrain-ready and optimized",
+      description:
+        "Five hand-built floating islands (meadow, snow, desert, forest, volcanic) with modular pieces, LODs and collision-optimized meshes. Drop-in ready for obby, simulator or adventure maps.",
+      genre: "Maps",
+      image: "f4",
+      format: "buy_now",
+      startingBid: 119,
+      currentBid: 119,
+      buyNow: 119,
+      endsAt: now + 30 * 24 * H,
+      seller: sellers.maple,
+      verified: { ownership: true, revenue: false, traffic: false },
+      file: {
+        fileName: "island-bundle_v3.0.rbxm",
+        fileType: ".rbxm",
+        fileSize: "48 MB",
+        version: "3.0.0",
+        category: "Maps",
+        compatibility: "Roblox Studio 2023+",
+        includedFiles: ["5 island .rbxm files", "Modular prop kit", "Lighting presets"],
+        license: "Standard license: use in unlimited own experiences. Not for resale as a standalone asset.",
+        sellerNotes: "All meshes under 10k tris. Seasonal variants included.",
+        inventory: { mode: "unlimited" },
+      },
+    }),
+    L({
+      id: "combat-anim-pack",
+      kind: "file",
+      title: "Combat Animation Pack — 60 Moves",
+      tagline: "Punches, kicks, dodges and finishers, R15 rigged",
+      description:
+        "Sixty combat animations for R15 rigs: light/heavy combos, blocks, dodges, hit reactions and finishers. Keyframe-optimized and loop-safe.",
+      genre: "Animations",
+      image: "f5",
+      format: "buy_now",
+      startingBid: 79,
+      currentBid: 79,
+      buyNow: 79,
+      endsAt: now + 10 * 24 * H,
+      status: "sold",
+      seller: sellers.kenzo,
+      verified: { ownership: true, revenue: false, traffic: false },
+      file: {
+        fileName: "combat-anims_v1.2.rbxm",
+        fileType: ".rbxm",
+        fileSize: "9.1 MB",
+        version: "1.2.0",
+        category: "Animations",
+        compatibility: "R15 rigs, Roblox Animation Editor",
+        includedFiles: ["60 animation .rbxm files", "Rig template", "Combo timing chart"],
+        license: "Standard license: use in unlimited own experiences. Not for resale as a standalone asset.",
+        sellerNotes: "Limited run sold out. Follow for the v2 pack.",
+        inventory: { mode: "limited", total: 15, remaining: 0 },
+      },
+    }),
+    L({
+      id: "epic-audio-pack",
+      kind: "file",
+      title: "Epic Sounds — Game Audio Pack",
+      tagline: "220 tracks & SFX: music, ambience, UI and combat",
+      description:
+        "A full audio library: 40 music loops, 120 SFX, 40 ambiences and 20 UI sounds. Mixed loudness-normalized and loop-pointed for seamless in-game use.",
+      genre: "Audio",
+      image: "f6",
+      format: "buy_now",
+      startingBid: 59,
+      currentBid: 59,
+      buyNow: 59,
+      endsAt: now + 30 * 24 * H,
+      seller: sellers.skyline,
+      verified: { ownership: true, revenue: false, traffic: false },
+      file: {
+        fileName: "epic-sounds_v5.0.zip",
+        fileType: ".zip",
+        fileSize: "310 MB",
+        version: "5.0.0",
+        category: "Audio",
+        compatibility: "Any engine · .ogg + .mp3",
+        includedFiles: ["220 audio files (.ogg/.mp3)", "Loop-point sheet", "Attribution-free license certificate"],
+        license: "Standard license: use in unlimited own experiences, commercial or free. Redistribution of the raw files is not permitted.",
+        sellerNotes: "All original compositions. Loudness normalized to -16 LUFS.",
+        inventory: { mode: "unlimited" },
+      },
+    }),
   ];
 
   const all = (items: { id: string }[], v: boolean) => Object.fromEntries(items.map((i) => [i.id, v]));
@@ -389,6 +600,7 @@ export function seedState(): State {
     {
       id: "d-1042",
       listingId: "pet-hatchery",
+      kind: "experience" as const,
       buyer: "northpeak",
       seller: ME,
       price: 36000,
@@ -399,6 +611,7 @@ export function seedState(): State {
       dd: all(DD_ITEMS, true),
       transfer: { ...all(TRANSFER_ITEMS, false), experience: true, source: true, branding: true },
       received: all(TRANSFER_ITEMS, false),
+      delivery: { released: false, confirmed: false },
       log: [
         { at: now - 95 * H, text: "Auction closed at $36,000 — deal room opened" },
         { at: now - 80 * H, text: "Asset purchase agreement signed by both parties" },
