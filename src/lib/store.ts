@@ -216,11 +216,11 @@ export const actions = {
         }
       }
       switch (x.stage) {
-        case 0: return log({ ...x, agreement: { buyer: true, seller: true } }, "Demo: both parties signed");
-        case 1: return log({ ...x, funded: true }, "Demo: escrow funded");
-        case 2: return log({ ...x, dd: all(DD_ITEMS) }, "Demo: due diligence completed");
-        case 3: return log({ ...x, transfer: all(TRANSFER_ITEMS) }, "Demo: seller completed all transfer items");
-        case 4: return log({ ...x, received: all(TRANSFER_ITEMS) }, "Demo: buyer confirmed receipt of all items");
+        case 0: return x.agreement.buyer && x.agreement.seller ? x : log({ ...x, agreement: { buyer: true, seller: true } }, "Demo: both parties signed");
+        case 1: return x.funded ? x : log({ ...x, funded: true }, "Demo: escrow funded");
+        case 2: return DD_ITEMS.every((i) => x.dd[i.id]) ? x : log({ ...x, dd: all(DD_ITEMS) }, "Demo: due diligence completed");
+        case 3: return TRANSFER_ITEMS.every((i) => x.transfer[i.id]) ? x : log({ ...x, transfer: all(TRANSFER_ITEMS) }, "Demo: seller completed all transfer items");
+        case 4: return TRANSFER_ITEMS.every((i) => x.received[i.id]) ? x : log({ ...x, received: all(TRANSFER_ITEMS) }, "Demo: buyer confirmed receipt of all items");
         default: return x;
       }
     });
