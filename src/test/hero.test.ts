@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { heroListings } from "@/lib/hero";
-import { seedListings } from "@/lib/data";
+import { seedState } from "@/lib/data";
+const seedListings = () => seedState().listings;
 
 describe("hero rotation", () => {
   it("uses only live experience listings, max 5", () => {

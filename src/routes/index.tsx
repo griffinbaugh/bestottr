@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BadgeCheck, FileSignature, Workflow } from "lucide-react";
 import { useState } from "react";
+import { HeroBackdrop } from "@/components/sb/HeroBackdrop";
+import { heroListings } from "@/lib/hero";
 import { CountUpStat } from "@/components/sb/CountUpStat";
 import { ListingCard } from "@/components/sb/ListingCard";
 import { SearchBox } from "@/components/sb/SearchBox";
@@ -28,11 +30,13 @@ function Home() {
   const auctions = live.filter((l) => l.format === "auction");
   const buyNow = live.filter((l) => l.kind === "experience" && l.format === "buy_now");
   const files = live.filter((l) => l.kind === "file");
+  const heroImages = heroListings(listings).map((l) => l.image);
 
   return (
     <>
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-3xl px-4 py-16 text-center md:py-24">
+      <section className="relative isolate overflow-hidden border-b border-border">
+        <HeroBackdrop images={heroImages} />
+        <div className="relative mx-auto max-w-3xl px-4 py-16 text-center md:py-24">
           <h1 className="text-[32px] font-bold leading-[1.1] tracking-tight md:text-[40px] lg:text-[46px]">
             Buy and sell Roblox businesses and creator assets.
           </h1>
