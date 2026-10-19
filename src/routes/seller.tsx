@@ -42,7 +42,8 @@ function Seller() {
           <h2 className="mb-3 font-semibold">Active listings</h2>
           {active.length ? active.map((l) => (
             <Link key={l.id} to="/listing/$id" params={{ id: l.id }} className="flex items-center justify-between border-t border-border py-3 first:border-0">
-              <span>{l.title}</span><span className="flex items-center gap-2"><span className="num text-sm">{usd(l.currentBid)}</span><Badge tone={l.status === "review" ? "warning" : "brand"}>{l.status === "review" ? "In review" : "Live"}</Badge></span>
+              <span className="min-w-0"><span className="block truncate">{l.title}</span>{l.kind === "file" && l.file && <span className="num text-xs text-muted-foreground">{l.file.category} · {stockLabel(l.file.inventory)}</span>}</span>
+              <span className="flex shrink-0 items-center gap-2"><span className="num text-sm">{usd(l.currentBid)}</span><Badge tone={l.status === "review" ? "warning" : "brand"}>{l.status === "review" ? "In review" : "Live"}</Badge></span>
             </Link>)) : <Empty title="No active listings" />}
         </section>
         <section className="surface p-5">
@@ -54,7 +55,7 @@ function Seller() {
         <h2 className="mb-3 font-semibold">Sold & transactions</h2>
         {deals.length ? deals.map((d) => (
           <Link key={d.id} to="/deal/$id" params={{ id: d.id }} className="flex items-center justify-between border-t border-border py-3 first:border-0">
-            <span>{s.listings.find((l) => l.id === d.listingId)?.title} · <span className="num">{usd(d.price)}</span></span><Badge tone={d.stage === 5 ? "brand" : "warning"}>{STAGES[d.stage]}</Badge>
+            <span>{s.listings.find((l) => l.id === d.listingId)?.title} · <span className="num">{usd(d.price)}</span>{d.kind === "file" && <span className="text-xs text-muted-foreground"> · File delivery</span>}</span><Badge tone={d.stage === dealStages(d).length - 1 ? "brand" : "warning"}>{dealStages(d)[d.stage]}</Badge>
           </Link>)) : <Empty title={sold.length ? "Sold listings pending" : "Nothing sold yet"} />}
       </section>
     </div>
