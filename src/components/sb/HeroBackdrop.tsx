@@ -37,11 +37,12 @@ export function HeroBackdrop({ images }: { images: string[] }) {
   if (!images.length) return null;
   const active = reduced ? 0 : i;
   const next = (active + 1) % images.length;
+  const prev = (active - 1 + images.length) % images.length;
 
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
       {images.map((key, idx) => {
-        if (idx !== active && idx !== next) return null;
+        if (idx !== active && idx !== next && idx !== prev) return null;
         const on = idx === active;
         return (
           <img
