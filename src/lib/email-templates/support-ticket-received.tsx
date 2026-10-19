@@ -26,7 +26,7 @@ const SupportTicketReceived = ({ ticketNumber }: Props) => (
 
 export const template = {
   component: SupportTicketReceived,
-  subject: (d: Record<string, any>) => `[${d.ticketNumber ?? "Ticket"}] We received your bestottr support request`,
+  subject: (d: Record<string, any>) => `[${d["ticketNumber"] ?? "Ticket"}] We received your bestottr support request`,
   displayName: "Support ticket received",
   previewData: { ticketNumber: "BOT-2026-000101" },
 } satisfies TemplateEntry;

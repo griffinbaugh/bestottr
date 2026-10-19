@@ -29,7 +29,7 @@ const SupportNewTicket = ({ ticketNumber, category, customerEmail }: Props) => (
 
 export const template = {
   component: SupportNewTicket,
-  subject: (d: Record<string, any>) => `[${d.ticketNumber ?? "Ticket"}] New support ticket — ${d.category ?? "Support"}`,
+  subject: (d: Record<string, any>) => `[${d["ticketNumber"] ?? "Ticket"}] New support ticket — ${d["category"] ?? "Support"}`,
   displayName: "New support ticket (team)",
   to: "support@bestottr.com",
   previewData: { ticketNumber: "BOT-2026-000101", category: "Technical issue", customerEmail: "jane@example.com" },
