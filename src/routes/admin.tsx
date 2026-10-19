@@ -9,10 +9,10 @@ import { actions, useAppState } from "@/lib/store";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Moderation — StudioBid" },
+      { title: "Moderation — bestottr" },
       { name: "description", content: "Listing review, verification, disputes and transaction review." },
-      { property: "og:title", content: "Moderation — StudioBid" },
-      { property: "og:description", content: "StudioBid admin console." },
+      { property: "og:title", content: "Moderation — bestottr" },
+      { property: "og:description", content: "bestottr admin console." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

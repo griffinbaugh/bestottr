@@ -7,10 +7,10 @@ import { useAppState } from "@/lib/store";
 export const Route = createFileRoute("/seller")({
   head: () => ({
     meta: [
-      { title: "Seller dashboard — StudioBid" },
+      { title: "Seller dashboard — bestottr" },
       { name: "description", content: "Manage listings, bids, sales and transfers." },
-      { property: "og:title", content: "Seller dashboard — StudioBid" },
-      { property: "og:description", content: "Manage your StudioBid listings." },
+      { property: "og:title", content: "Seller dashboard — bestottr" },
+      { property: "og:description", content: "Manage your bestottr listings." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

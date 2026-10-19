@@ -10,9 +10,9 @@ import { useAppState } from "@/lib/store";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "StudioBid — Buy and sell Roblox businesses with confidence" },
+      { title: "bestottr — Buy and sell Roblox businesses with confidence" },
       { name: "description", content: "Verified Roblox experience listings, competitive auctions, escrowed deal rooms and managed ownership transfers." },
-      { property: "og:title", content: "StudioBid — Buy and sell Roblox businesses with confidence" },
+      { property: "og:title", content: "bestottr — Buy and sell Roblox businesses with confidence" },
       { property: "og:description", content: "Verified listings, competitive bidding, secure transactions and managed transfers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

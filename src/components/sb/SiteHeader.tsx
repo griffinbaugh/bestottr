@@ -18,7 +18,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 md:px-6">
         <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">SB</span>
-          StudioBid
+          bestottr
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           {nav.map((n) => (

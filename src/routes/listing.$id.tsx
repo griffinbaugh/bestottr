@@ -15,9 +15,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/listing/$id")({
   head: () => ({
     meta: [
-      { title: "Listing details — StudioBid" },
+      { title: "Listing details — bestottr" },
       { name: "description", content: "Verified metrics, financials, bid history and seller details for this Roblox experience." },
-      { property: "og:title", content: "Listing details — StudioBid" },
+      { property: "og:title", content: "Listing details — bestottr" },
       { property: "og:description", content: "Verified metrics, financials and bid history." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
