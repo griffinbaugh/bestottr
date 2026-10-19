@@ -113,7 +113,7 @@ const sellers = {
   bastion: { handle: "rook_dev", name: "Rook", rating: 4.2, sales: 0, joined: "2023", verified: false, responseTime: "< 24h" },
   me: { handle: ME, name: ME_NAME, rating: 4.9, sales: 2, joined: "2020", verified: true, responseTime: "< 1h" },
   neon: { handle: "voltkart", name: "VoltKart Team", rating: 0, sales: 0, joined: "2024", verified: false, responseTime: "—" },
-};
+} satisfies Record<string, Seller>;
 
 const stdAssets = ["Experience & all places", "Full source code", "Private packages", "Game icon & thumbnails", "Discord server"];
 
