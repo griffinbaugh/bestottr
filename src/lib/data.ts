@@ -600,6 +600,7 @@ export function seedState(): State {
     {
       id: "d-1042",
       listingId: "pet-hatchery",
+      kind: "experience" as const,
       buyer: "northpeak",
       seller: ME,
       price: 36000,
@@ -610,6 +611,7 @@ export function seedState(): State {
       dd: all(DD_ITEMS, true),
       transfer: { ...all(TRANSFER_ITEMS, false), experience: true, source: true, branding: true },
       received: all(TRANSFER_ITEMS, false),
+      delivery: { released: false, confirmed: false },
       log: [
         { at: now - 95 * H, text: "Auction closed at $36,000 — deal room opened" },
         { at: now - 80 * H, text: "Asset purchase agreement signed by both parties" },
