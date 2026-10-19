@@ -32,7 +32,7 @@ function Buyer() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-      <PageHeader title="Buying" subtitle="Bids, wins and acquisitions" actions={<Link to="/browse" className={buttonVariants()}>Browse listings</Link>} />
+      <PageHeader title="Buying" subtitle="Bids, wins and acquisitions" actions={<Link to="/browse" search={{ q: "" }} className={buttonVariants()}>Browse listings</Link>} />
       <div className="mt-6">
         <Tabs value={tab} onChange={(t) => navigate({ search: { tab: t } })} items={[
           { value: "bids", label: "Active bids", count: bidOn.length },

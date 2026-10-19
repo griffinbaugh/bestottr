@@ -19,7 +19,7 @@ export function ListingCard({ listing: l }: { listing: Listing }) {
   return (
     <div className="surface lift group relative flex flex-col overflow-hidden">
       <Link to="/listing/$id" params={{ id: l.id }} className="relative block aspect-video overflow-hidden bg-muted">
-        <img src={img(l.image)} alt={l.title} loading="lazy" width={1088} height={608} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+        <img src={img(l.image)} alt={l.title} loading="lazy" width={1088} height={608} className="h-full w-full object-cover" />
         <div className="absolute left-3 top-3 flex gap-1.5">
           {l.format === "auction" && live ? (
             <Badge tone="overlay">
@@ -39,39 +39,20 @@ export function ListingCard({ listing: l }: { listing: Listing }) {
       </button>
       <Link to="/listing/$id" params={{ id: l.id }} className="flex flex-1 flex-col p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{l.genre}</span>
-          <span>·</span>
-          <span>{l.ageMonths} mo</span>
-          {isFullyVerified(l) && (
-            <span className="ml-auto inline-flex items-center gap-1 font-medium text-brand">
-              <BadgeCheck className="h-3.5 w-3.5" /> Verified
-            </span>
-          )}
+          <span className="truncate">{l.seller.name}</span>
+          {isFullyVerified(l) && <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-brand" aria-label="Verified" />}
+          <span className="ml-auto shrink-0">{l.genre}</span>
         </div>
-        <h3 className="mt-1.5 truncate font-semibold tracking-tight">{l.title}</h3>
-        <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border pt-3 text-xs">
-          <div>
-            <div className="text-muted-foreground">Revenue/mo</div>
-            <div className="num mt-0.5 font-semibold">{usdCompact(l.monthlyRevenue)}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground">Profit/mo</div>
-            <div className="num mt-0.5 font-semibold">{usdCompact(l.monthlyProfit)}</div>
-          </div>
-          <div>
-            <div className="text-muted-foreground">CCU</div>
-            <div className="num mt-0.5 inline-flex items-center gap-1 font-semibold">
-              <Users className="h-3 w-3" />
-              {compact(l.ccu)}
-            </div>
-          </div>
+        <h3 className="mt-1 truncate font-semibold tracking-tight">{l.title}</h3>
+        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="num">{usdCompact(l.monthlyRevenue)}/mo revenue</span>
+          <span className="num inline-flex items-center gap-1"><Users className="h-3 w-3" />{compact(l.ccu)} CCU</span>
         </div>
-        <div className="mt-auto flex items-end justify-between pt-4">
+        <div className="mt-auto flex items-end justify-between pt-3">
           <div>
             <div className="text-xs text-muted-foreground">{l.format === "auction" ? (l.bids.length ? `Current bid · ${l.bids.length} bids` : "Starting bid") : "Asking price"}</div>
-            <div className="num text-xl font-semibold">{usdCompact(l.format === "auction" ? l.currentBid : (l.buyNow ?? l.currentBid))}</div>
+            <div className="num text-lg font-semibold">{usdCompact(l.format === "auction" ? l.currentBid : (l.buyNow ?? l.currentBid))}</div>
           </div>
-          <div className="num text-xs text-muted-foreground">{(l.currentBid / (l.monthlyProfit * 12)).toFixed(1)}x profit</div>
         </div>
       </Link>
     </div>

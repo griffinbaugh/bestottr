@@ -33,7 +33,7 @@ function ListingPage() {
   const now = useNow();
   const [bidOpen, setBidOpen] = useState(false);
   const l = s.listings.find((x) => x.id === id);
-  if (!l) return <div className="mx-auto max-w-3xl px-4 py-16"><Empty title="Listing not found" body="It may have been removed." action={<Link to="/browse" className={buttonVariants({ variant: "outline" })}>Back to marketplace</Link>} /></div>;
+  if (!l) return <div className="mx-auto max-w-3xl px-4 py-16"><Empty title="Listing not found" body="It may have been removed." action={<Link to="/browse" search={{ q: "" }} className={buttonVariants({ variant: "outline" })}>Back to marketplace</Link>} /></div>;
 
   const deal = s.deals.find((d) => d.listingId === l.id);
   const watched = s.watchlist.includes(l.id);
@@ -49,7 +49,7 @@ function ListingPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
       <div className="mb-4 text-sm text-muted-foreground">
-        <Link to="/browse" className="hover:text-foreground">Marketplace</Link> / {l.genre}
+        <Link to="/browse" search={{ q: "" }} className="hover:text-foreground">Marketplace</Link> / {l.genre}
       </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="min-w-0 space-y-6">
@@ -62,11 +62,11 @@ function ListingPage() {
               <Badge tone={l.verified.revenue ? "brand" : "warning"}>{l.verified.revenue ? <Check className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}Revenue {l.verified.revenue ? "verified" : "unverified"}</Badge>
               <Badge tone={l.verified.traffic ? "brand" : "warning"}>{l.verified.traffic ? <Check className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}Traffic {l.verified.traffic ? "verified" : "unverified"}</Badge>
             </div>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">{l.title}</h1>
+            <h1 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">{l.title}</h1>
             <p className="mt-2 text-muted-foreground">{l.tagline}</p>
           </div>
 
-          <div className="surface grid grid-cols-2 gap-5 p-5 sm:grid-cols-4">
+          <div className="surface grid grid-cols-2 gap-x-5 gap-y-6 p-5 sm:grid-cols-4">
             <Stat label="Revenue / mo" value={usd(l.monthlyRevenue)} hint="Trailing 90-day avg" />
             <Stat label="Profit / mo" value={usd(l.monthlyProfit)} hint={`${Math.round((l.monthlyProfit / l.monthlyRevenue) * 100)}% margin`} />
             <Stat label="Visits / mo" value={compact(l.monthlyVisits)} />

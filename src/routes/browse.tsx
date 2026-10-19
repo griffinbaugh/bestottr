@@ -7,6 +7,7 @@ import { useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/browse")({
+  validateSearch: (s: Record<string, unknown>): { q: string } => ({ q: typeof s["q"] === "string" ? s["q"] : "" }),
   head: () => ({
     meta: [
       { title: "Marketplace — bestottr" },
@@ -25,7 +26,8 @@ const DEFAULTS = { q: "", minPrice: "", maxPrice: "", minRev: "", genre: "all", 
 
 function Browse() {
   const { listings, watchlist } = useAppState();
-  const [f, setF] = useState(DEFAULTS);
+  const initialQ = Route.useSearch().q ?? "";
+  const [f, setF] = useState({ ...DEFAULTS, q: initialQ });
   const [showFilters, setShowFilters] = useState(false);
   const up = <K extends keyof typeof DEFAULTS>(k: K, v: (typeof DEFAULTS)[K]) => setF((p) => ({ ...p, [k]: v }));
   const live = listings.filter((l) => l.status === "live");
@@ -79,8 +81,8 @@ function Browse() {
         </Button>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[260px_1fr]">
-        <aside className={cn("surface h-fit space-y-5 p-5 lg:sticky lg:top-20 lg:block", !showFilters && "hidden")}>
+      <div className="mt-6 grid gap-6 lg:grid-cols-[240px_1fr]">
+        <aside className={cn("h-fit space-y-5 rounded-lg border border-border p-4 lg:sticky lg:top-20 lg:block", !showFilters && "hidden")}>
           <div>
             <div className="eyebrow mb-2">Format</div>
             <div className="grid grid-cols-3 gap-1 rounded-md bg-secondary p-1">
@@ -123,7 +125,7 @@ function Browse() {
         <div>
           <div className="mb-3 text-sm text-muted-foreground">{results.length} results</div>
           {results.length ? (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {results.map((l) => <ListingCard key={l.id} listing={l} />)}
             </div>
           ) : (
