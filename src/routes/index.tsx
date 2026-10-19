@@ -9,10 +9,10 @@ import markWhite from "@/assets/mark-white.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "bestottr — Buy and sell Roblox businesses with confidence" },
-      { name: "description", content: "Verified Roblox experience listings, competitive auctions, escrowed deal rooms and managed ownership transfers." },
-      { property: "og:title", content: "bestottr — Buy and sell Roblox businesses with confidence" },
-      { property: "og:description", content: "Verified listings, competitive bidding, secure transactions and managed transfers." },
+      { title: "bestottr — Buy and sell Roblox businesses and creator assets" },
+      { name: "description", content: "Verified Roblox experience listings, creator files, competitive auctions, escrowed deal rooms and managed transfers." },
+      { property: "og:title", content: "bestottr — Buy and sell Roblox businesses and creator assets" },
+      { property: "og:description", content: "Verified listings, creator files, competitive bidding, secure transactions and managed transfers." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -26,7 +26,8 @@ function Home() {
   const [q, setQ] = useState("");
   const live = listings.filter((l) => l.status === "live");
   const auctions = live.filter((l) => l.format === "auction");
-  const buyNow = live.filter((l) => l.format === "buy_now");
+  const buyNow = live.filter((l) => l.kind === "experience" && l.format === "buy_now");
+  const files = live.filter((l) => l.kind === "file");
 
   return (
     <>
