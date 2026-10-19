@@ -222,7 +222,7 @@ function FileListing({ l, ended, mine, watched, deal, goDeal }: {
       toast.error(r.error ?? "Purchase failed");
       return;
     }
-    toast.success("Purchase complete — payment held in escrow", { description: "The seller can now release file access." });
+    toast.success("Purchase complete — file access granted", { description: "Your file is ready to download instantly." });
     goDeal(r.dealId!);
   };
 
@@ -355,7 +355,7 @@ function FileListing({ l, ended, mine, watched, deal, goDeal }: {
             <div className="rounded-xl border border-dashed border-warning bg-warning-soft p-4">
               <div className="text-sm font-semibold">Demo controls</div>
               <p className="mt-1 text-xs text-muted-foreground">Skip the wait: close this auction with you as the winning bidder (at or above reserve).</p>
-              <Button variant="demo" className="mt-3 w-full" onClick={() => { const d = actions.winAuction(l.id); toast.success("You won the auction!", { description: "Your delivery room is open." }); goDeal(d); }}>
+              <Button variant="demo" className="mt-3 w-full" onClick={() => { const d = actions.winAuction(l.id); toast.success("You won the auction!", { description: "Your file is ready to download." }); goDeal(d); }}>
                 <Trophy className="h-4 w-4" /> Demo: win auction
               </Button>
             </div>

@@ -76,7 +76,7 @@ export type Deal = {
   dd: Record<string, boolean>;
   transfer: Record<string, boolean>;
   received: Record<string, boolean>;
-  /** File deals only: seller released access, buyer confirmed download. */
+  /** File deals only: access is granted instantly on purchase/win (legacy staged fields, always true for new deals). */
   delivery: { released: boolean; confirmed: boolean };
   log: { at: number; text: string }[];
   createdAt: number;
