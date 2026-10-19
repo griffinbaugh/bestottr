@@ -39,7 +39,7 @@ export function ListingCard({ listing: l }: { listing: Listing }) {
       <button
         aria-label={watched ? "Remove from watchlist" : "Add to watchlist"}
         onClick={() => actions.toggleWatch(l.id)}
-        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-overlay text-overlay-foreground backdrop-blur"
+        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-overlay text-overlay-foreground backdrop-blur transition-transform duration-150 ease-out hover:scale-105 active:scale-95"
       >
         <Heart className={cn("h-4 w-4", watched && "fill-current")} />
       </button>

@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ListingCard, isFullyVerified } from "@/components/sb/ListingCard";
+import { SearchBox } from "@/components/sb/SearchBox";
 import { Button, Empty, PageHeader } from "@/components/sb/ui";
 import { FILE_CATEGORIES } from "@/lib/data";
 import { useAppState } from "@/lib/store";
@@ -76,10 +77,7 @@ function Browse() {
             </button>
           ))}
         </div>
-        <div className="relative min-w-[220px] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input className="field pl-9" placeholder="Search experiences, files, categories, studios…" value={f.q} onChange={(e) => up("q", e.target.value)} />
-        </div>
+        <SearchBox value={f.q} onChange={(v) => up("q", v)} placeholder="Search experiences, files, categories, studios…" className="min-w-[220px] flex-1" />
         <select className="field w-auto" value={f.sort} onChange={(e) => up("sort", e.target.value)} aria-label="Sort">
           <option value="ending">Ending soonest</option>
           <option value="newest">Newest</option>
@@ -150,7 +148,7 @@ function Browse() {
         <div>
           <div className="mb-3 text-sm text-muted-foreground">{results.length} results</div>
           {results.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {results.map((l) => <ListingCard key={l.id} listing={l} />)}
             </div>
           ) : (
