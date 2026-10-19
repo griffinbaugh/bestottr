@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Badge, Button, Empty, PageHeader, Tabs } from "@/components/sb/ui";
 import type { AdminItem } from "@/lib/data";
@@ -34,7 +34,7 @@ function Admin() {
   );
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-      <PageHeader title="Moderation" subtitle="Trust & safety console" />
+      <div className="flex flex-wrap items-end justify-between gap-3"><PageHeader title="Moderation" subtitle="Trust & safety console" /><Link to="/admin/support" className="inline-flex h-9 items-center rounded-md border border-input bg-card px-3 text-sm font-medium hover:bg-accent">Support queue</Link></div>
       <div className="mt-6"><Tabs value={tab} onChange={setTab} items={[
         { value: "listings", label: "Listing review", count: review.length },
         { value: "users", label: "Verification", count: s.admin.users.filter((i) => i.status === "open").length },
