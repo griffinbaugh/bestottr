@@ -16,6 +16,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as SellRouteImport } from './routes/sell'
 import { Route as SellerRouteImport } from './routes/seller'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as AdminSupportRouteImport } from './routes/admin_.support'
 import { Route as DealIdRouteImport } from './routes/deal.$id'
 import { Route as ListingIdRouteImport } from './routes/listing.$id'
 
@@ -54,6 +55,11 @@ const SupportRoute = SupportRouteImport.update({
   path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/admin_/support',
+  path: '/admin/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DealIdRoute = DealIdRouteImport.update({
   id: '/deal/$id',
   path: '/deal/$id',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/sell': typeof SellRoute
   '/seller': typeof SellerRoute
   '/support': typeof SupportRoute
+  '/admin/support': typeof AdminSupportRoute
   '/deal/$id': typeof DealIdRoute
   '/listing/$id': typeof ListingIdRoute
 }
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/sell': typeof SellRoute
   '/seller': typeof SellerRoute
   '/support': typeof SupportRoute
+  '/admin/support': typeof AdminSupportRoute
   '/deal/$id': typeof DealIdRoute
   '/listing/$id': typeof ListingIdRoute
 }
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/sell': typeof SellRoute
   '/seller': typeof SellerRoute
   '/support': typeof SupportRoute
+  '/admin_/support': typeof AdminSupportRoute
   '/deal/$id': typeof DealIdRoute
   '/listing/$id': typeof ListingIdRoute
 }
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/sell'
     | '/seller'
     | '/support'
+    | '/admin/support'
     | '/deal/$id'
     | '/listing/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/sell'
     | '/seller'
     | '/support'
+    | '/admin/support'
     | '/deal/$id'
     | '/listing/$id'
   id:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/sell'
     | '/seller'
     | '/support'
+    | '/admin_/support'
     | '/deal/$id'
     | '/listing/$id'
   fileRoutesById: FileRoutesById
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   SellRoute: typeof SellRoute
   SellerRoute: typeof SellerRoute
   SupportRoute: typeof SupportRoute
+  AdminSupportRoute: typeof AdminSupportRoute
   DealIdRoute: typeof DealIdRoute
   ListingIdRoute: typeof ListingIdRoute
 }
@@ -198,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin_/support': {
+      id: '/admin_/support'
+      path: '/admin/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/deal/$id': {
       id: '/deal/$id'
       path: '/deal/$id'
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   SellRoute: SellRoute,
   SellerRoute: SellerRoute,
   SupportRoute: SupportRoute,
+  AdminSupportRoute: AdminSupportRoute,
   DealIdRoute: DealIdRoute,
   ListingIdRoute: ListingIdRoute,
 }
