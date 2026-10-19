@@ -35,10 +35,10 @@ function Home() {
         <div className="mx-auto max-w-3xl px-4 py-16 text-center md:py-24">
           <img src={markWhite} alt="" width={40} height={40} className="mx-auto mb-6 h-10 w-10" />
           <h1 className="text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
-            Buy and sell Roblox businesses with confidence.
+            Buy and sell Roblox businesses and creator assets.
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Verified metrics, competitive auctions, escrowed funds and a managed transfer of every asset.
+            Verified experiences, scripts, maps and UI kits — with competitive auctions, escrowed funds and managed delivery.
           </p>
           <form
             className="relative mx-auto mt-8 max-w-xl"
@@ -50,7 +50,7 @@ function Home() {
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               className="field h-13 pl-11 pr-32 text-base"
-              placeholder="Search experiences, genres, studios…"
+              placeholder="Search experiences, files, genres, studios…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               aria-label="Search the marketplace"
