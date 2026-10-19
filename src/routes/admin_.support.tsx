@@ -63,7 +63,7 @@ function SupportAdmin() {
       </div>
       {emailOn ? (
         <div className="mt-4 rounded-md border border-border bg-card px-3 py-2 text-[13px]">
-          Outbound email is connected via Cloudflare Email Service. Customers get an acknowledgment and new tickets notify {SUPPORT_EMAIL}. Delivery failures are logged and never block submission.
+          Outbound email is connected via Resend. Customers get an acknowledgment and new tickets notify {SUPPORT_EMAIL}. Delivery failures are logged and never block submission.
         </div>
       ) : (
         <div className="mt-4 rounded-md border border-dashed border-warning bg-warning-soft px-3 py-2 text-[13px]">

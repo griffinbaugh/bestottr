@@ -14,4 +14,4 @@
 - Treat bestottr.com (root) as the canonical hostname with www redirecting to it, so generated metadata, canonical/OG URLs and share links point at the canonical host rather than a preview host; while the domain is not yet live, use the published Lovable URL.
 - Support tickets are created only through the security-definer `submit_support_ticket` RPC (called from a server function with validation + honeypot); the table has no public insert/select, and admin reads/updates are gated by `has_role(..., 'admin')` RLS. Why: public users must never enumerate tickets.
 
-- Support ticket emails send through Cloudflare Email Service (CF_EMAIL_API_TOKEN + CF_ACCOUNT_ID) via `deliverTicketEmails` in `src/lib/support-email.server.ts`; the Lovable email templates in `src/lib/email-templates/` are not used for support. Why: the owner chose Cloudflare as the support provider.
+- Support ticket emails send through Resend (RESEND_API_KEY, direct HTTPS API) via `deliverTicketEmails` in `src/lib/support-email.server.ts`; inbound support@ stays on Cloudflare Email Routing; Lovable email templates are unused for support. Why: the owner chose Resend for outbound.

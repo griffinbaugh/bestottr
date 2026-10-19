@@ -1,20 +1,25 @@
-// Support email via Cloudflare Email Service REST API.
-// Without CF_EMAIL_API_TOKEN + CF_ACCOUNT_ID this is a safe no-op (sent:false).
+// Support email via the Resend HTTPS API.
+// Without RESEND_API_KEY this is a safe no-op (sent:false).
 // Receiving support@bestottr.com stays on Cloudflare Email Routing (forwarded inbox).
 export type SupportEmailEvent =
   | { kind: "customer_ack"; to: string; ticketNumber: string }
   | { kind: "support_notify"; ticketNumber: string; category: string; customerEmail?: string }
   | { kind: "status_update"; to: string; ticketNumber: string; status: string };
 
-export type EmailEnv = { token?: string | undefined; accountId?: string | undefined; from?: string | undefined };
+export type EmailEnv = { apiKey?: string | undefined; from?: string | undefined };
 export type EmailMessage = { from: { address: string; name: string }; to: string[]; reply_to: string; subject: string; text: string; html: string };
 
 const ADMIN_URL = "https://bestottr.com/admin/support";
 
 export function readEmailEnv(): EmailEnv {
-  return { token: process.env["CF_EMAIL_API_TOKEN"], accountId: process.env["CF_ACCOUNT_ID"], from: process.env["SUPPORT_EMAIL_FROM"] };
+  return { apiKey: process.env["RESEND_API_KEY"], from: process.env["SUPPORT_EMAIL_FROM"] };
 }
-export const isEmailConfigured = (env: EmailEnv = readEmailEnv()) => !!(env.token && env.accountId);
+export const isEmailConfigured = (env: EmailEnv = readEmailEnv()) => !!env.apiKey;
+
+export const RESEND_URL = "https://api.resend.com/emails";
+export function toResendPayload(m: EmailMessage) {
+  return { from: `${m.from.name} <${m.from.address}>`, to: m.to, reply_to: m.reply_to, subject: m.subject, text: m.text, html: m.html };
+}
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 function html(title: string, lines: string[], link?: { href: string; label: string }) {
@@ -42,27 +47,26 @@ export async function sendSupportEmail(e: SupportEmailEvent, env: EmailEnv = rea
   if (!isEmailConfigured(env)) return { sent: false, error: "not_configured" };
   const msg = buildEmail(e, env.from || "support@bestottr.com");
   try {
-    const res = await f(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(env.accountId!)}/email/sending/send`, {
+    const res = await f(RESEND_URL, {
       method: "POST",
-      headers: { Authorization: `Bearer ${env.token}`, "Content-Type": "application/json" },
-      body: JSON.stringify(msg),
+      headers: { Authorization: `Bearer ${env.apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify(toResendPayload(msg)),
     });
-    const json = (await res.json().catch(() => null)) as { success?: boolean; result?: { id?: string; message_id?: string }; errors?: { message?: string }[] } | null;
-    if (!res.ok || json?.success === false) {
-      const err = `${res.status} ${json?.errors?.[0]?.message ?? "request failed"}`;
-      console.error("support email failed", { kind: e.kind, ticket: e.ticketNumber, error: err });
+    const json = (await res.json().catch(() => null)) as { id?: string; name?: string; message?: string } | null;
+    if (!res.ok || !json?.id) {
+      const err = `${res.status} ${json?.name ?? ""} ${json?.message ?? "request failed"}`.replace(/\s+/g, " ").trim();
+      console.error("support email failed", { provider: "resend", kind: e.kind, ticket: e.ticketNumber, error: err });
       return { sent: false, error: err };
     }
-    const id = json?.result?.id ?? json?.result?.message_id;
-    console.info("support email sent", { kind: e.kind, ticket: e.ticketNumber, id });
-    return { sent: true, id };
+    console.info("support email sent", { provider: "resend", kind: e.kind, ticket: e.ticketNumber, id: json.id });
+    return { sent: true, id: json.id };
   } catch (err) {
     console.error("support email error", { kind: e.kind, ticket: e.ticketNumber, error: err instanceof Error ? err.message : "unknown" });
     return { sent: false, error: "network" };
   }
 }
 
-/** Never throws — ticket creation must not fail after insert. Active provider: Cloudflare Email Service. */
+/** Never throws — ticket creation must not fail after insert. Active provider: Resend. */
 export async function deliverTicketEmails(t: { ticketNumber: string; email: string; category: string }, env?: EmailEnv, f?: typeof fetch) {
   try {
     const ack = await sendSupportEmail({ kind: "customer_ack", to: t.email, ticketNumber: t.ticketNumber }, env, f);
