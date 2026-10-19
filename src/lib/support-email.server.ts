@@ -6,7 +6,7 @@ export type SupportEmailEvent =
   | { kind: "support_notify"; ticketNumber: string; category: string; customerEmail?: string }
   | { kind: "status_update"; to: string; ticketNumber: string; status: string };
 
-export type EmailEnv = { token?: string; accountId?: string; from?: string };
+export type EmailEnv = { token?: string | undefined; accountId?: string | undefined; from?: string | undefined };
 export type EmailMessage = { from: { address: string; name: string }; to: string[]; reply_to: string; subject: string; text: string; html: string };
 
 const ADMIN_URL = "https://bestottr.com/admin/support";
@@ -38,7 +38,7 @@ export function buildEmail(e: SupportEmailEvent, fromAddr = "support@bestottr.co
   return { ...base, to: [e.to], subject: `[${e.ticketNumber}] Ticket status: ${e.status}`, text: lines.join("\n\n"), html: html("Ticket update", lines) };
 }
 
-export async function sendSupportEmail(e: SupportEmailEvent, env: EmailEnv = readEmailEnv(), f: typeof fetch = fetch): Promise<{ sent: boolean; id?: string; error?: string }> {
+export async function sendSupportEmail(e: SupportEmailEvent, env: EmailEnv = readEmailEnv(), f: typeof fetch = fetch): Promise<{ sent: boolean; id?: string | undefined; error?: string }> {
   if (!isEmailConfigured(env)) return { sent: false, error: "not_configured" };
   const msg = buildEmail(e, env.from || "support@bestottr.com");
   try {
