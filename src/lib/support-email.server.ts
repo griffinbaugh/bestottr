@@ -62,30 +62,13 @@ export async function sendSupportEmail(e: SupportEmailEvent, env: EmailEnv = rea
   }
 }
 
-type TemplateSender = (name: string, to: string, opts: { templateData: Record<string, unknown>; idempotencyKey: string; replyTo?: string }) => Promise<{ sent: boolean }>;
-
-/** Lovable managed email (support.bestottr.com) is the active sender. */
-export const isLovableEmailConfigured = () => !!process.env["LOVABLE_API_KEY"];
-
-async function defaultSender(...a: Parameters<TemplateSender>) {
-  const { sendTemplateEmail } = await import("./email-templates/send-email");
-  return sendTemplateEmail(...a);
-}
-
-async function safeSend(send: TemplateSender, ...a: Parameters<TemplateSender>) {
+/** Never throws — ticket creation must not fail after insert. Active provider: Cloudflare Email Service. */
+export async function deliverTicketEmails(t: { ticketNumber: string; email: string; category: string }, env?: EmailEnv, f?: typeof fetch) {
   try {
-    const r = await send(...a);
-    console.info("support email", { template: a[0], sent: r.sent });
-    return r;
-  } catch (err) {
-    console.error("support email failed", { template: a[0], error: err instanceof Error ? err.message : "unknown" });
-    return { sent: false };
+    const ack = await sendSupportEmail({ kind: "customer_ack", to: t.email, ticketNumber: t.ticketNumber }, env, f);
+    const notify = await sendSupportEmail({ kind: "support_notify", ticketNumber: t.ticketNumber, category: t.category, customerEmail: t.email }, env, f);
+    return { ack, notify };
+  } catch {
+    return { ack: { sent: false }, notify: { sent: false } };
   }
-}
-
-/** Never throws — ticket creation must not fail after insert. */
-export async function deliverTicketEmails(t: { ticketNumber: string; email: string; category: string }, send: TemplateSender = defaultSender) {
-  const ack = await safeSend(send, "support-ticket-received", t.email, { templateData: { ticketNumber: t.ticketNumber }, idempotencyKey: `support-ack-${t.ticketNumber}`, replyTo: "support@bestottr.com" });
-  const notify = await safeSend(send, "support-new-ticket", "support@bestottr.com", { templateData: { ticketNumber: t.ticketNumber, category: t.category, customerEmail: t.email }, idempotencyKey: `support-notify-${t.ticketNumber}`, replyTo: t.email });
-  return { ack, notify };
 }
