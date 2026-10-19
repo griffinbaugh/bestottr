@@ -179,7 +179,7 @@ function Detail({ t, onClose, onSaved }: { t: Ticket; onClose: () => void; onSav
     setBusy(true);
     const { data, error } = await supabase.from("support_tickets").update({ status, priority, admin_notes: notes.trim() || null }).eq("id", t.id).select("*").single();
     setBusy(false);
-    if (error || !data) return toast.error("Couldn't save changes");
+    if (error || !data) { toast.error("Couldn't save changes"); return; }
     onSaved(data);
     toast.success("Ticket updated");
   }
