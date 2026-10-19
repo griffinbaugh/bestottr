@@ -256,7 +256,16 @@ function Sell() {
           return <button key={a} onClick={() => up({ assets: on ? d.assets.filter((x) => x !== a) : [...d.assets, a] })} className="flex items-center gap-3 rounded-md border border-border p-3 text-left text-sm">
             <span className={cn("flex h-5 w-5 items-center justify-center rounded border", on ? "border-brand bg-brand text-brand-foreground" : "border-input")}>{on && <Check className="h-3.5 w-3.5" />}</span>{a}</button>;
         })}</div>}
-        {kind === "experience" && step === 7 && exp && <div className="space-y-2 text-sm">
+        {kind === "experience" && step === 7 && verified && <div className="space-y-2 text-sm">
+          <div className="flex items-center gap-3 rounded-md border border-brand bg-brand-soft p-3">
+            <img src={img(verified.exp.image)} alt="" className="h-12 w-20 shrink-0 rounded-md border border-border object-cover" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 font-semibold">{verified.exp.title} <BadgeCheck className="h-4 w-4 shrink-0 text-brand" /></div>
+              <div className="text-xs text-muted-foreground">
+                {verified.exp.creatorType === "Group" ? `Group-owned · ${verified.exp.creatorName}` : "User-owned"} · Place ID <span className="num">{verified.exp.placeId}</span> · ownership verified
+              </div>
+            </div>
+          </div>
           <div className="text-lg font-semibold">{d.title}</div><div className="text-muted-foreground">{d.tagline}</div>
           <div className="num">Revenue {usd(d.rev)}/mo · Profit {usd(d.profit)}/mo</div>
           <div className="num">{d.format === "auction" ? `Auction from ${usd(d.start)}, reserve ${usd(d.reserve)}, ${d.days} days` : "Buy now"} · Buy-now {usd(d.buyNow)}</div>
