@@ -124,7 +124,7 @@ function RootComponent() {
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground md:px-6">
           <span className="flex items-center gap-2">
-            <img src={mark} alt="" width={20} height={20} loading="lazy" className="h-5 w-5" />
+            <img src={mark} alt="" width={22} height={20} loading="lazy" className="h-5 w-auto" />
             <span className="text-sm font-semibold tracking-tight text-foreground">bestottr</span>
           </span>
           <span>© 2026 bestottr · Demo environment — no real funds or Roblox accounts are used.</span>

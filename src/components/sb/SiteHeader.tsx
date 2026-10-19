@@ -18,7 +18,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 md:px-6">
         <Link to="/" className="flex items-center gap-2.5 font-semibold tracking-tight" aria-label="bestottr home">
-          <img src={mark} alt="" width={28} height={28} className="h-7 w-7" />
+          <img src={mark} alt="" width={31} height={28} className="h-7 w-auto" />
           <span className="text-[17px]">bestottr</span>
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
