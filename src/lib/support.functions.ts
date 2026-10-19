@@ -46,6 +46,6 @@ export const submitTicket = createServerFn({ method: "POST" })
   });
 
 export const getEmailStatus = createServerFn({ method: "GET" }).handler(async () => {
-  const { isEmailConfigured } = await import("./support-email.server");
-  return { connected: isEmailConfigured() };
+  const { isLovableEmailConfigured } = await import("./support-email.server");
+  return { connected: isLovableEmailConfigured() };
 });

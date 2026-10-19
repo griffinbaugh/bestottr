@@ -35,9 +35,11 @@ describe("support email", () => {
     const f = vi.fn(async () => new Response(JSON.stringify({ success: false, errors: [{ message: "bad" }] }), { status: 403 }));
     expect((await sendSupportEmail({ kind: "customer_ack", to: "a@b.co", ticketNumber: "X" }, env, f)).sent).toBe(false);
   });
-  it("delivery never throws on network failure or missing credentials", async () => {
-    const boom = vi.fn(async () => { throw new Error("down"); });
-    await expect(deliverTicketEmails({ ticketNumber: "X", email: "a@b.co", category: "c" }, env, boom)).resolves.toMatchObject({ ack: { sent: false }, notify: { sent: false } });
-    await expect(deliverTicketEmails({ ticketNumber: "X", email: "a@b.co", category: "c" }, {})).resolves.toMatchObject({ ack: { sent: false } });
+  it("delivery sends ack to customer and notify to support, never throws", async () => {
+    const calls: string[] = [];
+    const send = vi.fn(async (name: string, to: string) => { calls.push(`${name}:${to}`); if (name === "support-new-ticket") throw new Error("down"); return { sent: true }; });
+    const r = await deliverTicketEmails({ ticketNumber: "BOT-1", email: "a@b.co", category: "c" }, send);
+    expect(calls).toEqual(["support-ticket-received:a@b.co", "support-new-ticket:support@bestottr.com"]);
+    expect(r).toEqual({ ack: { sent: true }, notify: { sent: false } });
   });
 });
