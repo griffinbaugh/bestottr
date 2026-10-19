@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from "react";
-import { DD_ITEMS, ME, TRANSFER_ITEMS, seedState, type AdminItem, type Deal, type Listing, type State } from "./data";
+import { DD_ITEMS, FILE_STAGES, ME, TRANSFER_ITEMS, seedState, type AdminItem, type Deal, type Listing, type State } from "./data";
+import { applyPurchase, isSoldOut } from "./inventory";
 import { buyerPremium, minNextBid } from "./pricing";
 
-const KEY = "bestottr-demo-v1";
+const KEY = "bestottr-demo-v2";
 const initial = seedState();
 let state: State = initial;
 const listeners = new Set<() => void>();
