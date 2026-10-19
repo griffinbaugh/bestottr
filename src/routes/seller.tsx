@@ -55,7 +55,7 @@ function Seller() {
         <h2 className="mb-3 font-semibold">Sold & transactions</h2>
         {deals.length ? deals.map((d) => (
           <Link key={d.id} to="/deal/$id" params={{ id: d.id }} className="flex items-center justify-between border-t border-border py-3 first:border-0">
-            <span>{s.listings.find((l) => l.id === d.listingId)?.title} · <span className="num">{usd(d.price)}</span>{d.kind === "file" && <span className="text-xs text-muted-foreground"> · File delivery</span>}</span><Badge tone={d.stage === dealStages(d).length - 1 ? "brand" : "warning"}>{dealStages(d)[d.stage]}</Badge>
+            <span>{s.listings.find((l) => l.id === d.listingId)?.title} · <span className="num">{usd(d.price)}</span>{d.kind === "file" && <span className="text-xs text-muted-foreground"> · File sale — fulfilled automatically</span>}</span><Badge tone={d.kind === "file" || d.stage === dealStages(d).length - 1 ? "brand" : "warning"}>{d.kind === "file" ? "Completed" : dealStages(d)[d.stage]}</Badge>
           </Link>)) : <Empty title={sold.length ? "Sold listings pending" : "Nothing sold yet"} />}
       </section>
     </div>
