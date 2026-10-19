@@ -6,7 +6,6 @@ import { ListingCard } from "@/components/sb/ListingCard";
 import { SearchBox } from "@/components/sb/SearchBox";
 import { buttonVariants } from "@/components/sb/ui";
 import { useAppState } from "@/lib/store";
-import markWhite from "@/assets/mark-white.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,8 +33,7 @@ function Home() {
     <>
       <section className="border-b border-border">
         <div className="mx-auto max-w-3xl px-4 py-16 text-center md:py-24">
-          <img src={markWhite} alt="" width={40} height={40} className="mx-auto mb-6 h-10 w-10" />
-          <h1 className="text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
+          <h1 className="text-[32px] font-bold leading-[1.1] tracking-tight md:text-[40px] lg:text-[46px]">
             Buy and sell Roblox businesses and creator assets.
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
