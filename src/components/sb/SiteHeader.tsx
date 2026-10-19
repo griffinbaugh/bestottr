@@ -6,10 +6,10 @@ import { actions, useAppState } from "@/lib/store";
 
 const nav = [
   { to: "/browse", label: "Marketplace", search: { q: "" } },
-  { to: "/sell", label: "Sell" },
-  { to: "/dashboard", label: "Buying" },
-  { to: "/seller", label: "Selling" },
-  { to: "/admin", label: "Admin" },
+  { to: "/sell", label: "Sell", search: {} },
+  { to: "/dashboard", label: "Buying", search: {} },
+  { to: "/seller", label: "Selling", search: {} },
+  { to: "/admin", label: "Admin", search: {} },
 ] as const;
 
 export function SiteHeader() {
@@ -23,7 +23,7 @@ export function SiteHeader() {
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           {nav.map((n) => (
-            <Link key={n.to} to={n.to} search={n.to === "/browse" ? { q: "" } : undefined} className="rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground bg-secondary" }}>
+            <Link key={n.to} to={n.to} search={n.search} className="rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground bg-secondary" }}>
               {n.label}
             </Link>
           ))}
@@ -53,7 +53,7 @@ export function SiteHeader() {
       </div>
       <nav className="flex gap-1 overflow-x-auto border-t border-border px-3 py-1.5 md:hidden">
         {nav.map((n) => (
-          <Link key={n.to} to={n.to} search={n.to === "/browse" ? { q: "" } : undefined} className="shrink-0 rounded-md px-3 py-2 text-sm text-muted-foreground" activeProps={{ className: "text-foreground bg-secondary" }}>
+          <Link key={n.to} to={n.to} search={n.search} className="shrink-0 rounded-md px-3 py-2 text-sm text-muted-foreground" activeProps={{ className: "text-foreground bg-secondary" }}>
             {n.label}
           </Link>
         ))}
