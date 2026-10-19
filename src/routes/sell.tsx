@@ -2,9 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BadgeCheck, Building2, Check, FileUp, Link2, ShieldX, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { CurrencyInput } from "@/components/sb/CurrencyInput";
 import { Button, PageHeader } from "@/components/sb/ui";
+import { computeEndsAt, defaultEndLocal, formatAuctionEnd, localTimezone, toLocalInputValue, validateAuctionEnd, type EndMode } from "@/lib/auction-end";
+import { centsToDollars } from "@/lib/currency";
 import { FILE_CATEGORIES, ME, ME_NAME, type FileCategory, type FileMeta, type Listing } from "@/lib/data";
-import { usd } from "@/lib/format";
+import { usd, usdPrecise } from "@/lib/format";
 import { img } from "@/lib/images";
 import { DEMO_URLS, VERIFY_ERRORS, verifyOwnership, type VerifiedExperience, type VerifyFailure } from "@/lib/roblox";
 import { actions, useAppState } from "@/lib/store";
@@ -46,14 +49,14 @@ function Sell() {
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState<{ exp: VerifiedExperience; via?: string | undefined } | null>(null);
   const [verr, setVerr] = useState<VerifyFailure | null>(null);
-  const [d, setD] = useState({ title: "", tagline: "", description: "", rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 10000, reserve: 15000, buyNow: 25000, days: 7, assets: ASSETS.slice(0, 5) });
+  const [d, setD] = useState({ title: "", tagline: "", description: "", rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 1000000, reserve: 1500000, buyNow: 2500000, endMode: "duration" as EndMode, days: 7, endAtLocal: defaultEndLocal(), assets: ASSETS.slice(0, 5) });
   const up = (p: Partial<typeof d>) => setD((x) => ({ ...x, ...p }));
 
   // File listing state
   const [fd, setFd] = useState({
     title: "", tagline: "", description: "", category: "Scripts" as FileCategory,
     version: "1.0.0", compatibility: "", includedFiles: "", license: "", sellerNotes: "",
-    format: "buy_now" as "auction" | "buy_now", start: 100, reserve: 250, buyNow: 99, days: 7,
+    format: "buy_now" as "auction" | "buy_now", start: 10000, reserve: 25000, buyNow: 9900, endMode: "duration" as EndMode, days: 7, endAtLocal: defaultEndLocal(),
     invMode: "unlimited" as "unlimited" | "limited", quantity: 10, image: "f1", attested: false,
   });
   const [file, setFile] = useState<(typeof DEMO_FILES)[number] | null>(null);
@@ -62,8 +65,10 @@ function Sell() {
 
   const steps = kind === "file" ? FILE_STEPS : EXP_STEPS;
 
-  const expCanNext = [kind !== null, s.roblox.connected, !!verified, d.title.length > 2, d.rev > 0, d.start > 0, d.assets.length > 0, true][step];
-  const fileCanNext = [kind !== null, !!file, fd.title.length > 2 && fd.compatibility.length > 2, fd.format === "auction" ? fd.start > 0 : fd.buyNow > 0, fd.license.length > 5 && fd.attested, true][step];
+  const expEnd = validateAuctionEnd(d.endMode, d.days, d.endAtLocal);
+  const fileEnd = validateAuctionEnd(fd.endMode, fd.days, fd.endAtLocal);
+  const expCanNext = [kind !== null, s.roblox.connected, !!verified, d.title.length > 2, d.rev > 0, d.format === "auction" ? d.start > 0 && expEnd.ok : d.buyNow > 0, d.assets.length > 0, true][step];
+  const fileCanNext = [kind !== null, !!file, fd.title.length > 2 && fd.compatibility.length > 2, fd.format === "auction" ? fd.start > 0 && fileEnd.ok : fd.buyNow > 0, fd.license.length > 5 && fd.attested, true][step];
   const canNext = kind === "file" ? fileCanNext : expCanNext;
 
   function pickType(k: "experience" | "file") {
@@ -107,10 +112,11 @@ function Sell() {
   function publishExperience() {
     const id = `new-${Date.now()}`;
     const exp = verified!.exp;
+    const endsAt = d.format === "auction" ? (computeEndsAt(d.endMode, d.days, d.endAtLocal) ?? Date.now() + d.days * 86400000) : Date.now() + d.days * 86400000;
     const l: Listing = {
       id, kind: "experience", title: d.title, tagline: d.tagline, description: d.description, genre: exp.genre, image: exp.image, format: d.format,
-      startingBid: d.format === "auction" ? d.start : d.buyNow, currentBid: d.format === "auction" ? d.start : d.buyNow,
-      reserve: d.format === "auction" ? d.reserve : undefined, buyNow: d.buyNow, endsAt: Date.now() + d.days * 86400000, bids: [], status: "review",
+      startingBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow), currentBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow),
+      reserve: d.format === "auction" ? centsToDollars(d.reserve) : undefined, buyNow: centsToDollars(d.buyNow), endsAt, bids: [], status: "review",
       monthlyRevenue: d.rev, monthlyProfit: d.profit, monthlyVisits: exp.monthlyVisits, ccu: exp.ccu, favorites: 12000, ageMonths: 10,
       monetization: [{ label: "Game passes", pct: 60 }, { label: "Developer products", pct: 40 }],
       seller: meSeller,
@@ -130,11 +136,12 @@ function Sell() {
       license: fd.license, sellerNotes: fd.sellerNotes,
       inventory: fd.format === "auction" ? { mode: "limited", total: 1, remaining: 1 } : fd.invMode === "unlimited" ? { mode: "unlimited" } : { mode: "limited", total: fd.quantity, remaining: fd.quantity },
     };
+    const endsAt = fd.format === "auction" ? (computeEndsAt(fd.endMode, fd.days, fd.endAtLocal) ?? Date.now() + fd.days * 86400000) : Date.now() + fd.days * 86400000;
     const l: Listing = {
       id, kind: "file", title: fd.title, tagline: fd.tagline, description: fd.description, genre: fd.category, image: fd.image, format: fd.format,
-      startingBid: fd.format === "auction" ? fd.start : fd.buyNow, currentBid: fd.format === "auction" ? fd.start : fd.buyNow,
-      reserve: fd.format === "auction" ? fd.reserve : undefined, buyNow: fd.format === "buy_now" ? fd.buyNow : undefined,
-      endsAt: Date.now() + fd.days * 86400000, bids: [], status: "review",
+      startingBid: centsToDollars(fd.format === "auction" ? fd.start : fd.buyNow), currentBid: centsToDollars(fd.format === "auction" ? fd.start : fd.buyNow),
+      reserve: fd.format === "auction" ? centsToDollars(fd.reserve) : undefined, buyNow: fd.format === "buy_now" ? centsToDollars(fd.buyNow) : undefined,
+      endsAt, bids: [], status: "review",
       monthlyRevenue: 0, monthlyProfit: 0, monthlyVisits: 0, ccu: 0, favorites: 0, ageMonths: 0,
       monetization: [], seller: meSeller, assets: meta.includedFiles, risks: [],
       verified: { ownership: true, revenue: false, traffic: false }, hasGroup: false, createdAt: Date.now(), file: meta,
@@ -268,7 +275,7 @@ function Sell() {
           </div>
           <div className="text-lg font-semibold">{d.title}</div><div className="text-muted-foreground">{d.tagline}</div>
           <div className="num">Revenue {usd(d.rev)}/mo · Profit {usd(d.profit)}/mo</div>
-          <div className="num">{d.format === "auction" ? `Auction from ${usd(d.start)}, reserve ${usd(d.reserve)}, ${d.days} days` : "Buy now"} · Buy-now {usd(d.buyNow)}</div>
+          <div className="num">{d.format === "auction" ? `Auction from ${usdPrecise(centsToDollars(d.start))}, reserve ${usdPrecise(centsToDollars(d.reserve))} · ends ${d.endMode === "datetime" ? formatAuctionEnd(new Date(d.endAtLocal).getTime()) : `in ${d.days} days`}` : "Buy now"} · Buy-now {usdPrecise(centsToDollars(d.buyNow))}</div>
           <div>{d.assets.join(", ")}</div>
         </div>}
 
@@ -352,8 +359,8 @@ function Sell() {
           <div>{fd.category} · {fd.compatibility}</div>
           <div className="num">
             {fd.format === "auction"
-              ? `Auction from ${usd(fd.start)}, reserve ${usd(fd.reserve)}, ${fd.days} days · single exclusive copy`
-              : `Buy now ${usd(fd.buyNow)} · ${fd.invMode === "unlimited" ? "unlimited sales" : `${fd.quantity} copies`}`}
+              ? `Auction from ${usdPrecise(centsToDollars(fd.start))}, reserve ${usdPrecise(centsToDollars(fd.reserve))} · ends ${fd.endMode === "datetime" ? formatAuctionEnd(new Date(fd.endAtLocal).getTime()) : `in ${fd.days} days`} · single exclusive copy`
+              : `Buy now ${usdPrecise(centsToDollars(fd.buyNow))} · ${fd.invMode === "unlimited" ? "unlimited sales" : `${fd.quantity} copies`}`}
           </div>
           <div className="rounded-md bg-secondary p-3 text-xs text-muted-foreground">Delivery: buyer pays into escrow, you release file access in the deal room, funds release on buyer confirmation.</div>
         </div>}
@@ -369,18 +376,42 @@ function Sell() {
   );
 }
 
-type SaleState = { format: "auction" | "buy_now"; start: number; reserve: number; buyNow: number; days: number };
+type SaleState = { format: "auction" | "buy_now"; start: number; reserve: number; buyNow: number; endMode: EndMode; days: number; endAtLocal: string };
 
 function SaleFormat({ d, up, showInventory }: { d: SaleState; up: (p: Partial<SaleState>) => void; showInventory: boolean }) {
+  const end = validateAuctionEnd(d.endMode, d.days, d.endAtLocal);
+  const tz = localTimezone();
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-2">{(["auction", "buy_now"] as const).map((f) => <Button key={f} variant={d.format === f ? "primary" : "outline"} onClick={() => up({ format: f })}>{f === "auction" ? "Auction" : "Buy now"}</Button>)}</div>
       <div className="grid gap-4 sm:grid-cols-2">
-        {d.format === "auction" && <><F label="Starting bid"><input className="field num" value={d.start} onChange={(e) => up({ start: Number(e.target.value.replace(/\D/g, "")) })} /></F>
-        <F label="Reserve"><input className="field num" value={d.reserve} onChange={(e) => up({ reserve: Number(e.target.value.replace(/\D/g, "")) })} /></F>
-        <F label="Duration (days)"><select className="field" value={d.days} onChange={(e) => up({ days: Number(e.target.value) })}>{[3, 5, 7, 10].map((n) => <option key={n} value={n}>{n}</option>)}</select></F></>}
-        <F label={showInventory && d.format === "buy_now" ? "Price" : "Buy-now price"}><input className="field num" value={d.buyNow} onChange={(e) => up({ buyNow: Number(e.target.value.replace(/\D/g, "")) })} /></F>
+        {d.format === "auction" && <>
+          <F label="Starting bid"><CurrencyInput label="Starting bid" valueCents={d.start} onChange={(c) => up({ start: c })} /></F>
+          <F label="Reserve"><CurrencyInput label="Reserve" valueCents={d.reserve} onChange={(c) => up({ reserve: c })} /></F>
+        </>}
+        <F label={showInventory && d.format === "buy_now" ? "Price" : "Buy-now price"}><CurrencyInput label="Buy-now price" valueCents={d.buyNow} onChange={(c) => up({ buyNow: c })} /></F>
       </div>
+      {d.format === "auction" && (
+        <div>
+          <span className="mb-1.5 block text-sm font-medium">Auction end</span>
+          <div className="grid grid-cols-2 gap-2">
+            {(["duration", "datetime"] as const).map((m) => (
+              <Button key={m} variant={d.endMode === m ? "primary" : "outline"} onClick={() => up({ endMode: m })}>{m === "duration" ? "Duration" : "Specific date & time"}</Button>
+            ))}
+          </div>
+          <div className="mt-3">
+            {d.endMode === "duration" ? (
+              <F label="Duration (days)"><select className="field" value={d.days} onChange={(e) => up({ days: Number(e.target.value) })}>{[3, 5, 7, 10].map((n) => <option key={n} value={n}>{n}</option>)}</select></F>
+            ) : (
+              <F label={`Ends at${tz ? ` (${tz})` : ""}`}>
+                <input type="datetime-local" className="field num" value={d.endAtLocal} min={toLocalInputValue(Date.now())} onChange={(e) => up({ endAtLocal: e.target.value })} aria-label="Auction end date and time" />
+              </F>
+            )}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">Bids stop exactly at this time{tz ? ` — shown in your local timezone (${tz})` : ""}.</p>
+          {d.endMode === "datetime" && !end.ok && end.error && <p className="mt-2 text-xs text-destructive">{end.error}</p>}
+        </div>
+      )}
     </div>
   );
 }
