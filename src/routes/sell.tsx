@@ -262,7 +262,7 @@ function Sell() {
               <div className="eyebrow mb-2">Demo links to try</div>
               <p className="mb-2 text-xs text-muted-foreground">Use this link with the demo Roblox account to test a successful listing.</p>
               <button data-testid="demo-owned-url" onClick={() => { setUrl(DEMO_OWNED_URL); setVerr(null); }} className="mb-3 block w-full rounded-md border border-foreground/50 px-3 py-2 text-left transition-colors hover:border-foreground">
-                <div className="flex items-center gap-1.5 text-xs font-medium"><BadgeCheck className="h-3.5 w-3.5 text-success" /> Demo owned experience — works with connected demo account</div>
+                <div className="flex items-center gap-1.5 text-xs font-medium"><BadgeCheck className="h-3.5 w-3.5 text-brand" /> Demo owned experience — works with connected demo account</div>
                 <div className="num mt-0.5 truncate text-xs text-muted-foreground">{DEMO_OWNED_URL}</div>
               </button>
               <div className="mb-1.5 text-xs text-muted-foreground">Other outcomes (group owner passes; others fail)</div>
