@@ -282,8 +282,8 @@ function FileListing({ l, ended, mine, watched, deal, goDeal }: {
           <Section title="Delivery & buyer protection">
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />Payment is held in escrow until you confirm successful download.</li>
-              <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />The seller releases file access inside the deal room after payment.</li>
-              <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />Funds release to the seller only after your confirmation.</li>
+              <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />File access is granted automatically the instant your payment or auction win is confirmed.</li>
+              <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />Your download is always available from your buyer dashboard.</li>
             </ul>
           </Section>
 
