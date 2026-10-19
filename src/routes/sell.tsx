@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { BadgeCheck, Building2, Check, FileUp, Upload } from "lucide-react";
+import { BadgeCheck, Building2, Check, FileUp, Link2, ShieldX, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button, PageHeader } from "@/components/sb/ui";
 import { FILE_CATEGORIES, ME, ME_NAME, type FileCategory, type FileMeta, type Listing } from "@/lib/data";
 import { usd } from "@/lib/format";
 import { img } from "@/lib/images";
+import { DEMO_URLS, VERIFY_ERRORS, verifyOwnership, type VerifiedExperience, type VerifyFailure } from "@/lib/roblox";
 import { actions, useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import mark from "@/assets/mark-white.png";
@@ -24,13 +25,8 @@ export const Route = createFileRoute("/sell")({
   component: Sell,
 });
 
-const EXP_STEPS = ["Listing type", "Roblox verification", "Experience", "Details", "Financials", "Sale format", "Assets", "Review"];
+const EXP_STEPS = ["Listing type", "Connect Roblox", "Experience link", "Details", "Financials", "Sale format", "Assets", "Review"];
 const FILE_STEPS = ["Listing type", "File upload", "Details", "Sale setup", "License & rights", "Review"];
-const OWNED = [
-  { id: "x1", title: "Sky Kingdom Builders", genre: "Simulator", image: "g6", rev: 2600, profit: 2300, visits: 840000, ccu: 380 },
-  { id: "x2", title: "Midnight Courier", genre: "Horror", image: "g2", rev: 1800, profit: 1650, visits: 610000, ccu: 240 },
-  { id: "x3", title: "Rail Rush Tycoon", genre: "Tycoon", image: "g1", rev: 4100, profit: 3700, visits: 1300000, ccu: 690 },
-];
 const ASSETS = ["Experience & all places", "Full source code", "Private packages", "Roblox group", "Game icon & thumbnails", "Discord server", "Social accounts", "Analytics dashboards"];
 const DEMO_FILES = [
   { fileName: "combat-system_v2.0.rbxm", fileType: ".rbxm", fileSize: "3.2 MB" },
@@ -46,7 +42,10 @@ function Sell() {
   const [kind, setKind] = useState<"experience" | "file" | null>(null);
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [exp, setExp] = useState<(typeof OWNED)[number] | null>(null);
+  const [url, setUrl] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [verified, setVerified] = useState<{ exp: VerifiedExperience; via?: string | undefined } | null>(null);
+  const [verr, setVerr] = useState<VerifyFailure | null>(null);
   const [d, setD] = useState({ title: "", tagline: "", description: "", rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 10000, reserve: 15000, buyNow: 25000, days: 7, assets: ASSETS.slice(0, 5) });
   const up = (p: Partial<typeof d>) => setD((x) => ({ ...x, ...p }));
 
@@ -63,7 +62,7 @@ function Sell() {
 
   const steps = kind === "file" ? FILE_STEPS : EXP_STEPS;
 
-  const expCanNext = [kind !== null, s.roblox.connected, !!exp, d.title.length > 2, d.rev > 0, d.start > 0, d.assets.length > 0, true][step];
+  const expCanNext = [kind !== null, s.roblox.connected, !!verified, d.title.length > 2, d.rev > 0, d.start > 0, d.assets.length > 0, true][step];
   const fileCanNext = [kind !== null, !!file, fd.title.length > 2 && fd.compatibility.length > 2, fd.format === "auction" ? fd.start > 0 : fd.buyNow > 0, fd.license.length > 5 && fd.attested, true][step];
   const canNext = kind === "file" ? fileCanNext : expCanNext;
 
@@ -81,13 +80,38 @@ function Sell() {
     }, 900);
   }
 
+  function runVerify() {
+    setVerifying(true);
+    setVerr(null);
+    setVerified(null);
+    // Simulated network latency — the real implementation will call the Roblox API here.
+    setTimeout(() => {
+      const r = verifyOwnership(url, s.roblox);
+      if (r.ok) {
+        setVerified({ exp: r.exp, via: r.via });
+        up({ title: r.exp.title, rev: r.exp.monthlyRevenue, profit: r.exp.monthlyProfit });
+      } else {
+        setVerr(r.reason);
+      }
+      setVerifying(false);
+    }, 900);
+  }
+
+  function disconnect() {
+    actions.disconnectRoblox();
+    setVerified(null);
+    setVerr(null);
+    setUrl("");
+  }
+
   function publishExperience() {
     const id = `new-${Date.now()}`;
+    const exp = verified!.exp;
     const l: Listing = {
-      id, kind: "experience", title: d.title, tagline: d.tagline, description: d.description, genre: exp!.genre, image: exp!.image, format: d.format,
+      id, kind: "experience", title: d.title, tagline: d.tagline, description: d.description, genre: exp.genre, image: exp.image, format: d.format,
       startingBid: d.format === "auction" ? d.start : d.buyNow, currentBid: d.format === "auction" ? d.start : d.buyNow,
       reserve: d.format === "auction" ? d.reserve : undefined, buyNow: d.buyNow, endsAt: Date.now() + d.days * 86400000, bids: [], status: "review",
-      monthlyRevenue: d.rev, monthlyProfit: d.profit, monthlyVisits: exp!.visits, ccu: exp!.ccu, favorites: 12000, ageMonths: 10,
+      monthlyRevenue: d.rev, monthlyProfit: d.profit, monthlyVisits: exp.monthlyVisits, ccu: exp.ccu, favorites: 12000, ageMonths: 10,
       monetization: [{ label: "Game passes", pct: 60 }, { label: "Developer products", pct: 40 }],
       seller: meSeller,
       assets: d.assets, risks: [], verified: { ownership: true, revenue: true, traffic: true }, hasGroup: d.assets.includes("Roblox group"), createdAt: Date.now(),
@@ -144,15 +168,78 @@ function Sell() {
 
         {/* ---- Experience flow ---- */}
         {kind === "experience" && step === 1 && (s.roblox.connected ? (
-          <div className="flex items-center gap-3 text-brand"><BadgeCheck className="h-6 w-6" /><div><div className="font-semibold">Connected as @{s.roblox.username}</div><div className="text-sm text-muted-foreground">Ownership of your experiences is verified.</div></div></div>
+          <div>
+            <div className="flex flex-wrap items-center gap-3 rounded-md border border-border p-3">
+              <img src={mark} alt="" width={36} height={36} className="h-9 w-9 rounded-md border border-border" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-sm font-semibold">@{s.roblox.username} <BadgeCheck className="h-4 w-4 text-brand" /></div>
+                <div className="num text-xs text-muted-foreground">Roblox user ID {s.roblox.userId}</div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={disconnect}>Disconnect</Button>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">Next you'll paste your experience link. We verify that this account owns the experience directly, or owns the group that owns it — group admins and developers don't qualify.</p>
+          </div>
         ) : (
-          <div><img src={mark} alt="" width={40} height={40} loading="lazy" className="mb-3 h-10 w-10" /><p className="text-sm text-muted-foreground">Connect your Roblox account so we can verify ownership and pull analytics. (Demo — no credentials needed.)</p>
-            <Button className="mt-4" disabled={busy} onClick={() => { setBusy(true); setTimeout(() => { actions.connectRoblox(); setBusy(false); }, 900); }}>{busy ? "Verifying…" : "Connect Roblox (demo)"}</Button></div>
+          <div><img src={mark} alt="" width={40} height={40} loading="lazy" className="mb-3 h-10 w-10" /><p className="text-sm text-muted-foreground">Connect your Roblox account so we can verify that you own the experience you want to list. (Demo — no credentials needed.)</p>
+            <Button className="mt-4" disabled={busy} onClick={() => { setBusy(true); setTimeout(() => { actions.connectRoblox(); setBusy(false); }, 900); }}>{busy ? "Connecting…" : "Connect Roblox (demo)"}</Button></div>
         ))}
-        {kind === "experience" && step === 2 && <div className="grid gap-3 sm:grid-cols-3">{OWNED.map((o) => (
-          <button key={o.id} onClick={() => { setExp(o); up({ title: o.title, rev: o.rev, profit: o.profit }); }} className={cn("overflow-hidden rounded-lg border text-left", exp?.id === o.id ? "border-foreground ring-2 ring-ring" : "border-border")}>
-            <img src={img(o.image)} alt="" className="aspect-video w-full object-cover" /><div className="p-3"><div className="text-sm font-medium">{o.title}</div><div className="text-xs text-muted-foreground">{o.genre} · {o.ccu} CCU</div></div>
-          </button>))}</div>}
+        {kind === "experience" && step === 2 && (!s.roblox.connected ? (
+          <div className="text-sm text-muted-foreground">Connect your Roblox account first — ownership verification runs against the connected account.</div>
+        ) : verified ? (
+          <div>
+            <div className="flex items-start gap-3 rounded-md border border-brand bg-brand-soft p-3">
+              <img src={img(verified.exp.image)} alt="" className="h-16 w-28 shrink-0 rounded-md border border-border object-cover" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 font-semibold">{verified.exp.title} <BadgeCheck className="h-4 w-4 shrink-0 text-brand" /></div>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {verified.exp.creatorType === "Group" ? "Group" : "User"}-owned · {verified.exp.creatorName} · Place ID <span className="num">{verified.exp.placeId}</span>
+                </div>
+                <div className="mt-1 text-xs font-medium text-brand">
+                  Ownership verified — {verified.via ? `owned through ${verified.via}` : `owned directly by @${s.roblox.username}`}
+                </div>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" className="mt-3" onClick={() => { setVerified(null); setUrl(""); }}>Use a different link</Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <F label="Roblox experience link">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative flex-1">
+                  <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    className="field pl-9"
+                    placeholder="https://www.roblox.com/games/…"
+                    value={url}
+                    onChange={(e) => { setUrl(e.target.value); setVerr(null); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" && url.trim() && !verifying) runVerify(); }}
+                    aria-label="Roblox experience link"
+                  />
+                </div>
+                <Button disabled={verifying || !url.trim()} onClick={runVerify}>{verifying ? "Verifying ownership…" : "Verify ownership"}</Button>
+              </div>
+            </F>
+            {verr && (
+              <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+                <ShieldX className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <span>{VERIFY_ERRORS[verr]}</span>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              We check that <span className="text-foreground">@{s.roblox.username}</span> owns this experience directly, or is the owner of the group that owns it. Membership, admin rank or edit access don't qualify.
+            </p>
+            <div>
+              <div className="eyebrow mb-2">Demo links to try</div>
+              <div className="space-y-1.5">
+                {DEMO_URLS.map((u) => (
+                  <button key={u} onClick={() => { setUrl(u); setVerr(null); }} className="num block w-full truncate rounded-md border border-border px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground">
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
         {kind === "experience" && step === 3 && <div className="space-y-4">
           <F label="Title"><input className="field" value={d.title} onChange={(e) => up({ title: e.target.value })} /></F>
           <F label="Tagline"><input className="field" value={d.tagline} onChange={(e) => up({ tagline: e.target.value })} /></F>
@@ -169,7 +256,16 @@ function Sell() {
           return <button key={a} onClick={() => up({ assets: on ? d.assets.filter((x) => x !== a) : [...d.assets, a] })} className="flex items-center gap-3 rounded-md border border-border p-3 text-left text-sm">
             <span className={cn("flex h-5 w-5 items-center justify-center rounded border", on ? "border-brand bg-brand text-brand-foreground" : "border-input")}>{on && <Check className="h-3.5 w-3.5" />}</span>{a}</button>;
         })}</div>}
-        {kind === "experience" && step === 7 && exp && <div className="space-y-2 text-sm">
+        {kind === "experience" && step === 7 && verified && <div className="space-y-2 text-sm">
+          <div className="flex items-center gap-3 rounded-md border border-brand bg-brand-soft p-3">
+            <img src={img(verified.exp.image)} alt="" className="h-12 w-20 shrink-0 rounded-md border border-border object-cover" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 font-semibold">{verified.exp.title} <BadgeCheck className="h-4 w-4 shrink-0 text-brand" /></div>
+              <div className="text-xs text-muted-foreground">
+                {verified.exp.creatorType === "Group" ? `Group-owned · ${verified.exp.creatorName}` : "User-owned"} · Place ID <span className="num">{verified.exp.placeId}</span> · ownership verified
+              </div>
+            </div>
+          </div>
           <div className="text-lg font-semibold">{d.title}</div><div className="text-muted-foreground">{d.tagline}</div>
           <div className="num">Revenue {usd(d.rev)}/mo · Profit {usd(d.profit)}/mo</div>
           <div className="num">{d.format === "auction" ? `Auction from ${usd(d.start)}, reserve ${usd(d.reserve)}, ${d.days} days` : "Buy now"} · Buy-now {usd(d.buyNow)}</div>

@@ -81,7 +81,7 @@ function Home() {
       <section className="border-t border-border">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:grid-cols-3 md:px-6">
           {[
-            { icon: BadgeCheck, t: "Verify", d: "Sellers connect Roblox. Ownership, revenue and traffic are verified automatically." },
+            { icon: BadgeCheck, t: "Verify", d: "Sellers connect Roblox and paste their game link. We verify they own the experience — or own the group that does." },
             { icon: FileSignature, t: "Close", d: "A private deal room handles the agreement, escrow and due diligence." },
             { icon: Workflow, t: "Transfer", d: "A guided checklist moves every asset. Funds release on buyer confirmation." },
           ].map(({ icon: I, t, d }) => (
