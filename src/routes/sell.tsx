@@ -13,7 +13,7 @@ import { img } from "@/lib/images";
 import { DEMO_URLS, VERIFY_ERRORS, verifyOwnership, type VerifiedExperience, type VerifyFailure } from "@/lib/roblox";
 import { actions, useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import mark from "@/assets/mark-white.png";
+import mark from "@/assets/bestottr-icon-white.png";
 
 export const Route = createFileRoute("/sell")({
   head: () => ({

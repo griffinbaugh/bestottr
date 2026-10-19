@@ -6,7 +6,7 @@ import { ListingCard } from "@/components/sb/ListingCard";
 import { SearchBox } from "@/components/sb/SearchBox";
 import { buttonVariants } from "@/components/sb/ui";
 import { useAppState } from "@/lib/store";
-import markWhite from "@/assets/mark-white.png";
+import markWhite from "@/assets/bestottr-icon-white.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({

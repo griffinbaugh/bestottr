@@ -16,7 +16,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/sb/SiteHeader";
 import { hydrateStore } from "@/lib/store";
-import mark from "@/assets/mark-white.png";
+import mark from "@/assets/bestottr-icon-white.png";
 
 function NotFoundComponent() {
   return (
