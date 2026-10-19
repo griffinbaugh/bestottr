@@ -99,6 +99,12 @@ export type State = {
 };
 
 export const STAGES = ["Agreement", "Funding", "Due Diligence", "Roblox Transfer", "Final Verification", "Complete"];
+export const FILE_STAGES = ["Payment", "File Access", "Buyer Confirmation", "Complete"];
+export const dealStages = (d: Pick<Deal, "kind">) => (d.kind === "file" ? FILE_STAGES : STAGES);
+export const lastStage = (d: Pick<Deal, "kind">) => dealStages(d).length - 1;
+
+export const LICENSE_TERMS =
+  "Purchases grant only the license stated on this listing. They do not transfer ownership of the underlying work or any third-party IP.";
 
 export const DD_ITEMS = [
   { id: "analytics", label: "Read-only analytics access reviewed", detail: "Creator Dashboard retention, sessions and traffic sources" },
