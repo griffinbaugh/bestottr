@@ -10,7 +10,9 @@ import { centsToDollars } from "@/lib/currency";
 import { FILE_CATEGORIES, ME, ME_NAME, type FileCategory, type FileMeta, type Listing } from "@/lib/data";
 import { usd, usdPrecise } from "@/lib/format";
 import { img } from "@/lib/images";
-import { DEMO_URLS, VERIFY_ERRORS, verifyOwnership, type VerifiedExperience, type VerifyFailure } from "@/lib/roblox";
+import { TagPicker } from "@/components/sb/TagPicker";
+import { suggestTags } from "@/lib/tags";
+import { DEMO_OWNED_URL, DEMO_URLS, VERIFY_ERRORS, verifyOwnership, type VerifiedExperience, type VerifyFailure } from "@/lib/roblox";
 import { actions, useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import mark from "@/assets/bestottr-icon-white.png";
@@ -50,7 +52,7 @@ function Sell() {
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState<{ exp: VerifiedExperience; via?: string | undefined } | null>(null);
   const [verr, setVerr] = useState<VerifyFailure | null>(null);
-  const [d, setD] = useState({ title: "", tagline: "", description: "", rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 1000000, reserve: 1500000, buyNow: 2500000, endMode: "duration" as EndMode, days: 7, endAtLocal: defaultEndLocal(), assets: ASSETS.slice(0, 5) });
+  const [d, setD] = useState({ title: "", tagline: "", description: "", rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 1000000, reserve: 1500000, buyNow: 2500000, endMode: "duration" as EndMode, days: 7, endAtLocal: defaultEndLocal(), assets: ASSETS.slice(0, 5), tags: [] as string[] });
   const up = (p: Partial<typeof d>) => setD((x) => ({ ...x, ...p }));
 
   // File listing state
@@ -127,7 +129,7 @@ function Sell() {
     const endsAt = d.format === "auction" ? end.endsAt : computeEndsAt("duration", d.days, "");
     if (endsAt === null) return;
     const l: Listing = {
-      id, kind: "experience", title: d.title, tagline: d.tagline, description: d.description, genre: exp.genre, image: exp.image, format: d.format,
+      id, kind: "experience", title: d.title, tagline: d.tagline, description: d.description, genre: exp.genre, tags: d.tags, image: exp.image, format: d.format,
       startingBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow), currentBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow),
       reserve: d.format === "auction" ? centsToDollars(d.reserve) : undefined, buyNow: centsToDollars(d.buyNow), endsAt, bids: [], status: "review",
       monthlyRevenue: d.rev, monthlyProfit: d.profit, monthlyVisits: exp.monthlyVisits, ccu: exp.ccu, favorites: 12000, ageMonths: 10,
@@ -258,6 +260,12 @@ function Sell() {
             </p>
             <div>
               <div className="eyebrow mb-2">Demo links to try</div>
+              <p className="mb-2 text-xs text-muted-foreground">Use this link with the demo Roblox account to test a successful listing.</p>
+              <button data-testid="demo-owned-url" onClick={() => { setUrl(DEMO_OWNED_URL); setVerr(null); }} className="mb-3 block w-full rounded-md border border-foreground/50 px-3 py-2 text-left transition-colors hover:border-foreground">
+                <div className="flex items-center gap-1.5 text-xs font-medium"><BadgeCheck className="h-3.5 w-3.5 text-brand" /> Demo owned experience — works with connected demo account</div>
+                <div className="num mt-0.5 truncate text-xs text-muted-foreground">{DEMO_OWNED_URL}</div>
+              </button>
+              <div className="mb-1.5 text-xs text-muted-foreground">Other outcomes (group owner passes; others fail)</div>
               <div className="space-y-1.5">
                 {DEMO_URLS.map((u) => (
                   <button key={u} onClick={() => { setUrl(u); setVerr(null); }} className="num block w-full truncate rounded-md border border-border px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground">
@@ -272,6 +280,7 @@ function Sell() {
           <F label="Title"><input className="field" value={d.title} onChange={(e) => up({ title: e.target.value })} /></F>
           <F label="Tagline"><input className="field" value={d.tagline} onChange={(e) => up({ tagline: e.target.value })} /></F>
           <F label="Description"><textarea className="field h-28 py-2" value={d.description} onChange={(e) => up({ description: e.target.value })} /></F>
+          <TagPicker value={d.tags} onChange={(tags) => up({ tags })} suggested={suggestTags({ genre: verified?.exp.genre, title: d.title, tagline: d.tagline, description: d.description })} />
         </div>}
         {kind === "experience" && step === 4 && <div className="grid gap-4 sm:grid-cols-2">
           <p className="text-sm text-brand sm:col-span-2">Pre-filled from verified Roblox analytics.</p>
@@ -295,6 +304,7 @@ function Sell() {
             </div>
           </div>
           <div className="text-lg font-semibold">{d.title}</div><div className="text-muted-foreground">{d.tagline}</div>
+          {d.tags.length > 0 && <div className="flex flex-wrap gap-1.5" data-testid="review-tags">{d.tags.map((t) => <span key={t} className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">{t}</span>)}</div>}
           <div className="num">Revenue {usd(d.rev)}/mo · Profit {usd(d.profit)}/mo</div>
           <div className="num">{d.format === "auction" ? `Auction from ${usdPrecise(centsToDollars(d.start))}, reserve ${usdPrecise(centsToDollars(d.reserve))} · ends ${d.endMode === "datetime" ? formatAuctionEnd(new Date(d.endAtLocal).getTime()) : `in ${d.days} days`}` : "Buy now"} · Buy-now {usdPrecise(centsToDollars(d.buyNow))}</div>
           <div>{d.assets.join(", ")}</div>

@@ -69,6 +69,7 @@ function ListingPage() {
             </div>
             <h1 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">{l.title}</h1>
             <p className="mt-2 text-muted-foreground">{l.tagline}</p>
+            {(l.tags?.length ?? 0) > 0 && <div className="mt-3 flex flex-wrap gap-1.5" data-testid="listing-tags">{l.tags!.map((t) => <span key={t} className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">{t}</span>)}</div>}
           </div>
 
           <div className="surface grid grid-cols-2 gap-x-5 gap-y-6 p-5 sm:grid-cols-4">

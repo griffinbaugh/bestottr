@@ -38,6 +38,8 @@ export type Listing = {
   tagline: string;
   description: string;
   genre: string;
+  /** Roblox discovery tags (experiences only). */
+  tags?: string[] | undefined;
   image: string;
   format: "auction" | "buy_now";
   startingBid: number;
