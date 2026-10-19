@@ -62,10 +62,10 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.915 0.004 95);
   --input: oklch(0.88 0.005 95);
-  --ring: oklch(0.55 0.12 158);
-  --brand: oklch(0.55 0.13 158);
-  --brand-foreground: oklch(0.99 0 0);
-  --brand-soft: oklch(0.95 0.04 158);
+  --ring: oklch(0.55 0.01 265);
+  --brand: oklch(0.19 0.008 265);
+  --brand-foreground: oklch(0.985 0.002 95);
+  --brand-soft: oklch(0.94 0.003 95);
   --warning: oklch(0.62 0.14 65);
   --warning-soft: oklch(0.96 0.05 80);
   --live: oklch(0.6 0.2 25);
@@ -91,9 +91,9 @@
   --accent-foreground: oklch(0.97 0.002 95);
   --border: oklch(1 0 0 / 9%);
   --input: oklch(1 0 0 / 14%);
-  --brand: oklch(0.72 0.14 158);
-  --brand-foreground: oklch(0.17 0.01 265);
-  --brand-soft: oklch(0.72 0.14 158 / 14%);
+  --brand: oklch(0.97 0.002 95);
+  --brand-foreground: oklch(0.19 0.008 265);
+  --brand-soft: oklch(1 0 0 / 12%);
 }
 
 @utility surface {
