@@ -84,8 +84,9 @@
   box-shadow: var(--shadow-card);
 }
 @utility lift {
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   &:hover {
+    transform: translateY(-1px);
     box-shadow: var(--shadow-lift);
     border-color: var(--color-input);
   }
@@ -106,16 +107,76 @@
   }
 }
 @utility eyebrow {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
+  font-weight: 500;
   color: var(--color-muted-foreground);
 }
 @utility num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98) translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility page-enter {
+  animation: page-in 200ms ease-out both;
+}
+@utility pop-in {
+  animation: pop-in 140ms ease-out both;
+  transform-origin: top center;
+}
+@utility stagger {
+  & > * {
+    animation: rise-in 240ms ease-out both;
+  }
+  & > *:nth-child(2) {
+    animation-delay: 45ms;
+  }
+  & > *:nth-child(3) {
+    animation-delay: 90ms;
+  }
+  & > *:nth-child(4) {
+    animation-delay: 135ms;
+  }
+  & > *:nth-child(5) {
+    animation-delay: 180ms;
+  }
+  & > *:nth-child(6) {
+    animation-delay: 225ms;
+  }
+  & > *:nth-child(n + 7) {
+    animation-delay: 270ms;
+  }
 }
 
 @layer base {
@@ -135,5 +196,14 @@
   button {
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
