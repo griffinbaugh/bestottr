@@ -209,9 +209,9 @@ export const actions = {
     patchDeal(dealId, (x) => {
       if (x.kind === "file") {
         switch (x.stage) {
-          case 0: return log({ ...x, funded: true }, "Demo: payment received");
-          case 1: return log({ ...x, delivery: { ...x.delivery, released: true } }, "Demo: seller released file access");
-          case 2: return log({ ...x, delivery: { ...x.delivery, confirmed: true } }, "Demo: buyer confirmed download");
+          case 0: return x.funded ? x : log({ ...x, funded: true }, "Demo: payment received");
+          case 1: return x.delivery.released ? x : log({ ...x, delivery: { ...x.delivery, released: true } }, "Demo: seller released file access");
+          case 2: return x.delivery.confirmed ? x : log({ ...x, delivery: { ...x.delivery, confirmed: true } }, "Demo: buyer confirmed download");
           default: return x;
         }
       }
