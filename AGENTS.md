@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep seller listing prices in integer cents through the shared CurrencyInput and convert only when creating a listing; verified financial metrics retain their existing input model.
+- Keep auction scheduling in the shared auction-end helpers, validate again at publication, and store absolute millisecond timestamps so countdowns remain independent of display modes.
