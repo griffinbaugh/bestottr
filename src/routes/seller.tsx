@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Badge, Empty, PageHeader, Stat, buttonVariants } from "@/components/sb/ui";
-import { ME, STAGES } from "@/lib/data";
+import { ME, dealStages } from "@/lib/data";
 import { usd } from "@/lib/format";
+import { stockLabel } from "@/lib/inventory";
 import { useAppState } from "@/lib/store";
 
 export const Route = createFileRoute("/seller")({

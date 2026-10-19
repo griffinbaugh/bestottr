@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ListingCard } from "@/components/sb/ListingCard";
 import { Badge, Empty, PageHeader, Tabs, buttonVariants } from "@/components/sb/ui";
-import { ME, STAGES } from "@/lib/data";
+import { ME, dealStages } from "@/lib/data";
 import { usd } from "@/lib/format";
 import { useAppState } from "@/lib/store";
 
@@ -53,8 +53,8 @@ function Buyer() {
         {(tab === "won" || tab === "transactions") && (deals.length ? (
           <div className="grid gap-3">{deals.map((d) => (
             <Link key={d.id} to="/deal/$id" params={{ id: d.id }} className="surface lift flex items-center justify-between p-4">
-              <div><div className="font-medium">{title(d.listingId)}</div><div className="num text-sm text-muted-foreground">#{d.id} · {usd(d.price)}</div></div>
-              <Badge tone={d.stage === 5 ? "brand" : "warning"}>{STAGES[d.stage]}</Badge>
+              <div><div className="font-medium">{title(d.listingId)}</div><div className="num text-sm text-muted-foreground">#{d.id} · {usd(d.price)} · {d.kind === "file" ? "File delivery" : "Experience transfer"}</div></div>
+              <Badge tone={d.stage === dealStages(d).length - 1 ? "brand" : "warning"}>{dealStages(d)[d.stage]}</Badge>
             </Link>))}</div>
         ) : <Empty title="No acquisitions yet" body="Win an auction or buy now to open a deal room." />)}
       </div>
