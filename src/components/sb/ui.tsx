@@ -69,7 +69,7 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 export function Empty({ title, body, action }: { title: string; body?: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-input px-6 py-14 text-center">
-      <img src={mark} alt="" width={40} height={40} loading="lazy" className="mb-3 h-10 w-10 opacity-30" />
+      <img src={mark} alt="" width={40} height={40} loading="lazy" className="mb-3 h-10 w-auto opacity-30" />
       <div className="text-sm font-semibold">{title}</div>
       {body && <p className="mt-1 max-w-sm text-sm text-muted-foreground">{body}</p>}
       {action && <div className="mt-4">{action}</div>}

@@ -198,7 +198,7 @@ function Sell() {
         {kind === "experience" && step === 1 && (s.roblox.connected ? (
           <div>
             <div className="flex flex-wrap items-center gap-3 rounded-md border border-border p-3">
-              <img src={mark} alt="" width={36} height={36} className="h-9 w-9 rounded-md border border-border" />
+              <img src={mark} alt="" width={36} height={36} className="h-9 w-auto object-contain" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 text-sm font-semibold">@{s.roblox.username} <BadgeCheck className="h-4 w-4 text-brand" /></div>
                 <div className="num text-xs text-muted-foreground">Roblox user ID {s.roblox.userId}</div>
@@ -208,7 +208,7 @@ function Sell() {
             <p className="mt-3 text-sm text-muted-foreground">Next you'll paste your experience link. We verify that this account owns the experience directly, or owns the group that owns it — group admins and developers don't qualify.</p>
           </div>
         ) : (
-          <div><img src={mark} alt="" width={40} height={40} loading="lazy" className="mb-3 h-10 w-10" /><p className="text-sm text-muted-foreground">Connect your Roblox account so we can verify that you own the experience you want to list. (Demo — no credentials needed.)</p>
+          <div><img src={mark} alt="" width={40} height={40} loading="lazy" className="mb-3 h-10 w-auto" /><p className="text-sm text-muted-foreground">Connect your Roblox account so we can verify that you own the experience you want to list. (Demo — no credentials needed.)</p>
             <Button className="mt-4" disabled={busy} onClick={() => { setBusy(true); setTimeout(() => { actions.connectRoblox(); setBusy(false); }, 900); }}>{busy ? "Connecting…" : "Connect Roblox (demo)"}</Button></div>
         ))}
         {kind === "experience" && step === 2 && (!s.roblox.connected ? (
