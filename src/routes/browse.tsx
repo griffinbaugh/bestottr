@@ -7,7 +7,7 @@ import { useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/browse")({
-  validateSearch: (s: Record<string, unknown>): { q?: string } => ({ q: typeof s["q"] === "string" && s["q"] ? s["q"] : undefined }),
+  validateSearch: (s: Record<string, unknown>): { q: string } => ({ q: typeof s["q"] === "string" ? s["q"] : "" }),
   head: () => ({
     meta: [
       { title: "Marketplace — bestottr" },
