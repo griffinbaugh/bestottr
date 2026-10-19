@@ -120,7 +120,7 @@ function SectionHead({ title, link }: { title: string; link: "/browse" }) {
   return (
     <div className="mb-4 flex items-end justify-between">
       <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-      <Link to={link} className="text-sm text-muted-foreground hover:text-foreground">View all →</Link>
+      <Link to={link} search={{ q: "" }} className="text-sm text-muted-foreground hover:text-foreground">View all →</Link>
     </div>
   );
 }

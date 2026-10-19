@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { actions, useAppState } from "@/lib/store";
 
 const nav = [
-  { to: "/browse", label: "Marketplace" },
+  { to: "/browse", label: "Marketplace", search: { q: "" } },
   { to: "/sell", label: "Sell" },
   { to: "/dashboard", label: "Buying" },
   { to: "/seller", label: "Selling" },
