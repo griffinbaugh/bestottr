@@ -84,6 +84,13 @@ function Home() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-7xl px-4 pb-10 md:px-6">
+        <SectionHead title="Creator files" link="/browse" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {files.slice(0, 6).map((l) => <ListingCard key={l.id} listing={l} />)}
+        </div>
+      </section>
+
       <section className="border-t border-border">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:grid-cols-3 md:px-6">
           {[
@@ -105,8 +112,8 @@ function Home() {
       <section className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-10 md:px-6">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Selling an experience?</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Connect Roblox, verify ownership and list in minutes.</p>
+            <h2 className="text-lg font-semibold tracking-tight">Selling an experience or a file?</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Verify ownership, set your price and list in minutes.</p>
           </div>
           <Link to="/sell" className={buttonVariants({ variant: "outline" })}>
             Start a listing <ArrowRight className="h-4 w-4" />
