@@ -44,7 +44,7 @@ function Sell() {
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState("");
   const [verifying, setVerifying] = useState(false);
-  const [verified, setVerified] = useState<{ exp: VerifiedExperience; via?: string } | null>(null);
+  const [verified, setVerified] = useState<{ exp: VerifiedExperience; via?: string | undefined } | null>(null);
   const [verr, setVerr] = useState<VerifyFailure | null>(null);
   const [d, setD] = useState({ title: "", tagline: "", description: "", rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 10000, reserve: 15000, buyNow: 25000, days: 7, assets: ASSETS.slice(0, 5) });
   const up = (p: Partial<typeof d>) => setD((x) => ({ ...x, ...p }));
