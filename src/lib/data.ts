@@ -12,7 +12,27 @@ export type Seller = {
   responseTime: string;
 };
 export type ListingStatus = "live" | "ended" | "sold" | "review" | "rejected";
+export type ListingKind = "experience" | "file";
+
+export const FILE_CATEGORIES = ["Scripts", "Systems", "Models", "UI Kits", "Maps", "Vehicles", "Animations", "Audio", "Plugins", "Templates", "Other"] as const;
+export type FileCategory = (typeof FILE_CATEGORIES)[number];
+
+export type FileMeta = {
+  fileName: string;
+  fileType: string;
+  fileSize: string;
+  version: string;
+  category: FileCategory;
+  compatibility: string;
+  includedFiles: string[];
+  license: string;
+  sellerNotes: string;
+  inventory: { mode: "unlimited" } | { mode: "limited"; total: number; remaining: number };
+};
+
 export type Listing = {
+  kind: ListingKind;
+  file?: FileMeta;
   id: string;
   title: string;
   tagline: string;
@@ -45,6 +65,7 @@ export type Listing = {
 export type Deal = {
   id: string;
   listingId: string;
+  kind: ListingKind;
   buyer: string;
   seller: string;
   price: number;
@@ -55,6 +76,8 @@ export type Deal = {
   dd: Record<string, boolean>;
   transfer: Record<string, boolean>;
   received: Record<string, boolean>;
+  /** File deals only: seller released access, buyer confirmed download. */
+  delivery: { released: boolean; confirmed: boolean };
   log: { at: number; text: string }[];
   createdAt: number;
 };
