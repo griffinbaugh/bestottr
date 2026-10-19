@@ -22,7 +22,7 @@ export type Listing = {
   format: "auction" | "buy_now";
   startingBid: number;
   currentBid: number;
-  reserve?: number;
+  reserve?: number | undefined;
   buyNow?: number;
   endsAt: number;
   bids: Bid[];
@@ -103,7 +103,7 @@ function bids(base: number, list: [string, number, number][]): Bid[] {
   return list.map(([bidder, amount, hoursAgo], i) => ({ id: `b${i}`, bidder, amount, at: base - hoursAgo * H }));
 }
 
-const sellers: Record<string, Seller> = {
+const sellers = {
   brickforge: { handle: "brickforge", name: "Brickforge Studios", rating: 4.9, sales: 7, joined: "2019", verified: true, responseTime: "< 2h" },
   hollow: { handle: "hollowlight", name: "Hollowlight Games", rating: 4.8, sales: 3, joined: "2020", verified: true, responseTime: "< 6h" },
   skyline: { handle: "skylinedev", name: "Skyline Dev Co.", rating: 4.6, sales: 2, joined: "2021", verified: true, responseTime: "< 12h" },
@@ -113,7 +113,7 @@ const sellers: Record<string, Seller> = {
   bastion: { handle: "rook_dev", name: "Rook", rating: 4.2, sales: 0, joined: "2023", verified: false, responseTime: "< 24h" },
   me: { handle: ME, name: ME_NAME, rating: 4.9, sales: 2, joined: "2020", verified: true, responseTime: "< 1h" },
   neon: { handle: "voltkart", name: "VoltKart Team", rating: 0, sales: 0, joined: "2024", verified: false, responseTime: "—" },
-};
+} satisfies Record<string, Seller>;
 
 const stdAssets = ["Experience & all places", "Full source code", "Private packages", "Game icon & thumbnails", "Discord server"];
 
