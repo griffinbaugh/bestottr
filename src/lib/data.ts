@@ -149,6 +149,7 @@ const stdAssets = ["Experience & all places", "Full source code", "Private packa
 export function seedState(): State {
   const now = Date.now();
   const L = (p: Partial<Listing> & Pick<Listing, "id" | "title">): Listing => ({
+    kind: "experience",
     tagline: "",
     description: "",
     genre: "Simulator",
