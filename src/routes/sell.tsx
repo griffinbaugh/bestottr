@@ -168,15 +168,78 @@ function Sell() {
 
         {/* ---- Experience flow ---- */}
         {kind === "experience" && step === 1 && (s.roblox.connected ? (
-          <div className="flex items-center gap-3 text-brand"><BadgeCheck className="h-6 w-6" /><div><div className="font-semibold">Connected as @{s.roblox.username}</div><div className="text-sm text-muted-foreground">Ownership of your experiences is verified.</div></div></div>
+          <div>
+            <div className="flex flex-wrap items-center gap-3 rounded-md border border-border p-3">
+              <img src={mark} alt="" width={36} height={36} className="h-9 w-9 rounded-md border border-border" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 text-sm font-semibold">@{s.roblox.username} <BadgeCheck className="h-4 w-4 text-brand" /></div>
+                <div className="num text-xs text-muted-foreground">Roblox user ID {s.roblox.userId}</div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={disconnect}>Disconnect</Button>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">Next you'll paste your experience link. We verify that this account owns the experience directly, or owns the group that owns it — group admins and developers don't qualify.</p>
+          </div>
         ) : (
-          <div><img src={mark} alt="" width={40} height={40} loading="lazy" className="mb-3 h-10 w-10" /><p className="text-sm text-muted-foreground">Connect your Roblox account so we can verify ownership and pull analytics. (Demo — no credentials needed.)</p>
-            <Button className="mt-4" disabled={busy} onClick={() => { setBusy(true); setTimeout(() => { actions.connectRoblox(); setBusy(false); }, 900); }}>{busy ? "Verifying…" : "Connect Roblox (demo)"}</Button></div>
+          <div><img src={mark} alt="" width={40} height={40} loading="lazy" className="mb-3 h-10 w-10" /><p className="text-sm text-muted-foreground">Connect your Roblox account so we can verify that you own the experience you want to list. (Demo — no credentials needed.)</p>
+            <Button className="mt-4" disabled={busy} onClick={() => { setBusy(true); setTimeout(() => { actions.connectRoblox(); setBusy(false); }, 900); }}>{busy ? "Connecting…" : "Connect Roblox (demo)"}</Button></div>
         ))}
-        {kind === "experience" && step === 2 && <div className="grid gap-3 sm:grid-cols-3">{OWNED.map((o) => (
-          <button key={o.id} onClick={() => { setExp(o); up({ title: o.title, rev: o.rev, profit: o.profit }); }} className={cn("overflow-hidden rounded-lg border text-left", exp?.id === o.id ? "border-foreground ring-2 ring-ring" : "border-border")}>
-            <img src={img(o.image)} alt="" className="aspect-video w-full object-cover" /><div className="p-3"><div className="text-sm font-medium">{o.title}</div><div className="text-xs text-muted-foreground">{o.genre} · {o.ccu} CCU</div></div>
-          </button>))}</div>}
+        {kind === "experience" && step === 2 && (!s.roblox.connected ? (
+          <div className="text-sm text-muted-foreground">Connect your Roblox account first — ownership verification runs against the connected account.</div>
+        ) : verified ? (
+          <div>
+            <div className="flex items-start gap-3 rounded-md border border-brand bg-brand-soft p-3">
+              <img src={img(verified.exp.image)} alt="" className="h-16 w-28 shrink-0 rounded-md border border-border object-cover" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 font-semibold">{verified.exp.title} <BadgeCheck className="h-4 w-4 shrink-0 text-brand" /></div>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {verified.exp.creatorType === "Group" ? "Group" : "User"}-owned · {verified.exp.creatorName} · Place ID <span className="num">{verified.exp.placeId}</span>
+                </div>
+                <div className="mt-1 text-xs font-medium text-brand">
+                  Ownership verified — {verified.via ? `owned through ${verified.via}` : `owned directly by @${s.roblox.username}`}
+                </div>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" className="mt-3" onClick={() => { setVerified(null); setUrl(""); }}>Use a different link</Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <F label="Roblox experience link">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative flex-1">
+                  <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    className="field pl-9"
+                    placeholder="https://www.roblox.com/games/…"
+                    value={url}
+                    onChange={(e) => { setUrl(e.target.value); setVerr(null); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" && url.trim() && !verifying) runVerify(); }}
+                    aria-label="Roblox experience link"
+                  />
+                </div>
+                <Button disabled={verifying || !url.trim()} onClick={runVerify}>{verifying ? "Verifying ownership…" : "Verify ownership"}</Button>
+              </div>
+            </F>
+            {verr && (
+              <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
+                <ShieldX className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <span>{VERIFY_ERRORS[verr]}</span>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              We check that <span className="text-foreground">@{s.roblox.username}</span> owns this experience directly, or is the owner of the group that owns it. Membership, admin rank or edit access don't qualify.
+            </p>
+            <div>
+              <div className="eyebrow mb-2">Demo links to try</div>
+              <div className="space-y-1.5">
+                {DEMO_URLS.map((u) => (
+                  <button key={u} onClick={() => { setUrl(u); setVerr(null); }} className="num block w-full truncate rounded-md border border-border px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground">
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
         {kind === "experience" && step === 3 && <div className="space-y-4">
           <F label="Title"><input className="field" value={d.title} onChange={(e) => up({ title: e.target.value })} /></F>
           <F label="Tagline"><input className="field" value={d.tagline} onChange={(e) => up({ tagline: e.target.value })} /></F>
