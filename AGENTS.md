@@ -11,3 +11,4 @@
 
 - Keep seller listing prices in integer cents through the shared CurrencyInput and convert only when creating a listing; verified financial metrics retain their existing input model.
 - Keep auction scheduling in the shared auction-end helpers, validate again at publication, and store absolute millisecond timestamps so countdowns remain independent of display modes.
+- Treat bestottr.com (root) as the canonical hostname with www redirecting to it, so generated metadata, canonical/OG URLs and share links point at the canonical host rather than a preview host; while the domain is not yet live, use the published Lovable URL.
