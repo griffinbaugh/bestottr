@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { BadgeCheck, Building2, Check, FileUp, Upload } from "lucide-react";
+import { BadgeCheck, Building2, Check, FileUp, Link2, ShieldX, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button, PageHeader } from "@/components/sb/ui";
 import { FILE_CATEGORIES, ME, ME_NAME, type FileCategory, type FileMeta, type Listing } from "@/lib/data";
 import { usd } from "@/lib/format";
 import { img } from "@/lib/images";
+import { DEMO_URLS, VERIFY_ERRORS, verifyOwnership, type VerifiedExperience, type VerifyFailure } from "@/lib/roblox";
 import { actions, useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import mark from "@/assets/mark-white.png";
@@ -24,13 +25,8 @@ export const Route = createFileRoute("/sell")({
   component: Sell,
 });
 
-const EXP_STEPS = ["Listing type", "Roblox verification", "Experience", "Details", "Financials", "Sale format", "Assets", "Review"];
+const EXP_STEPS = ["Listing type", "Connect Roblox", "Experience link", "Details", "Financials", "Sale format", "Assets", "Review"];
 const FILE_STEPS = ["Listing type", "File upload", "Details", "Sale setup", "License & rights", "Review"];
-const OWNED = [
-  { id: "x1", title: "Sky Kingdom Builders", genre: "Simulator", image: "g6", rev: 2600, profit: 2300, visits: 840000, ccu: 380 },
-  { id: "x2", title: "Midnight Courier", genre: "Horror", image: "g2", rev: 1800, profit: 1650, visits: 610000, ccu: 240 },
-  { id: "x3", title: "Rail Rush Tycoon", genre: "Tycoon", image: "g1", rev: 4100, profit: 3700, visits: 1300000, ccu: 690 },
-];
 const ASSETS = ["Experience & all places", "Full source code", "Private packages", "Roblox group", "Game icon & thumbnails", "Discord server", "Social accounts", "Analytics dashboards"];
 const DEMO_FILES = [
   { fileName: "combat-system_v2.0.rbxm", fileType: ".rbxm", fileSize: "3.2 MB" },
@@ -46,7 +42,10 @@ function Sell() {
   const [kind, setKind] = useState<"experience" | "file" | null>(null);
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [exp, setExp] = useState<(typeof OWNED)[number] | null>(null);
+  const [url, setUrl] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [verified, setVerified] = useState<{ exp: VerifiedExperience; via?: string } | null>(null);
+  const [verr, setVerr] = useState<VerifyFailure | null>(null);
   const [d, setD] = useState({ title: "", tagline: "", description: "", rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 10000, reserve: 15000, buyNow: 25000, days: 7, assets: ASSETS.slice(0, 5) });
   const up = (p: Partial<typeof d>) => setD((x) => ({ ...x, ...p }));
 
@@ -63,7 +62,7 @@ function Sell() {
 
   const steps = kind === "file" ? FILE_STEPS : EXP_STEPS;
 
-  const expCanNext = [kind !== null, s.roblox.connected, !!exp, d.title.length > 2, d.rev > 0, d.start > 0, d.assets.length > 0, true][step];
+  const expCanNext = [kind !== null, s.roblox.connected, !!verified, d.title.length > 2, d.rev > 0, d.start > 0, d.assets.length > 0, true][step];
   const fileCanNext = [kind !== null, !!file, fd.title.length > 2 && fd.compatibility.length > 2, fd.format === "auction" ? fd.start > 0 : fd.buyNow > 0, fd.license.length > 5 && fd.attested, true][step];
   const canNext = kind === "file" ? fileCanNext : expCanNext;
 
