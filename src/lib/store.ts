@@ -91,6 +91,7 @@ export const actions = {
     const deal: Deal = {
       id,
       listingId,
+      kind: l.kind,
       buyer: ME,
       seller: l.seller.handle,
       price,
@@ -101,6 +102,7 @@ export const actions = {
       dd: blank(DD_ITEMS),
       transfer: { ...blank(TRANSFER_ITEMS), ...(l.hasGroup ? {} : { group: true }) },
       received: { ...blank(TRANSFER_ITEMS), ...(l.hasGroup ? {} : { group: true }) },
+      delivery: { released: false, confirmed: false },
       log: [{ at: Date.now(), text: `Deal room opened at ${"$" + price.toLocaleString("en-US")}` }],
       createdAt: Date.now(),
     };
@@ -109,6 +111,52 @@ export const actions = {
       deals: [deal, ...s.deals],
     }));
     return id;
+  },
+  /** Demo file purchase: payment is simulated instantly, inventory decrements, deal opens at File Access. */
+  buyFile(listingId: string): { ok: boolean; dealId?: string; error?: string } {
+    const l = state.listings.find((x) => x.id === listingId);
+    if (!l || l.kind !== "file" || !l.file) return { ok: false, error: "Not a file listing." };
+    if (l.status !== "live") return { ok: false, error: "This listing is no longer available." };
+    const inv = applyPurchase(l.file.inventory);
+    if (!inv) return { ok: false, error: "Sold out." };
+    const price = l.buyNow ?? l.currentBid;
+    const id = `d-${1100 + state.deals.length}`;
+    const deal: Deal = {
+      id,
+      listingId,
+      kind: "file",
+      buyer: ME,
+      seller: l.seller.handle,
+      price,
+      fee: buyerPremium(price),
+      stage: 1,
+      agreement: { buyer: true, seller: true },
+      funded: true,
+      dd: {},
+      transfer: {},
+      received: {},
+      delivery: { released: false, confirmed: false },
+      log: [
+        { at: Date.now(), text: `Payment received ($${(price + buyerPremium(price)).toLocaleString("en-US")}) — held in escrow` },
+        { at: Date.now(), text: `Order placed at $${price.toLocaleString("en-US")}` },
+      ],
+      createdAt: Date.now(),
+    };
+    set((s) => ({
+      ...patchListing(s, listingId, (x) => ({
+        ...x,
+        file: x.file ? { ...x.file, inventory: inv } : x.file,
+        ...(isSoldOut(inv) ? { status: "sold" as const, endsAt: Math.min(x.endsAt, Date.now()) } : {}),
+      })),
+      deals: [deal, ...s.deals],
+    }));
+    return { ok: true, dealId: id };
+  },
+  releaseFile(dealId: string) {
+    patchDeal(dealId, (d) => log({ ...d, delivery: { ...d.delivery, released: true } }, "Seller released file access"));
+  },
+  confirmFile(dealId: string) {
+    patchDeal(dealId, (d) => log({ ...d, delivery: { ...d.delivery, confirmed: true } }, "Buyer confirmed successful download"));
   },
   buyNow(listingId: string) {
     const l = state.listings.find((x) => x.id === listingId)!;
