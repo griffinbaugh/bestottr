@@ -24,6 +24,8 @@ export type VerifyResult = { ok: true; exp: VerifiedExperience; via?: string } |
 
 /** The mock connected account's Roblox user ID. */
 export const DEMO_USER_ID = "24816309";
+/** The mock connected account's Roblox username. */
+export const DEMO_USERNAME = "alexr_dev";
 
 /**
  * Extract a place/experience ID from a pasted Roblox URL.
@@ -53,12 +55,26 @@ type DemoExp = VerifiedExperience & { ownerUserId?: string; groupOwnerId?: strin
 /** Deterministic demo registry standing in for the Roblox API. */
 export const DEMO_EXPERIENCES: DemoExp[] = [
   {
+    // Primary demo fixture: guaranteed to verify as directly owned by the demo account.
+    placeId: "4920175538",
+    title: "Coastline Rescue Roleplay",
+    genre: "Roleplay",
+    image: "g7",
+    creatorType: "User",
+    creatorName: DEMO_USERNAME,
+    ownerUserId: DEMO_USER_ID,
+    monthlyRevenue: 5400,
+    monthlyProfit: 4800,
+    monthlyVisits: 1650000,
+    ccu: 910,
+  },
+  {
     placeId: "1830291743",
     title: "Sky Kingdom Builders",
     genre: "Simulator",
     image: "g6",
     creatorType: "User",
-    creatorName: "alexr_dev",
+    creatorName: DEMO_USERNAME,
     ownerUserId: DEMO_USER_ID,
     monthlyRevenue: 2600,
     monthlyProfit: 2300,
@@ -106,8 +122,11 @@ export const DEMO_EXPERIENCES: DemoExp[] = [
   },
 ];
 
-/** Demo links covering each verification outcome. */
-export const DEMO_URLS = DEMO_EXPERIENCES.map((e) => `https://www.roblox.com/games/${e.placeId}/${e.title.replace(/[^a-zA-Z0-9]+/g, "-")}`);
+const urlFor = (e: VerifiedExperience) => `https://www.roblox.com/games/${e.placeId}/${e.title.replace(/[^a-zA-Z0-9]+/g, "-")}`;
+/** Primary demo link: always verifies as directly owned by DEMO_USER_ID. */
+export const DEMO_OWNED_URL = urlFor(DEMO_EXPERIENCES[0]!);
+/** Other demo links covering each remaining verification outcome. */
+export const DEMO_URLS = DEMO_EXPERIENCES.slice(1).map(urlFor);
 
 /**
  * Strict ownership rule:

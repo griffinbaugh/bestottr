@@ -10,7 +10,7 @@ export function searchListings(listings: Listing[], q: string, max = 6): Listing
   const needle = q.trim().toLowerCase();
   if (!needle) return [];
   const hay = (l: Listing) =>
-    `${l.title} ${l.tagline} ${l.genre} ${l.seller.name} ${l.file?.category ?? ""} ${l.file?.fileName ?? ""} ${l.file?.fileType ?? ""}`.toLowerCase();
+    `${l.title} ${l.tagline} ${l.genre} ${l.seller.name} ${(l.tags ?? []).join(" ")} ${l.file?.category ?? ""} ${l.file?.fileName ?? ""} ${l.file?.fileType ?? ""}`.toLowerCase();
   return listings.filter((l) => l.status === "live" && hay(l).includes(needle)).slice(0, max);
 }
 

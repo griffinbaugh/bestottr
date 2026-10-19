@@ -40,7 +40,7 @@ function Browse() {
     const price = (l: (typeof live)[number]) => (l.format === "auction" ? l.currentBid : (l.buyNow ?? l.currentBid));
     const r = live.filter((l) => {
       if (f.kind !== "all" && l.kind !== f.kind) return false;
-      const hay = `${l.title} ${l.genre} ${l.tagline} ${l.seller.name} ${l.file?.category ?? ""} ${l.file?.fileName ?? ""}`.toLowerCase();
+      const hay = `${l.title} ${l.genre} ${l.tagline} ${l.seller.name} ${(l.tags ?? []).join(" ")} ${l.file?.category ?? ""} ${l.file?.fileName ?? ""}`.toLowerCase();
       if (f.q && !hay.includes(f.q.toLowerCase())) return false;
       if (f.minPrice && price(l) < Number(f.minPrice)) return false;
       if (f.maxPrice && price(l) > Number(f.maxPrice)) return false;
