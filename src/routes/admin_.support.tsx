@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import { Badge, Button } from "@/components/sb/ui";
 import { CATEGORIES, PRIORITIES, STATUSES, SUPPORT_EMAIL, categoryLabel, replyMailto } from "@/lib/support";
+import { getEmailStatus } from "@/lib/support.functions";
 
 type Ticket = Tables<"support_tickets">;
 
@@ -33,6 +34,9 @@ const fmt = (s: string) => new Date(s).toLocaleString(undefined, { dateStyle: "m
 function SupportAdmin() {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [emailOn, setEmailOn] = useState(false);
+  useEffect(() => { getEmailStatus().then((r) => setEmailOn(r.connected)).catch(() => {}); }, []);
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -57,9 +61,15 @@ function SupportAdmin() {
         </div>
         {session && <Button size="sm" variant="ghost" onClick={() => supabase.auth.signOut()}>Sign out</Button>}
       </div>
-      <div className="mt-4 rounded-md border border-dashed border-warning bg-warning-soft px-3 py-2 text-[13px]">
-        Outbound email isn't connected yet. Tickets are saved, but no acknowledgment or notification emails are sent. Use "Reply by email" to answer from your own mail client as {SUPPORT_EMAIL}.
-      </div>
+      {emailOn ? (
+        <div className="mt-4 rounded-md border border-border bg-card px-3 py-2 text-[13px]">
+          Outbound email is connected via Cloudflare Email Service. Customers get an acknowledgment and new tickets notify {SUPPORT_EMAIL}. Delivery failures are logged and never block submission.
+        </div>
+      ) : (
+        <div className="mt-4 rounded-md border border-dashed border-warning bg-warning-soft px-3 py-2 text-[13px]">
+          Outbound email isn't connected yet. Tickets are saved, but no acknowledgment or notification emails are sent. Use "Reply by email" to answer from your own mail client as {SUPPORT_EMAIL}.
+        </div>
+      )}
       <div className="mt-6">
         {session === undefined ? <p className="text-sm text-muted-foreground">Loading…</p>
           : !session ? <SignIn />
