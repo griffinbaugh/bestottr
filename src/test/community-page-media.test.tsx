@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { extractCommunityPageMedia, fetchCommunityPageMedia, safeRobloxImageUrl } from "@/lib/community-page-media";
 import { fetchLiveCommunity } from "@/lib/roblox-live";
-import { CommunityBanner, COMMUNITY_ICON_OVERHANG, COMMUNITY_ICON_RATIO, RobloxVerifiedBadge } from "@/components/sb/CommunityHero";
+import { CommunityBanner, COMMUNITY_ICON_RATIO, RobloxVerifiedBadge } from "@/components/sb/CommunityHero";
 
 beforeEach(() => cleanup());
 
@@ -65,24 +65,23 @@ describe("Live Community facts merge", () => {
 
 describe("Community banner geometry", () => {
   const tile = () => screen.getByTestId("community-icon-tile");
-  it("icon is ~70% of banner height, bottom-centered and overhanging the edge", () => {
+  it("icon is ~70% of banner height, bottom-centered and bottom-aligned inside the banner", () => {
     render(<CommunityBanner c={{ name: "N", iconUrl: "c1", bannerUrl: "cb1", verified: true }} />);
     expect(COMMUNITY_ICON_RATIO).toBe(0.7);
-    expect(COMMUNITY_ICON_OVERHANG).toBeGreaterThanOrEqual(0.35);
-    expect(COMMUNITY_ICON_OVERHANG).toBeLessThanOrEqual(0.45);
     expect(tile().style.height).toBe("70%");
-    expect(tile().style.transform).toBe("translate(-50%, 40%)");
+    expect(tile().style.transform).toBe("translateX(-50%)");
     expect(tile().className).toMatch(/bottom-0/);
     expect(tile().className).toMatch(/left-1\/2/);
     expect(screen.getByTestId("community-banner-image")).toBeInTheDocument();
     expect(screen.queryByTestId("roblox-verified")).toBeNull();
-    expect(screen.getByTestId("community-icon-spacer").style.paddingTop).not.toBe("");
+    expect(screen.queryByTestId("community-icon-spacer")).toBeNull();
+    expect(tile().parentElement).toBe(screen.getByTestId("community-banner"));
   });
   it("blank banner keeps the same large overlapping icon, placeholder when no icon", () => {
     render(<CommunityBanner c={{ name: "N", iconUrl: null, bannerUrl: null, verified: false }} size="hero" />);
     expect(screen.getByTestId("community-banner-blank")).toBeInTheDocument();
     expect(tile().style.height).toBe("70%");
-    expect(tile().style.transform).toBe("translate(-50%, 40%)");
+    expect(tile().style.transform).toBe("translateX(-50%)");
     expect(screen.getByTestId("community-icon")).toBeInTheDocument();
   });
   it("verified badge still renders as readable text", () => {
