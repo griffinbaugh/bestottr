@@ -165,14 +165,15 @@ export function AcquisitionRoom({ d, l, s }: { d: Deal; l: Listing; s: State }) 
   const [role, setRole] = useState<Party>(d.buyer === "you" ? "buyer" : "seller");
   const level = deadlineLevel(t, now);
   const group = t.asset.mode === "group";
+  const community = t.asset.mode === "community";
   const terminal = ["completed", "refunded", "cancelled"].includes(t.state);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
       <div className="flex flex-wrap items-center gap-4">
-        <ListingImage image={coverImage(l)} alt="" className="h-16 w-28 shrink-0 rounded-md object-cover" />
+        <ListingImage image={community && l.community?.iconUrl ? l.community.iconUrl : coverImage(l)} alt="" className={community ? "h-16 w-16 shrink-0 rounded-xl border border-border object-cover" : "h-16 w-28 shrink-0 rounded-md object-cover"} />
         <div className="min-w-0 flex-1">
-          <div className="eyebrow">Acquisition · #{d.id}</div>
+          <div className="eyebrow">{community ? "Community acquisition" : "Acquisition"} · #{d.id}</div>
           <h1 className="truncate text-2xl font-semibold tracking-tight">{l.title}</h1>
         </div>
         <Badge tone={t.state === "completed" ? "brand" : t.state === "manual_review" ? "live" : terminal ? "neutral" : "warning"}>{STATE_LABELS[t.state]}</Badge>
@@ -237,8 +238,14 @@ export function AcquisitionRoom({ d, l, s }: { d: Deal; l: Listing; s: State }) 
               <TargetCard t={t.target} locked={t.targetLockedAt !== null} />
               {role === "seller" && MONITORED.includes(t.state) && (
                 <div className="mt-4 rounded-md bg-secondary p-4 text-sm">
-                  <div className="font-medium">How to transfer ({group ? "group-owned" : "user-owned"})</div>
-                  {group ? (
+                  <div className="font-medium">How to transfer ({community ? "Community" : group ? "group-owned Experience" : "user-owned Experience"})</div>
+                  {community ? (
+                    <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
+                      <li>Have @{t.target.username} join Community {t.asset.groupId}.</li>
+                      <li>Transfer Community ownership to user ID {t.target.userId} (Community settings → transfer ownership).</li>
+                      <li>Admin, high-rank or member roles do not count — only the exact owner of this Community ID.</li>
+                    </ol>
+                  ) : group ? (
                     <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
                       <li>Keep the experience in group {t.asset.groupId} — don't move it to another group.</li>
                       <li>Have @{t.target.username} join the group, then make them group <b>Owner</b> (Community settings → transfer ownership).</li>
@@ -288,8 +295,8 @@ export function AcquisitionRoom({ d, l, s }: { d: Deal; l: Listing; s: State }) 
                   <dl className="num mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 break-all">
                     <dt>Target</dt><dd>{t.verification.evidence.targetUserId}</dd>
                     <dt>Observed owner</dt><dd>{t.verification.evidence.observedOwnerId ?? "—"}</dd>
-                    <dt>Universe / place</dt><dd>{t.verification.evidence.universeId} / {t.verification.evidence.placeId}</dd>
-                    {t.asset.groupId && <><dt>Group</dt><dd>{t.asset.groupId}</dd></>}
+                    {!community && <><dt>Universe / place</dt><dd>{t.verification.evidence.universeId} / {t.verification.evidence.placeId}</dd></>}
+                    {t.asset.groupId && <><dt>Community</dt><dd>{t.asset.groupId}</dd></>}
                     <dt>Source</dt><dd>{t.verification.evidence.source}</dd>
                     <dt>Checked</dt><dd>{fmt(t.verification.evidence.checkedAt)}</dd>
                   </dl>
@@ -324,7 +331,7 @@ export function AcquisitionRoom({ d, l, s }: { d: Deal; l: Listing; s: State }) 
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button size="sm" variant="demo" onClick={() => actions.demoSimulate(d.id, "target")}>Correct transfer to destination</Button>
                 <Button size="sm" variant="demo" onClick={() => actions.demoSimulate(d.id, "wrong_user")}>Transfer to wrong user</Button>
-                {group && <Button size="sm" variant="demo" onClick={() => actions.demoSimulate(d.id, "group_admin_only")}>Make buyer group admin only</Button>}
+                {(group || community) && <Button size="sm" variant="demo" onClick={() => actions.demoSimulate(d.id, "group_admin_only")}>Make buyer {community ? "Community" : "group"} admin only</Button>}
                 <Button size="sm" variant="demo" onClick={() => actions.demoSimulate(d.id, "outage")}>Roblox API outage</Button>
                 <Button size="sm" variant="demo" onClick={() => actions.demoSimulate(d.id, "restore")}>End outage</Button>
                 <Button size="sm" variant="demo" onClick={() => actions.demoSimulate(d.id, "expire")}>Fast-forward to deadline</Button>

@@ -24,7 +24,7 @@ export const Route = createFileRoute("/browse")({
 });
 
 type Format = "all" | "auction" | "buy_now";
-type Kind = "all" | "experience" | "file";
+type Kind = "all" | "experience" | "community" | "file";
 const DEFAULTS = { q: "", kind: "all" as Kind, minPrice: "", maxPrice: "", minRev: "", genre: "all", category: "all", format: "all" as Format, verified: false, watch: false, sort: "ending" };
 
 function Browse() {
@@ -40,15 +40,15 @@ function Browse() {
     const price = (l: (typeof live)[number]) => (l.format === "auction" ? l.currentBid : (l.buyNow ?? l.currentBid));
     const r = live.filter((l) => {
       if (f.kind !== "all" && l.kind !== f.kind) return false;
-      const hay = `${l.title} ${l.genre} ${l.tagline} ${l.seller.name} ${(l.tags ?? []).join(" ")} ${l.file?.category ?? ""} ${l.file?.fileName ?? ""}`.toLowerCase();
+      const hay = `${l.title} ${l.genre} ${l.tagline} ${l.seller.name} ${(l.tags ?? []).join(" ")} ${l.file?.category ?? ""} ${l.file?.fileName ?? ""} ${l.seller.handle} ${l.community ? `${l.community.name} ${l.community.groupId} community` : ""} ${l.experience?.placeId ?? ""}`.toLowerCase();
       if (f.q && !hay.includes(f.q.toLowerCase())) return false;
       if (f.minPrice && price(l) < Number(f.minPrice)) return false;
       if (f.maxPrice && price(l) > Number(f.maxPrice)) return false;
-      if (f.minRev && (l.kind !== "experience" || l.monthlyRevenue < Number(f.minRev))) return false;
+      if (f.minRev && (l.kind === "file" || l.financialsProvided === false || l.monthlyRevenue < Number(f.minRev))) return false;
       if (f.genre !== "all" && (l.kind !== "experience" || l.genre !== f.genre)) return false;
       if (f.category !== "all" && (l.kind !== "file" || l.file?.category !== f.category)) return false;
       if (f.format !== "all" && l.format !== f.format) return false;
-      if (f.verified && !(l.kind === "file" ? l.seller.verified : isFullyVerified(l))) return false;
+      if (f.verified && !(l.kind === "experience" ? isFullyVerified(l) : l.kind === "community" ? l.verified.ownership : l.seller.verified)) return false;
       if (f.watch && !watchlist.includes(l.id)) return false;
       return true;
     });
@@ -67,17 +67,17 @@ function Browse() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
-      <PageHeader title="Marketplace" subtitle={`${live.length} listings · verified Roblox businesses and creator files`} />
+      <PageHeader title="Marketplace" subtitle={`${live.length} listings · verified Roblox businesses, Communities and creator files`} />
 
       <div className="mt-6 flex flex-wrap gap-2">
         <div className="flex rounded-md bg-secondary p-1 text-sm">
-          {([["all", "All"], ["experience", "Experiences"], ["file", "Files"]] as [Kind, string][]).map(([v, label]) => (
+          {([["all", "All"], ["experience", "Experiences"], ["community", "Communities"], ["file", "Files"]] as [Kind, string][]).map(([v, label]) => (
             <button key={v} onClick={() => up("kind", v)} className={cn("rounded px-3 py-2 font-medium", f.kind === v ? "bg-card shadow-sm" : "text-muted-foreground")}>
               {label}
             </button>
           ))}
         </div>
-        <SearchBox value={f.q} onChange={(v) => up("q", v)} placeholder="Search experiences, files, categories, studios…" className="min-w-[220px] flex-1" />
+        <SearchBox value={f.q} onChange={(v) => up("q", v)} placeholder="Search experiences, communities, files, studios…" className="min-w-[220px] flex-1" />
         <select className="field w-auto" value={f.sort} onChange={(e) => up("sort", e.target.value)} aria-label="Sort">
           <option value="ending">Ending soonest</option>
           <option value="newest">Newest</option>
@@ -122,7 +122,7 @@ function Browse() {
               </select>
             </div>
           )}
-          {f.kind !== "file" && (
+          {f.kind !== "file" && f.kind !== "community" && (
             <div>
               <div className="eyebrow mb-2">Genre</div>
               <select className="field" value={f.genre} onChange={(e) => up("genre", e.target.value)}>
@@ -131,7 +131,7 @@ function Browse() {
               </select>
             </div>
           )}
-          {f.kind !== "experience" && (
+          {(f.kind === "all" || f.kind === "file") && (
             <div>
               <div className="eyebrow mb-2">File category</div>
               <select className="field" value={f.category} onChange={(e) => up("category", e.target.value)}>

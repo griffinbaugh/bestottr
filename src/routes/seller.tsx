@@ -27,7 +27,7 @@ function Seller() {
   const sold = mine.filter((l) => l.status === "sold" || l.status === "ended");
   const deals = s.deals.filter((d) => d.seller === ME);
   const bids = active.flatMap((l) => l.bids.map((b) => ({ ...b, title: l.title })));
-  const closed = deals.filter((d) => d.kind === "experience" && isDealCompleted(d)).reduce((a, d) => a + d.price, 0);
+  const closed = deals.filter((d) => d.kind !== "file" && isDealCompleted(d)).reduce((a, d) => a + d.price, 0);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-6">
@@ -45,7 +45,7 @@ function Seller() {
             <div key={l.id} className="flex flex-wrap items-center gap-2 border-t border-border py-3 first:border-0"><Link to="/listing/$id" params={{ id: l.id }} className="flex min-w-0 flex-1 items-center justify-between gap-3">
               <span className="min-w-0"><span className="block truncate">{l.title}</span>{l.kind === "file" && l.file && <span className="num text-xs text-muted-foreground">{l.file.category} · {stockLabel(l.file.inventory)}</span>}</span>
               <span className="flex shrink-0 items-center gap-2"><span className="num text-sm">{usd(l.currentBid)}</span><Badge tone={l.status === "review" ? "warning" : "brand"}>{l.status === "review" ? "In review" : "Live"}</Badge></span>
-            </Link>{l.kind === "experience" && <Link to="/listing/$id/edit" params={{ id: l.id }} className={buttonVariants({ variant: "outline", size: "sm" })}>Edit listing</Link>}</div>)) : <Empty title="No active listings" />}
+            </Link>{l.kind !== "file" && <Link to="/listing/$id/edit" params={{ id: l.id }} className={buttonVariants({ variant: "outline", size: "sm" })}>Edit listing</Link>}</div>)) : <Empty title="No active listings" />}
         </section>
         <section className="surface p-5">
           <h2 className="mb-3 font-semibold">Recent bids</h2>

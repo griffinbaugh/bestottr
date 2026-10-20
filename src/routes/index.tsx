@@ -31,6 +31,7 @@ function Home() {
   const auctions = live.filter((l) => l.format === "auction");
   const buyNow = live.filter((l) => l.kind === "experience" && l.format === "buy_now");
   const files = live.filter((l) => l.kind === "file");
+  const communities = live.filter((l) => l.kind === "community");
   const heroImages = heroListings(listings).map(coverImage);
 
   return (
