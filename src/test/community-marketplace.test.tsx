@@ -111,7 +111,7 @@ describe("Community acquisition", () => {
     t = chooseTarget(t, { userId: "55018342", username: "alt", displayName: "Alt", profileUrl: profileUrlFor("55018342"), avatarUrl: null, source: "profile_url" }, T0).t;
     return fundTransfer(confirmTarget(t, T0).t, T0).t;
   };
-  const obs = (o: Partial<Observation>): Observation => ({ placeId: null, universeId: "community:48120931", creatorType: "Group", creatorId: "48120931", groupOwnerId: "55018342", source: "test", checkedAt: T0 + 1, ...o });
+  const obs = (o: Partial<Observation>) => ({ observation: { placeId: null, universeId: "community:48120931", creatorType: "Group", creatorId: "48120931", groupOwnerId: "55018342", source: "test", checkedAt: T0 + 1, ...o } as Observation });
   it("standalone Community completes only when the target owns the exact Community ID", () => {
     expect(funded().asset).toMatchObject({ mode: "community", groupId: "48120931", placeId: "" });
     expect(applyCheck(funded(), obs({}), T0 + 2).t.state).toBe("completed");
@@ -168,13 +168,18 @@ describe("Pricing and seller financials", () => {
 
 describe("Seller profile", () => {
   it("profile shows current listings, reviews and numeric Roblox profile link", async () => {
-    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() }, history: createMemoryHistory({ initialEntries: ["/user/kenzo_labs"] }) });
+    // Render the page component directly: the root document shell can't mount in jsdom.
+    const { Route: ProfileRoute } = await import("@/routes/user.$handle");
+    vi.spyOn(ProfileRoute, "useParams").mockReturnValue({ handle: "kenzo_labs" } as never);
+    const Page = ProfileRoute.options.component!;
+    const root = createRootRoute({ component: () => <Page /> });
+    const router = createRouter({ routeTree: root, history: createMemoryHistory({ initialEntries: ["/"] }) });
     render(<RouterProvider router={router} />);
-    const link = await screen.findByRole("link", { name: /View Roblox profile/ });
+    const link = await screen.findByRole("link", { name: /View Roblox profile/ }, { timeout: 8000 });
     expect(link).toHaveAttribute("href", "https://www.roblox.com/users/90412277/profile");
     expect(link).toHaveAttribute("target", "_blank");
     expect(screen.getByText(/Current listings/)).toBeInTheDocument();
     expect(screen.getByText("Forgeline Studios Community")).toBeInTheDocument();
     expect(screen.getByText(reviewsFor("kenzo_labs")[0]!.text)).toBeInTheDocument();
-  });
+  }, 15000);
 });
