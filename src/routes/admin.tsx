@@ -53,7 +53,7 @@ function Admin() {
         {tab === "flags" && s.admin.flags.map((i) => <Row key={i.id} item={i} kind="flags" ok={["Clear", "resolved"]} no={["Void bid", "voided"]} />)}
         {tab === "txn" && s.deals.map((d) => (
           <div key={d.id} className="flex flex-wrap items-center justify-between gap-3 border-t border-border py-3 first:border-0">
-            <div><div className="font-medium">#{d.id} · {s.listings.find((l) => l.id === d.listingId)?.title}</div><div className="text-sm text-muted-foreground">{usd(d.price)} · {STAGES[d.stage]}</div></div>
+            <div><div className="font-medium">#{d.id} · {s.listings.find((l) => l.id === d.listingId)?.title}</div><div className="text-sm text-muted-foreground">{usd(d.price)} · {dealStatus(d).label}</div></div>
             {s.admin.txn[d.id] ? <Badge>{s.admin.txn[d.id]}</Badge> : <div className="flex gap-2"><Button size="sm" onClick={() => actions.setTxn(d.id, "approved")}>Approve</Button><Button size="sm" variant="outline" onClick={() => actions.setTxn(d.id, "held")}>Hold</Button></div>}
           </div>))}
       </div>
