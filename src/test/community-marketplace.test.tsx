@@ -168,9 +168,13 @@ describe("Pricing and seller financials", () => {
 
 describe("Seller profile", () => {
   it("profile shows current listings, reviews and numeric Roblox profile link", async () => {
-    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() }, history: createMemoryHistory({ initialEntries: ["/user/kenzo_labs"] }) });
+    // Render the page component directly: the root document shell can't mount in jsdom.
+    const { Route: ProfileRoute } = await import("@/routes/user.$handle");
+    vi.spyOn(ProfileRoute, "useParams").mockReturnValue({ handle: "kenzo_labs" } as never);
+    const Page = ProfileRoute.options.component!;
+    const root = createRootRoute({ component: () => <Page /> });
+    const router = createRouter({ routeTree: root, history: createMemoryHistory({ initialEntries: ["/"] }) });
     render(<RouterProvider router={router} />);
-    await new Promise((r) => setTimeout(r, 1500)); console.log("DBG", document.body.textContent?.slice(0, 400));
     const link = await screen.findByRole("link", { name: /View Roblox profile/ }, { timeout: 8000 });
     expect(link).toHaveAttribute("href", "https://www.roblox.com/users/90412277/profile");
     expect(link).toHaveAttribute("target", "_blank");
