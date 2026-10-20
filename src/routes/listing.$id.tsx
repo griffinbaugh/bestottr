@@ -171,7 +171,7 @@ function ListingPage() {
                 )}
               </>
             )}
-            {mine && <Link to="/listing/$id_/edit" params={{ id: l.id }} className={buttonVariants({ variant: "outline", className: "mt-4 w-full" })}>Edit listing</Link>}
+            {mine && <Link to="/listing/$id/edit" params={{ id: l.id }} className={buttonVariants({ variant: "outline", className: "mt-4 w-full" })}>Edit listing</Link>}
             {deal && (
               <Link to="/deal/$id" params={{ id: deal.id }} className={buttonVariants({ variant: "brand", size: "lg", className: "mt-4 w-full" })}>
                 Open deal room
