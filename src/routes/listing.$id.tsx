@@ -69,7 +69,7 @@ function ListingPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="min-w-0 space-y-6">
           {isCommunity ? (
-            <div className="surface aspect-[16/7] overflow-hidden" data-testid="community-hero"><CommunityBanner c={l.community!} size="hero" /></div>
+            <div className="surface overflow-hidden" data-testid="community-hero"><CommunityBanner c={l.community!} size="hero" /></div>
           ) : <ExperienceGallery key={l.id} images={normalizeGallery(l)} title={l.title} />}
           <div>
             {isCommunity ? (

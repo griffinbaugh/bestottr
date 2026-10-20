@@ -5,6 +5,7 @@ import type { Listing } from "./data";
 import { demoCommunity, type CommunityIdentity } from "./community";
 import { DEMO_EXPERIENCES } from "./roblox";
 import { assetFromListing } from "./roblox-ownership";
+import { fetchCommunityPageMedia } from "./community-page-media";
 
 export type LiveCommunityFacts = CommunityIdentity & { unavailable: boolean };
 
@@ -47,13 +48,16 @@ const getter = (request: Req) => async (url: string) => {
 };
 
 const emptyCommunity = (groupId: string, now: number): LiveCommunityFacts => ({
-  groupId, name: "", ownerUserId: "", ownerUsername: "", memberCount: null, iconUrl: null, bannerUrl: null, verified: false, fetchedAt: now, source: "roblox", unavailable: true,
+  groupId, name: "", ownerUserId: "", ownerUsername: "", memberCount: null, iconUrl: null, bannerUrl: null, bannerSource: "none", pageMediaUrls: [], verified: false, fetchedAt: now, source: "roblox", unavailable: true,
 });
 
-/** Groups v1 + group icon thumbnail. Roblox exposes no stable public banner endpoint, so bannerUrl stays null. */
+/**
+ * Groups v1 + official group icon thumbnail (authoritative square icon), merged with a
+ * best-effort banner extracted from the public Community page (no cookies/auth).
+ */
 export async function fetchLiveCommunity(groupId: string, request: Req = fetch, now = Date.now()): Promise<LiveCommunityFacts> {
   const demo = demoCommunity(groupId, now);
-  if (demo) return { ...demo, unavailable: false };
+  if (demo) return { ...demo, bannerSource: demo.bannerUrl ? "demo" : "none", pageMediaUrls: demo.bannerUrl ? [demo.bannerUrl] : [], unavailable: false };
   const json = getter(request);
   try {
     const g = await json(`https://groups.roblox.com/v1/groups/${groupId}`);
@@ -65,6 +69,7 @@ export async function fetchLiveCommunity(groupId: string, request: Req = fetch, 
       const d = (t["data"] as { state?: string; imageUrl?: string }[] | undefined)?.[0];
       iconUrl = d?.state === "Completed" && d.imageUrl?.startsWith("https://") ? d.imageUrl : null;
     } catch { /* icon optional */ }
+    const media = await fetchCommunityPageMedia(groupId, request, [iconUrl]);
     return {
       groupId,
       name: str(g["name"]) ?? "",
@@ -72,7 +77,9 @@ export async function fetchLiveCommunity(groupId: string, request: Req = fetch, 
       ownerUsername: owner?.username ?? "",
       memberCount: num(g["memberCount"]),
       iconUrl,
-      bannerUrl: null,
+      bannerUrl: media.bannerUrl,
+      bannerSource: media.bannerSource,
+      pageMediaUrls: media.pageMediaUrls,
       verified: g["hasVerifiedBadge"] === true,
       description: str(g["description"]) ?? undefined,
       fetchedAt: now,

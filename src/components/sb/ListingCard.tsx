@@ -27,7 +27,7 @@ export function ListingCard({ listing: l }: { listing: Listing }) {
   const rev = sellerRevenue(l);
   return (
     <div className="surface lift group relative flex flex-col overflow-hidden" data-testid={isCommunity ? "community-card" : "listing-card"}>
-      <Link to="/listing/$id" params={{ id: l.id }} className="relative block aspect-video overflow-hidden bg-muted">
+      <Link to="/listing/$id" params={{ id: l.id }} className={isCommunity ? "relative block" : "relative block aspect-video overflow-hidden bg-muted"}>
         {isCommunity ? <CommunityBanner c={l.community!} /> : <ListingImage image={coverImage(l)} alt={l.title} loading="lazy" width={1088} height={608} className="h-full w-full object-cover" />}
         <div className="absolute left-3 top-3 flex gap-1.5">
           {l.format === "auction" && live ? (

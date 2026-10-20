@@ -13,6 +13,10 @@ export type CommunityIdentity = {
   iconUrl: string | null;
   /** Explicit null when Roblox provides no banner — never substituted with unrelated art. */
   bannerUrl: string | null;
+  /** Where bannerUrl came from: public Community page extraction, demo fixture, or none. */
+  bannerSource?: "community_page" | "demo" | "none" | undefined;
+  /** Up to 5 wide Community-page images (bannerUrl first) for future galleries. */
+  pageMediaUrls?: string[] | undefined;
   verified: boolean;
   description?: string | undefined;
   fetchedAt: number;
