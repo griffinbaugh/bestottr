@@ -84,7 +84,7 @@ describe("Experience edits", () => {
     const listing = getState().listings.find((l) => l.id === "castaway");
     if (!listing) throw new Error("Missing fixture");
     const original = { ...listing, experience: { placeId: "4920175538", name: "Coastline", creatorType: "User" as const, creatorName: "alexr_dev" } };
-    const result = editExperience(original, "you", { ...original, id: "changed", experience: { ...original.experience, placeId: "999" }, seller: { ...listing.seller, handle: "other" }, verified: { ownership: false, revenue: false, traffic: false }, gallery: images.slice(0, 1) });
+    const result = editExperience(original, "you", { ...original, id: "changed",  experience: { ...original.experience, placeId: "999" }, seller: { ...listing.seller, handle: "other" }, verified: { ownership: false, revenue: false, traffic: false }, gallery: images.slice(0, 1) } as Parameters<typeof editExperience>[2]);
     expect(result.experience).toEqual(original.experience);
     expect(result.id).toBe("castaway");
     expect(result.seller).toEqual(original.seller);
