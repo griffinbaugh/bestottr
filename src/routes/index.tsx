@@ -14,7 +14,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "bestottr — Buy and sell Roblox businesses and creator assets" },
-      { name: "description", content: "Verified Roblox experience listings, creator files, competitive auctions, escrowed deal rooms and managed transfers." },
+      { name: "description", content: "Verified Roblox experience listings, creator files, competitive auctions, protected funds and automatically verified transfers." },
       { property: "og:title", content: "bestottr — Buy and sell Roblox businesses and creator assets" },
       { property: "og:description", content: "Verified listings, creator files, competitive bidding, secure transactions and managed transfers." },
       { property: "og:type", content: "website" },
@@ -42,7 +42,7 @@ function Home() {
             Buy and sell Roblox businesses and creator assets.
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Verified experiences, scripts, maps and UI kits — with competitive auctions, escrowed funds and managed delivery.
+            Verified experiences, scripts, maps and UI kits — with competitive auctions, protected funds and automatic ownership verification.
           </p>
           <SearchBox
             value={q}
@@ -85,7 +85,7 @@ function Home() {
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:grid-cols-3 md:px-6">
           {[
             { icon: BadgeCheck, t: "Verify", d: "Sellers connect Roblox and paste their game link. We verify they own the experience — or own the group that does." },
-            { icon: FileSignature, t: "Close", d: "A private deal room handles the agreement, escrow and due diligence." },
+            { icon: FileSignature, t: "Close", d: "A private deal room locks the destination account, protects funds and verifies Roblox ownership automatically." },
             { icon: Workflow, t: "Transfer", d: "A guided checklist moves every asset. Funds release on buyer confirmation." },
           ].map(({ icon: I, t, d }) => (
             <div key={t} className="flex gap-3">

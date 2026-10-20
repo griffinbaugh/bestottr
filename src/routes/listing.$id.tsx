@@ -282,7 +282,7 @@ function FileListing({ l, ended, mine, watched, deal, goDeal }: {
 
           <Section title="Delivery & buyer protection">
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />Payment is held in escrow until you confirm successful download.</li>
+              <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />Payment is processed securely and access is granted instantly.</li>
               <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />File access is granted automatically the instant your payment or auction win is confirmed.</li>
               <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />Your download is always available from your buyer dashboard.</li>
             </ul>
@@ -337,7 +337,7 @@ function FileListing({ l, ended, mine, watched, deal, goDeal }: {
                 {soldOut ? (
                   <Button size="lg" className="mt-4 w-full" disabled>Sold out</Button>
                 ) : purchasable && (
-                  <Button size="lg" className="mt-4 w-full" onClick={buy}><Download className="h-4 w-4" />Buy now · instant escrow</Button>
+                  <Button size="lg" className="mt-4 w-full" onClick={buy}><Download className="h-4 w-4" />Buy now · instant access</Button>
                 )}
               </>
             )}

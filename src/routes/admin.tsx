@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Badge, Button, Empty, PageHeader, Tabs } from "@/components/sb/ui";
 import type { AdminItem } from "@/lib/data";
-import { STAGES } from "@/lib/data";
+import { dealStatus } from "@/lib/deal-status";
 import { usd } from "@/lib/format";
 import { actions, useAppState } from "@/lib/store";
 
