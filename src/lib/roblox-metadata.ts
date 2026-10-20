@@ -21,7 +21,7 @@ export async function fetchRobloxMetadata(placeId: string, fallback: VerifiedExp
     const currentName = details.status === "fulfilled" ? details.value.data?.[0]?.name : undefined;
     const unavailable = typeof currentName === "string" && /\[.*unavailable.*\]/i.test(currentName);
     if (currentName && !unavailable) {
-      result.name = details.value.data[0].name;
+      result.name = currentName;
       result.live = true;
     }
     if (thumbs.status === "fulfilled" && !unavailable) {

@@ -61,6 +61,8 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
   const [identity, setIdentity] = useState(editing?.experience);
   const [verr, setVerr] = useState<VerifyFailure | null>(null);
   const [d, setD] = useState({ title: "", tagline: "", description: "", rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 1000000, reserve: 1500000, buyNow: 2500000, endMode: "duration" as EndMode, days: 7, endAtLocal: defaultEndLocal(), assets: ASSETS.slice(0, 5), tags: [] as string[], ...(editing ? { title: editing.title, tagline: editing.tagline, description: editing.description, rev: editing.monthlyRevenue, profit: editing.monthlyProfit, format: editing.format, start: Math.round(editing.startingBid * 100), reserve: Math.round((editing.reserve ?? 0) * 100), buyNow: Math.round((editing.buyNow ?? 0) * 100), endMode: "datetime" as EndMode, endAtLocal: toLocalInputValue(editing.endsAt), assets: [...editing.assets], tags: [...(editing.tags ?? [])] } : {}) });
+  const [extra, setExtra] = useState({ genre: editing?.genre ?? "", risks: editing?.risks.join("\n") ?? "", monthlyVisits: editing?.monthlyVisits ?? 0, ccu: editing?.ccu ?? 0, favorites: editing?.favorites ?? 0, ageMonths: editing?.ageMonths ?? 0, monetization: editing?.monetization ?? [] });
+  const extraUp = (p: Partial<typeof extra>) => setExtra((x) => ({ ...x, ...p }));
   const up = (p: Partial<typeof d>) => setD((x) => ({ ...x, ...p }));
 
   // File listing state
@@ -133,7 +135,7 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
       const unchangedEnd = d.endAtLocal === toLocalInputValue(editing.endsAt) && d.endMode === "datetime";
       const end = validateAuctionEnd(d.endMode, d.days, d.endAtLocal);
       if (d.format === "auction" && !unchangedEnd && !end.ok) { toast.error(end.error); setStep(6); return; }
-      const result = actions.updateExperience(editing.id, { ...editing, title: d.title, tagline: d.tagline, description: d.description, tags: d.tags, gallery, monthlyRevenue: d.rev, monthlyProfit: d.profit, format: d.format, startingBid: centsToDollars(d.start), reserve: d.format === "auction" ? centsToDollars(d.reserve) : undefined, buyNow: centsToDollars(d.buyNow), endsAt: d.format === "auction" && !unchangedEnd ? (end.endsAt ?? editing.endsAt) : editing.endsAt, assets: d.assets });
+      const result = actions.updateExperience(editing.id, { ...editing, ...extra, risks: extra.risks.split("\n").map((x) => x.trim()).filter(Boolean), title: d.title, tagline: d.tagline, description: d.description, tags: d.tags, gallery, monthlyRevenue: d.rev, monthlyProfit: d.profit, format: d.format, startingBid: centsToDollars(d.start), reserve: d.format === "auction" ? centsToDollars(d.reserve) : undefined, buyNow: centsToDollars(d.buyNow), endsAt: d.format === "auction" && !unchangedEnd ? (end.endsAt ?? editing.endsAt) : editing.endsAt, assets: d.assets });
       if (!result.ok) { toast.error(result.error); return; }
       toast.success("Listing changes saved");
       void nav({ to: "/listing/$id", params: { id: editing.id } });
@@ -303,14 +305,20 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
         {kind === "experience" && step === 3 && <GalleryEditor title={d.title} onTitleChange={(title) => up({ title })} images={gallery} onChange={setGallery} />}
         {kind === "experience" && step === 4 && <div className="space-y-4">
           <F label="Title"><input className="field" value={d.title} onChange={(e) => up({ title: e.target.value })} /></F>
+          {editing && <F label="Genre"><input className="field" value={extra.genre} onChange={(e) => extraUp({ genre: e.target.value })} /></F>}
           <F label="Tagline"><input className="field" value={d.tagline} onChange={(e) => up({ tagline: e.target.value })} /></F>
           <F label="Description"><textarea className="field h-28 py-2" value={d.description} onChange={(e) => up({ description: e.target.value })} /></F>
+          {editing && <F label="Risks & notes (one per line)"><textarea className="field h-24 py-2" value={extra.risks} onChange={(e) => extraUp({ risks: e.target.value })} /></F>}
           <TagPicker value={d.tags} onChange={(tags) => up({ tags })} suggested={suggestTags({ genre: verified?.exp.genre, title: d.title, tagline: d.tagline, description: d.description })} />
         </div>}
         {kind === "experience" && step === 5 && <div className="grid gap-4 sm:grid-cols-2">
-          <p className="text-sm text-brand sm:col-span-2">Pre-filled from verified Roblox analytics.</p>
+          <p className="text-sm text-brand sm:col-span-2">{editing ? "Current saved financials" : "Pre-filled from verified Roblox analytics."}</p>
           <F label="Monthly revenue (USD)"><input className="field num" inputMode="numeric" value={d.rev} onChange={(e) => up({ rev: Number(e.target.value.replace(/\D/g, "")) })} /></F>
           <F label="Monthly profit (USD)"><input className="field num" inputMode="numeric" value={d.profit} onChange={(e) => up({ profit: Number(e.target.value.replace(/\D/g, "")) })} /></F>
+        </div>}
+        {kind === "experience" && step === 5 && editing && <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {([['monthlyVisits', 'Monthly visits'], ['ccu', 'Average CCU'], ['favorites', 'Favorites'], ['ageMonths', 'Age (months)']] as const).map(([key, label]) => <F key={key} label={label}><input className="field num" inputMode="numeric" value={extra[key]} onChange={(e) => extraUp({ [key]: Number(e.target.value.replace(/\D/g, "")) })} /></F>)}
+          <div className="space-y-3 sm:col-span-2"><h2 className="text-sm font-medium">Monetization breakdown</h2>{extra.monetization.map((m, n) => <div key={n} className="grid grid-cols-[1fr_90px] gap-2"><input aria-label={`Revenue source ${n + 1}`} className="field" value={m.label} onChange={(e) => extraUp({ monetization: extra.monetization.map((x, i) => i === n ? { ...x, label: e.target.value } : x) })} /><input aria-label={`Revenue percentage ${n + 1}`} className="field num" type="number" min="0" max="100" value={m.pct} onChange={(e) => extraUp({ monetization: extra.monetization.map((x, i) => i === n ? { ...x, pct: Math.max(0, Math.min(100, Number(e.target.value))) } : x) })} /></div>)}</div>
         </div>}
         {kind === "experience" && step === 6 && <SaleFormat d={d} up={up} showInventory={false} />}
         {kind === "experience" && step === 7 && <div className="grid gap-2 sm:grid-cols-2">{ASSETS.map((a) => {
