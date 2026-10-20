@@ -3,10 +3,16 @@ import { useSyncExternalStore } from "react";
 import { DD_ITEMS, FILE_STAGES, ME, TRANSFER_ITEMS, seedState, type AdminItem, type Deal, type Listing, type State } from "./data";
 import { applyPurchase, isSoldOut } from "./inventory";
 import { buyerPremium, minNextBid } from "./pricing";
-import { DEMO_USER_ID, DEMO_USERNAME } from "./roblox";
+import { DEMO_USER_ID, DEMO_USERNAME, findDemoProfile, profileUrlFor } from "./roblox";
+import { assetFromListing, initialWorldEntry, observeDemo, type DemoWorldEntry } from "./roblox-ownership";
+import {
+  applyCheck, canCheckNow, cancelTransfer, chooseTarget, confirmTarget, createTransfer, fundTransfer, markTransferStarted,
+  requestExtension, tick, MONITORED, type CheckOutcome, type ExperienceTransfer, type Party, type StepResult, type TargetAccount,
+} from "./transfer";
+import { lookupLiveOwnership } from "./roblox-transfer.functions";
 
 const KEY = "bestottr-demo-v2";
-const initial = seedState();
+const initial = normalizeState(seedState(), Date.now());
 let state: State = initial;
 const listeners = new Set<() => void>();
 
@@ -28,6 +34,7 @@ export function hydrateStore() {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       state = JSON.parse(raw) as State;
+      state = normalizeState(state, Date.now());
       // Migrate staged file deals from the old delivery flow: access is now granted instantly.
       state = {
         ...state,
@@ -69,7 +76,7 @@ const log = (d: Deal, text: string): Deal => ({ ...d, log: [{ at: Date.now(), te
 
 export const actions = {
   reset() {
-    const fresh = seedState();
+    const fresh = normalizeState(seedState(), Date.now());
     set(() => fresh);
   },
   toggleWatch(id: string) {
@@ -116,6 +123,7 @@ export const actions = {
       delivery: { released: false, confirmed: false },
       log: [{ at: Date.now(), text: `Deal room opened at ${"$" + price.toLocaleString("en-US")}` }],
       createdAt: Date.now(),
+      ...(l.kind === "experience" ? { acquisition: createTransfer(id, assetFromListing(l), price + buyerPremium(price), Date.now()) } : {}),
     };
     set((s) => ({
       ...patchListing(s, listingId, (x) => ({ ...x, status: "ended", endsAt: Math.min(x.endsAt, Date.now()) })),
@@ -202,44 +210,58 @@ export const actions = {
     }
     return actions.createDeal(listingId, price);
   },
-  signAgreement(dealId: string, party: "buyer" | "seller") {
-    patchDeal(dealId, (d) => log({ ...d, agreement: { ...d.agreement, [party]: true } }, `Agreement signed by ${party}`));
+  /* ---------- Experience acquisition (money moves only via the transfer engine) ---------- */
+  selectTarget(dealId: string, target: TargetAccount) { return stepAcq(dealId, (t, now) => chooseTarget(t, target, now)); },
+  confirmTarget(dealId: string) { return stepAcq(dealId, (t, now) => confirmTarget(t, now)); },
+  /** Demo payment: the mock provider places a hold. */
+  fundExperienceDeal(dealId: string) { return stepAcq(dealId, (t, now) => fundTransfer(t, now)); },
+  /** Status-only claim; never releases payment. */
+  sellerMarkTransferStarted(dealId: string) { return stepAcq(dealId, (t, now) => markTransferStarted(t, now)); },
+  cancelExperienceDeal(dealId: string, by: Party) { return stepAcq(dealId, (t, now) => cancelTransfer(t, by, now)); },
+  requestTransferExtension(dealId: string, by: Party) { return stepAcq(dealId, (t, now) => requestExtension(t, by, now)); },
+  /** "Check now": requests a fresh observation from the ownership source; callers cannot supply results. */
+  async runOwnershipCheck(dealId: string): Promise<{ ok: boolean; error?: string }> {
+    const t = state.deals.find((d) => d.id === dealId)?.acquisition;
+    const now = Date.now();
+    if (!t || !canCheckNow(t, now)) return { ok: false, error: "Please wait 30 seconds between checks." };
+    stepAcq(dealId, (x) => ({ ok: true, t: { ...x, verification: { ...x.verification, lastManualCheckAt: now } } }));
+    const outcome = await observe(t);
+    return stepAcq(dealId, (x, n) => applyCheck(x, outcome, n));
   },
-  fund(dealId: string) {
-    patchDeal(dealId, (d) => log({ ...d, funded: true }, `Buyer funded escrow ($${(d.price + d.fee).toLocaleString("en-US")})`));
+  /**
+   * Monitor tick over all active acquisitions. DEMO: driven by a client interval
+   * using persisted nextCheckAt/expiresAt so reloads recover. PRODUCTION: run this
+   * same engine from a server scheduler/worker with a row lock per deal.
+   */
+  runMonitorTick() {
+    for (const d of state.deals) {
+      const t = d.acquisition;
+      if (!t || !(MONITORED.includes(t.state) || t.state === "payout_releasing" || t.state === "refunding")) continue;
+      if (t.asset.demo) stepAcq(d.id, (x, now) => tick(x, now, () => observeDemo(state.robloxWorld ?? {}, x.asset, now)));
+      else if (t.verification.nextCheckAt !== null && Date.now() >= t.verification.nextCheckAt) {
+        void observe(t).then((o) => stepAcq(d.id, (x, now) => tick(x, now, () => o)));
+      } else stepAcq(d.id, (x, now) => tick(x, now, () => ({ error: "not due", checkedAt: now })));
+    }
   },
-  toggle(dealId: string, group: "dd" | "transfer" | "received", key: string) {
-    patchDeal(dealId, (d) => ({ ...d, [group]: { ...d[group], [key]: !d[group][key] } }));
-  },
-  advance(dealId: string) {
-    const d = state.deals.find((x) => x.id === dealId);
-    if (!d || !stageDone(d)) return;
-    const last = d.kind === "file" ? FILE_STAGES.length - 1 : 5;
-    const next = Math.min(last, d.stage + 1);
-    set((s) => {
-      let n: State = {
-        ...s,
-        deals: s.deals.map((x) => (x.id === dealId ? log({ ...x, stage: next }, next === last ? "Transaction complete — funds released to seller" : `Advanced to stage ${next + 1}`) : x)),
-      };
-      if (next === last) n = patchListing(n, d.listingId, (l) => ({ ...l, status: "sold" }));
-      return n;
-    });
-  },
-  autoComplete(dealId: string) {
-    const d = state.deals.find((x) => x.id === dealId);
-    if (!d) return;
-    const all = (items: { id: string }[]) => Object.fromEntries(items.map((i) => [i.id, true]));
-    patchDeal(dealId, (x) => {
-      if (x.kind === "file") return x; // file deals are fulfilled instantly — nothing to complete
-      switch (x.stage) {
-        case 0: return x.agreement.buyer && x.agreement.seller ? x : log({ ...x, agreement: { buyer: true, seller: true } }, "Demo: both parties signed");
-        case 1: return x.funded ? x : log({ ...x, funded: true }, "Demo: escrow funded");
-        case 2: return DD_ITEMS.every((i) => x.dd[i.id]) ? x : log({ ...x, dd: all(DD_ITEMS) }, "Demo: due diligence completed");
-        case 3: return TRANSFER_ITEMS.every((i) => x.transfer[i.id]) ? x : log({ ...x, transfer: all(TRANSFER_ITEMS) }, "Demo: seller completed all transfer items");
-        case 4: return TRANSFER_ITEMS.every((i) => x.received[i.id]) ? x : log({ ...x, received: all(TRANSFER_ITEMS) }, "Demo: buyer confirmed receipt of all items");
-        default: return x;
-      }
-    });
+  /** DEV/DEMO ONLY: mutate the simulated Roblox world or clock for a demo deal. */
+  demoSimulate(dealId: string, kind: "target" | "wrong_user" | "group_admin_only" | "outage" | "restore" | "expire") {
+    const t = state.deals.find((d) => d.id === dealId)?.acquisition;
+    if (!t || !t.asset.demo) return;
+    if (kind === "expire") {
+      stepAcq(dealId, (x, now) => ({ ok: true, t: { ...x, expiresAt: now, events: [{ at: now, kind: "demo", text: "DEMO: clock fast-forwarded to the deadline" }, ...x.events] } }));
+      actions.runMonitorTick();
+      return;
+    }
+    const cur = state.robloxWorld?.[t.asset.universeId] ?? initialWorldEntry(t.asset);
+    const target = t.target?.userId ?? "0";
+    const next: DemoWorldEntry =
+      kind === "outage" ? { ...cur, outage: true }
+      : kind === "restore" ? { ...cur, outage: false }
+      : kind === "group_admin_only" ? { ...cur } // buyer gets admin rank; owner unchanged — roles are not observable ownership
+      : t.asset.mode === "group" ? { ...cur, groupOwnerId: kind === "target" ? target : "31337001" }
+      : { ...cur, creatorId: kind === "target" ? target : "31337001" };
+    set((s) => ({ ...s, robloxWorld: { ...(s.robloxWorld ?? {}), [t.asset.universeId]: next } }));
+    stepAcq(dealId, (x, now) => ({ ok: true, t: { ...x, verification: { ...x.verification, nextCheckAt: now }, events: [{ at: now, kind: "demo", text: `DEMO: simulated Roblox state — ${kind.replace(/_/g, " ")}` }, ...x.events] } }));
   },
   connectRoblox() {
     set((s) => ({ ...s, roblox: { connected: true, username: DEMO_USERNAME, userId: DEMO_USER_ID } }));
@@ -270,22 +292,49 @@ export const actions = {
   },
 };
 
-export function stageDone(d: Deal) {
-  const every = (r: Record<string, boolean>) => Object.values(r).every(Boolean);
-  if (d.kind === "file") {
-    switch (d.stage) {
-      case 0: return d.funded;
-      case 1: return d.delivery.released;
-      case 2: return d.delivery.confirmed;
-      default: return false;
-    }
+
+async function observe(t: ExperienceTransfer): Promise<CheckOutcome> {
+  const now = Date.now();
+  if (t.asset.demo) return observeDemo(state.robloxWorld ?? {}, t.asset, now);
+  try {
+    return (await lookupLiveOwnership({ data: { universeId: t.asset.universeId, groupId: t.asset.groupId } })) as CheckOutcome;
+  } catch {
+    return { error: "lookup failed", checkedAt: now };
   }
-  switch (d.stage) {
-    case 0: return d.agreement.buyer && d.agreement.seller;
-    case 1: return d.funded;
-    case 2: return every(d.dd);
-    case 3: return every(d.transfer);
-    case 4: return every(d.received);
-    default: return false;
+}
+
+function stepAcq(dealId: string, fn: (t: ExperienceTransfer, now: number) => StepResult): { ok: boolean; error?: string } {
+  const d = state.deals.find((x) => x.id === dealId);
+  if (!d?.acquisition) return { ok: false, error: "Not an Experience acquisition." };
+  const r = fn(d.acquisition, Date.now());
+  if (r.t !== d.acquisition) {
+    const t = r.t;
+    set((s) => {
+      let n: State = { ...s, deals: s.deals.map((x) => (x.id === dealId ? { ...x, acquisition: t, funded: t.payment.status !== "none" } : x)) };
+      if (t.state === "completed") n = patchListing(n, d.listingId, (l) => ({ ...l, status: "sold" }));
+      return n;
+    });
   }
+  return r.error ? { ok: r.ok, error: r.error } : { ok: r.ok };
+}
+
+const H = 3600_000;
+/** Attach acquisitions to Experience deals created before the automated flow (seed + saved state). */
+export function normalizeState(s: State, now: number): State {
+  const deals = s.deals.map((d) => {
+    if (d.kind !== "experience" || d.acquisition) return d;
+    const l = s.listings.find((x) => x.id === d.listingId);
+    if (!l) return d;
+    let t = createTransfer(d.id, assetFromListing(l), d.price + d.fee, d.createdAt);
+    if (!d.funded) return { ...d, acquisition: t };
+    const p = d.buyer === ME ? findDemoProfile(DEMO_USER_ID)! : findDemoProfile("90412277")!;
+    const fundedAt = now - Math.min(50 * H, Math.max(0, now - d.createdAt));
+    t = chooseTarget(t, { ...p, profileUrl: profileUrlFor(p.userId), source: "profile_url" }, fundedAt).t;
+    t = confirmTarget(t, fundedAt).t;
+    t = fundTransfer(t, fundedAt).t;
+    if (d.stage >= 3) t = markTransferStarted(t, fundedAt + H).t;
+    t = { ...t, verification: { ...t.verification, nextCheckAt: now }, events: [{ at: now, kind: "migrated", text: "Deal moved to automated ownership verification" }, ...t.events] };
+    return { ...d, acquisition: t };
+  });
+  return { ...s, deals };
 }
