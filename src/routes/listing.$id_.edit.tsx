@@ -23,6 +23,6 @@ function EditPage() {
   const hydrated = useHydrated();
   const listing = s.listings.find((l) => l.id === id);
   if (!hydrated) return <div className="mx-auto max-w-4xl px-4 py-10 text-muted-foreground">Loading listing…</div>;
-  if (!listing || listing.kind !== "experience" || listing.seller.handle !== ME) return <div className="mx-auto max-w-4xl px-4 py-10"><Empty title="Listing unavailable for editing" body="You can only edit your own Experience listings." action={<Link to="/seller" className={buttonVariants({ variant: "outline" })}>Back to selling</Link>} /></div>;
+  if (!listing || listing.kind === "file" || listing.seller.handle !== ME) return <div className="mx-auto max-w-4xl px-4 py-10"><Empty title="Listing unavailable for editing" body="You can only edit your own Experience and Community listings." action={<Link to="/seller" className={buttonVariants({ variant: "outline" })}>Back to selling</Link>} /></div>;
   return <Sell key={listing.id} editing={listing} />;
 }

@@ -1,6 +1,7 @@
 import type { ExperienceIdentity, GalleryImage } from "./gallery";
 import type { ExperienceTransfer } from "./transfer";
 import type { DemoWorld } from "./roblox-ownership";
+import type { CommunityIdentity } from "./community";
 export const ME = "you";
 export const ME_NAME = "Alex Rivera";
 
@@ -13,9 +14,13 @@ export type Seller = {
   joined: string;
   verified: boolean;
   responseTime: string;
+  /** Public Roblox identity (numeric ID is immutable). */
+  robloxUserId?: string | undefined;
+  robloxUsername?: string | undefined;
+  bio?: string | undefined;
 };
 export type ListingStatus = "live" | "ended" | "sold" | "review" | "rejected";
-export type ListingKind = "experience" | "file";
+export type ListingKind = "experience" | "community" | "file";
 
 export const FILE_CATEGORIES = ["Scripts", "Systems", "Models", "UI Kits", "Maps", "Vehicles", "Animations", "Audio", "Plugins", "Templates", "Other"] as const;
 export type FileCategory = (typeof FILE_CATEGORIES)[number];
@@ -46,6 +51,10 @@ export type Listing = {
   image: string;
   gallery?: GalleryImage[] | undefined;
   experience?: ExperienceIdentity | undefined;
+  /** Community listings only: immutable verified Roblox Community identity + metadata snapshot. */
+  community?: CommunityIdentity | undefined;
+  /** false = seller chose not to provide revenue/profit (numbers are ignored). Undefined = legacy, treated as provided. */
+  financialsProvided?: boolean | undefined;
   format: "auction" | "buy_now";
   startingBid: number;
   currentBid: number;
@@ -87,7 +96,7 @@ export type Deal = {
   delivery: { released: boolean; confirmed: boolean };
   log: { at: number; text: string }[];
   createdAt: number;
-  /** Experience deals only: automated acquisition transfer (target lock, protected funds, verification). */
+  /** Experience and Community deals: automated acquisition transfer (target lock, protected funds, verification). */
   acquisition?: ExperienceTransfer | undefined;
 };
 
@@ -143,15 +152,15 @@ function bids(base: number, list: [string, number, number][]): Bid[] {
   return list.map(([bidder, amount, hoursAgo], i) => ({ id: `b${i}`, bidder, amount, at: base - hoursAgo * H }));
 }
 
-const sellers = {
-  brickforge: { handle: "brickforge", name: "Brickforge Studios", rating: 4.9, sales: 7, joined: "2019", verified: true, responseTime: "< 2h" },
-  hollow: { handle: "hollowlight", name: "Hollowlight Games", rating: 4.8, sales: 3, joined: "2020", verified: true, responseTime: "< 6h" },
+export const SELLERS = {
+  brickforge: { handle: "brickforge", name: "Brickforge Studios", rating: 4.9, sales: 7, joined: "2019", verified: true, responseTime: "< 2h", robloxUserId: "61204417", robloxUsername: "brickforge_rbx", bio: "Independent studio building tycoons and simulators since 2019." },
+  hollow: { handle: "hollowlight", name: "Hollowlight Games", rating: 4.8, sales: 3, joined: "2020", verified: true, responseTime: "< 6h", robloxUserId: "73019952", robloxUsername: "hollowlight" },
   skyline: { handle: "skylinedev", name: "Skyline Dev Co.", rating: 4.6, sales: 2, joined: "2021", verified: true, responseTime: "< 12h" },
-  kenzo: { handle: "kenzo_labs", name: "Kenzo Labs", rating: 5.0, sales: 11, joined: "2018", verified: true, responseTime: "< 1h" },
-  apex: { handle: "apexmotion", name: "Apex Motion", rating: 4.7, sales: 4, joined: "2020", verified: true, responseTime: "< 4h" },
+  kenzo: { handle: "kenzo_labs", name: "Kenzo Labs", rating: 5.0, sales: 11, joined: "2018", verified: true, responseTime: "< 1h", robloxUserId: "90412277", robloxUsername: "northpeak_rbx", bio: "Systems engineering studio. Trusted seller with 11 completed transfers." },
+  apex: { handle: "apexmotion", name: "Apex Motion", rating: 4.7, sales: 4, joined: "2020", verified: true, responseTime: "< 4h", robloxUserId: "88213045", robloxUsername: "apex_motion" },
   maple: { handle: "maplecollective", name: "Maple Collective", rating: 4.5, sales: 1, joined: "2022", verified: true, responseTime: "< 24h" },
   bastion: { handle: "rook_dev", name: "Rook", rating: 4.2, sales: 0, joined: "2023", verified: false, responseTime: "< 24h" },
-  me: { handle: ME, name: ME_NAME, rating: 4.9, sales: 2, joined: "2020", verified: true, responseTime: "< 1h" },
+  me: { handle: ME, name: ME_NAME, rating: 4.9, sales: 2, joined: "2020", verified: true, responseTime: "< 1h", robloxUserId: "24816309", robloxUsername: "alexr_dev" },
   neon: { handle: "voltkart", name: "VoltKart Team", rating: 0, sales: 0, joined: "2024", verified: false, responseTime: "—" },
 } satisfies Record<string, Seller>;
 
@@ -182,7 +191,7 @@ export function seedState(): State {
       { label: "Developer products", pct: 30 },
       { label: "Premium payouts", pct: 15 },
     ],
-    seller: sellers.brickforge,
+    seller: SELLERS.brickforge,
     assets: stdAssets,
     risks: [],
     verified: { ownership: true, revenue: true, traffic: true },
@@ -227,7 +236,7 @@ export function seedState(): State {
         { label: "Premium payouts", pct: 12 },
         { label: "Immersive ads", pct: 6 },
       ],
-      seller: sellers.brickforge,
+      seller: SELLERS.brickforge,
       assets: [...stdAssets, "Roblox group (412k members)", "Analytics dashboards", "YouTube channel (38k)"],
       risks: ["Revenue is ~40% concentrated in weekend events", "Two contractor scripters — IP assignments on file"],
     }),
@@ -249,7 +258,7 @@ export function seedState(): State {
       ccu: 4100,
       favorites: 410000,
       ageMonths: 14,
-      seller: sellers.hollow,
+      seller: SELLERS.hollow,
       risks: ["Traffic correlates with external virality; 30-day trend -8%"],
     }),
     L({
@@ -270,7 +279,7 @@ export function seedState(): State {
       ccu: 420,
       favorites: 61000,
       ageMonths: 31,
-      seller: sellers.skyline,
+      seller: SELLERS.skyline,
       hasGroup: false,
       assets: ["Experience & all places", "Full source code", "Game icon & thumbnails"],
     }),
@@ -299,7 +308,7 @@ export function seedState(): State {
         { label: "Game passes", pct: 18 },
         { label: "Premium payouts", pct: 8 },
       ],
-      seller: sellers.kenzo,
+      seller: SELLERS.kenzo,
       assets: [...stdAssets, "Roblox group (1.1M members)", "Live-ops runbook", "60-day transition support"],
       risks: ["Ongoing contractor costs of $4.2k/mo included in profit"],
     }),
@@ -321,7 +330,7 @@ export function seedState(): State {
       ccu: 2300,
       favorites: 240000,
       ageMonths: 9,
-      seller: sellers.apex,
+      seller: SELLERS.apex,
     }),
     L({
       id: "maple-grove",
@@ -341,7 +350,7 @@ export function seedState(): State {
       ccu: 3600,
       favorites: 520000,
       ageMonths: 27,
-      seller: sellers.maple,
+      seller: SELLERS.maple,
     }),
     L({
       id: "bastion-td",
@@ -360,7 +369,7 @@ export function seedState(): State {
       ccu: 1100,
       favorites: 95000,
       ageMonths: 6,
-      seller: sellers.bastion,
+      seller: SELLERS.bastion,
       verified: { ownership: true, revenue: false, traffic: true },
       risks: ["Revenue not yet verified via Roblox analytics", "New seller with no prior sales", "Young experience (6 months)"],
     }),
@@ -383,7 +392,7 @@ export function seedState(): State {
       ccu: 260,
       favorites: 28000,
       ageMonths: 15,
-      seller: sellers.me,
+      seller: SELLERS.me,
       hasGroup: false,
     }),
     L({
@@ -404,7 +413,7 @@ export function seedState(): State {
       ccu: 700,
       favorites: 70000,
       ageMonths: 20,
-      seller: sellers.me,
+      seller: SELLERS.me,
     }),
     L({
       id: "volt-kart",
@@ -420,8 +429,67 @@ export function seedState(): State {
       monthlyRevenue: 1900,
       monthlyProfit: 1600,
       ccu: 300,
-      seller: sellers.neon,
+      seller: SELLERS.neon,
       verified: { ownership: true, revenue: false, traffic: false },
+    }),
+    // ---- Roblox Community listings ----
+    L({
+      id: "community-forgeline",
+      kind: "community",
+      title: "Forgeline Studios Community",
+      tagline: "Verified 86k-member studio Community with an engaged fan base",
+      description: "A Roblox-verified studio Community with active announcements, a moderated wall and a long-standing player base. Ideal for a studio wanting an established audience for new launches.",
+      genre: "Community",
+      image: "c1",
+      startingBid: 0,
+      currentBid: 4200,
+      endsAt: now + 30 * H,
+      bids: bids(now, [["northpeak", 3000, 20], ["m.chen", 4200, 4]]).reverse(),
+      financialsProvided: false,
+      monthlyRevenue: 0, monthlyProfit: 0, monthlyVisits: 0, ccu: 0, favorites: 0, ageMonths: 38, monetization: [],
+      seller: SELLERS.kenzo,
+      assets: ["Community ownership", "Community icon & branding"],
+      hasGroup: true,
+      tags: ["Studio", "Verified"],
+      community: { groupId: "48120931", name: "Forgeline Studios", ownerUserId: "90412277", ownerUsername: "northpeak_rbx", memberCount: 86500, iconUrl: "c1", bannerUrl: "cb1", verified: true, fetchedAt: now - 2 * H, source: "demo" },
+    }),
+    L({
+      id: "community-stairway",
+      kind: "community",
+      title: "Stairway Builders Guild",
+      tagline: "Obby creator Community — 21k members, no banner",
+      description: "Creator Community for obby builders with weekly build contests.",
+      genre: "Community",
+      image: "c2",
+      format: "buy_now",
+      startingBid: 2500,
+      currentBid: 2500,
+      buyNow: 2500,
+      endsAt: now + 14 * 24 * H,
+      financialsProvided: true,
+      monthlyRevenue: 320, monthlyProfit: 300, monthlyVisits: 0, ccu: 0, favorites: 0, ageMonths: 20, monetization: [],
+      seller: SELLERS.apex,
+      assets: ["Community ownership"],
+      hasGroup: true,
+      community: { groupId: "48120932", name: "Stairway Builders Guild", ownerUserId: "88213045", ownerUsername: "apex_motion", memberCount: 21400, iconUrl: "c2", bannerUrl: null, verified: false, fetchedAt: now - 5 * H, source: "demo" },
+    }),
+    L({
+      id: "community-northwind",
+      kind: "community",
+      title: "Northwind Collective",
+      tagline: "Your builders Community — listed by you (demo)",
+      description: "Builders and scripters collective. Listed by you (demo).",
+      genre: "Community",
+      image: "c3",
+      startingBid: 0,
+      currentBid: 0,
+      endsAt: now + 60 * H,
+      financialsProvided: false,
+      monthlyRevenue: 0, monthlyProfit: 0, monthlyVisits: 0, ccu: 0, favorites: 0, ageMonths: 14, monetization: [],
+      seller: SELLERS.me,
+      assets: ["Community ownership"],
+      hasGroup: true,
+      community: { groupId: "3310003", name: "Northwind Collective", ownerUserId: "24816309", ownerUsername: "alexr_dev", memberCount: 12840, iconUrl: "c3", bannerUrl: null, verified: false, fetchedAt: now - 1 * H, source: "demo" },
     }),
     // ---- Creator file listings ----
     L({
@@ -443,7 +511,7 @@ export function seedState(): State {
         ["northpeak", 1900, 9],
         ["kairo_cap", 2450, 2],
       ]).reverse(),
-      seller: sellers.kenzo,
+      seller: SELLERS.kenzo,
       verified: { ownership: true, revenue: false, traffic: false },
       file: {
         fileName: "datastore-pro_v4.1.rbxm",
@@ -472,7 +540,7 @@ export function seedState(): State {
       currentBid: 89,
       buyNow: 89,
       endsAt: now + 30 * 24 * H,
-      seller: sellers.hollow,
+      seller: SELLERS.hollow,
       verified: { ownership: true, revenue: false, traffic: false },
       file: {
         fileName: "neon-ui-kit_v2.3.rbxm",
@@ -501,7 +569,7 @@ export function seedState(): State {
       currentBid: 149,
       buyNow: 149,
       endsAt: now + 21 * 24 * H,
-      seller: sellers.apex,
+      seller: SELLERS.apex,
       verified: { ownership: true, revenue: false, traffic: false },
       file: {
         fileName: "drift-cars-pack_v1.6.zip",
@@ -530,7 +598,7 @@ export function seedState(): State {
       currentBid: 119,
       buyNow: 119,
       endsAt: now + 30 * 24 * H,
-      seller: sellers.maple,
+      seller: SELLERS.maple,
       verified: { ownership: true, revenue: false, traffic: false },
       file: {
         fileName: "island-bundle_v3.0.rbxm",
@@ -560,7 +628,7 @@ export function seedState(): State {
       buyNow: 79,
       endsAt: now + 10 * 24 * H,
       status: "sold",
-      seller: sellers.kenzo,
+      seller: SELLERS.kenzo,
       verified: { ownership: true, revenue: false, traffic: false },
       file: {
         fileName: "combat-anims_v1.2.rbxm",
@@ -589,7 +657,7 @@ export function seedState(): State {
       currentBid: 59,
       buyNow: 59,
       endsAt: now + 30 * 24 * H,
-      seller: sellers.skyline,
+      seller: SELLERS.skyline,
       verified: { ownership: true, revenue: false, traffic: false },
       file: {
         fileName: "epic-sounds_v5.0.zip",
@@ -658,3 +726,18 @@ export function seedState(): State {
     },
   };
 }
+
+/* ---------------- Seller reviews (seeded; shape supports real reviews later) ---------------- */
+export type Review = { id: string; seller: string; reviewer: string; rating: 1 | 2 | 3 | 4 | 5; at: number; text: string; listingTitle?: string | undefined };
+const D = 86400_000;
+const T0 = Date.UTC(2026, 8, 30);
+export const REVIEWS: Review[] = [
+  { id: "r1", seller: "brickforge", reviewer: "northpeak", rating: 5, at: T0 - 12 * D, text: "Clean handover, documentation was excellent and the transfer verified within an hour.", listingTitle: "Mine & Craft Tycoon" },
+  { id: "r2", seller: "brickforge", reviewer: "m.chen", rating: 5, at: T0 - 70 * D, text: "Responsive and honest about the numbers." },
+  { id: "r3", seller: "kenzo_labs", reviewer: "kairo_cap", rating: 5, at: T0 - 5 * D, text: "Best source package I've bought. Integration help after sale was great.", listingTitle: "DataStore Pro" },
+  { id: "r4", seller: "kenzo_labs", reviewer: "horizon_fund", rating: 4, at: T0 - 40 * D, text: "Smooth Community transfer; took a day longer than planned but within the window." },
+  { id: "r5", seller: "hollowlight", reviewer: "blocky_ventures", rating: 5, at: T0 - 22 * D, text: "Exactly as described." },
+  { id: "r6", seller: "apexmotion", reviewer: "m.chen", rating: 4, at: T0 - 33 * D, text: "Good vehicle pack, quick answers." },
+  { id: "r7", seller: "you", reviewer: "northpeak", rating: 5, at: T0 - 90 * D, text: "Pet Hatchery transfer was textbook.", listingTitle: "Pet Hatchery Simulator" },
+];
+export const reviewsFor = (handle: string) => REVIEWS.filter((r) => r.seller === handle).sort((a, b) => b.at - a.at);

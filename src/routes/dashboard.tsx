@@ -54,7 +54,7 @@ function Buyer() {
         {(tab === "won" || tab === "transactions") && (deals.length ? (
           <div className="grid gap-3">{deals.map((d) => (
             <Link key={d.id} to="/deal/$id" params={{ id: d.id }} className="surface lift flex items-center justify-between p-4">
-              <div><div className="font-medium">{title(d.listingId)}</div><div className="num text-sm text-muted-foreground">#{d.id} · {usd(d.price)} · {d.kind === "file" ? "File purchase" : "Experience transfer"}</div></div>
+              <div><div className="font-medium">{title(d.listingId)}</div><div className="num text-sm text-muted-foreground">#{d.id} · {usd(d.price)} · {d.kind === "file" ? "File purchase" : d.kind === "community" ? "Community transfer" : "Experience transfer"}</div></div>
               <Badge tone={dealStatus(d).tone}>{d.kind === "file" ? "Available · Download" : dealStatus(d).label}</Badge>
             </Link>))}</div>
         ) : <Empty title="No acquisitions yet" body="Win an auction or buy now to open a deal room." />)}

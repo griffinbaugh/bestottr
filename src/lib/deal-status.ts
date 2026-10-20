@@ -13,4 +13,4 @@ export function dealStatus(d: Deal): { label: string; tone: Tone } {
 }
 
 export const isDealCompleted = (d: Deal) => (d.kind === "file" ? true : d.acquisition ? d.acquisition.state === "completed" : d.stage === dealStages(d).length - 1);
-export const isFundsProtected = (d: Deal) => d.kind === "experience" && d.acquisition?.payment.status === "held";
+export const isFundsProtected = (d: Deal) => d.kind !== "file" && d.acquisition?.payment.status === "held";

@@ -15,6 +15,10 @@ function demoId(seed: string, len = 10): string {
 
 /** Immutable asset identity derived from the verified listing. */
 export function assetFromListing(l: Listing): AssetIdentity {
+  if (l.kind === "community" && l.community) {
+    const c = l.community;
+    return { placeId: "", universeId: `community:${c.groupId}`, groupId: c.groupId, mode: "community", originalOwnerId: c.ownerUserId, originalOwnerName: c.ownerUsername, demo: true };
+  }
   const fx = DEMO_EXPERIENCES.find((e) => e.placeId === l.experience?.placeId);
   const placeId = l.experience?.placeId ?? demoId(`${l.id}:place`);
   const universeId = l.experience?.universeId ?? fx?.universeId ?? demoId(`${l.id}:universe`);
@@ -36,7 +40,7 @@ export type DemoWorldEntry = { creatorType: "User" | "Group"; creatorId: string;
 export type DemoWorld = Record<string, DemoWorldEntry>;
 
 export const initialWorldEntry = (a: AssetIdentity): DemoWorldEntry =>
-  a.mode === "group"
+  a.mode !== "user"
     ? { creatorType: "Group", creatorId: a.groupId!, groupOwnerId: a.originalOwnerId, outage: false }
     : { creatorType: "User", creatorId: a.originalOwnerId, groupOwnerId: null, outage: false };
 

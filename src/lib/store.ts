@@ -1,4 +1,4 @@
-import { editExperience, type ExperienceChanges } from "./listing-edit";
+import { editCommunity, editExperience, type CommunityChanges, type ExperienceChanges } from "./listing-edit";
 import { useSyncExternalStore } from "react";
 import { DD_ITEMS, FILE_STAGES, ME, TRANSFER_ITEMS, seedState, type AdminItem, type Deal, type Listing, type State } from "./data";
 import { applyPurchase, isSoldOut } from "./inventory";
@@ -9,7 +9,7 @@ import {
   applyCheck, canCheckNow, cancelTransfer, chooseTarget, confirmTarget, createTransfer, fundTransfer, markTransferStarted,
   requestExtension, tick, MONITORED, type CheckOutcome, type ExperienceTransfer, type Party, type StepResult, type TargetAccount,
 } from "./transfer";
-import { lookupLiveOwnership } from "./roblox-transfer.functions";
+import { lookupLiveCommunityOwnership, lookupLiveOwnership } from "./roblox-transfer.functions";
 
 const KEY = "bestottr-demo-v2";
 const initial = normalizeState(seedState(), Date.now());
@@ -90,7 +90,7 @@ export const actions = {
     if (!l || l.status !== "live" || l.format !== "auction") return { ok: false, error: "This auction is not accepting bids." };
     if (l.endsAt < Date.now()) return { ok: false, error: "This auction has ended." };
     const min = minNextBid(l.currentBid, l.bids.length > 0, l.startingBid);
-    if (!Number.isFinite(amount) || amount < min) return { ok: false, error: `Minimum bid is $${min.toLocaleString("en-US")}.` };
+    if (!Number.isFinite(amount) || amount < Math.max(min, 1)) return { ok: false, error: `Minimum bid is $${min.toLocaleString("en-US")}.` };
     set((s) =>
       patchListing(s, id, (x) => ({
         ...x,
@@ -123,7 +123,7 @@ export const actions = {
       delivery: { released: false, confirmed: false },
       log: [{ at: Date.now(), text: `Deal room opened at ${"$" + price.toLocaleString("en-US")}` }],
       createdAt: Date.now(),
-      ...(l.kind === "experience" ? { acquisition: createTransfer(id, assetFromListing(l), price + buyerPremium(price), Date.now()) } : {}),
+      ...(l.kind !== "file" ? { acquisition: createTransfer(id, assetFromListing(l), price + buyerPremium(price), Date.now()) } : {}),
     };
     set((s) => ({
       ...patchListing(s, listingId, (x) => ({ ...x, status: "ended", endsAt: Math.min(x.endsAt, Date.now()) })),
@@ -258,7 +258,7 @@ export const actions = {
       kind === "outage" ? { ...cur, outage: true }
       : kind === "restore" ? { ...cur, outage: false }
       : kind === "group_admin_only" ? { ...cur } // buyer gets admin rank; owner unchanged — roles are not observable ownership
-      : t.asset.mode === "group" ? { ...cur, groupOwnerId: kind === "target" ? target : "31337001" }
+      : t.asset.mode !== "user" ? { ...cur, groupOwnerId: kind === "target" ? target : "31337001" }
       : { ...cur, creatorId: kind === "target" ? target : "31337001" };
     set((s) => ({ ...s, robloxWorld: { ...(s.robloxWorld ?? {}), [t.asset.universeId]: next } }));
     stepAcq(dealId, (x, now) => ({ ok: true, t: { ...x, verification: { ...x.verification, nextCheckAt: now }, events: [{ at: now, kind: "demo", text: `DEMO: simulated Roblox state — ${kind.replace(/_/g, " ")}` }, ...x.events] } }));
@@ -271,6 +271,15 @@ export const actions = {
   },
   publishListing(l: Listing) {
     set((s) => ({ ...s, listings: [l, ...s.listings] }));
+  },
+  updateCommunity(id: string, changes: CommunityChanges): { ok: boolean; error?: string } {
+    const listing = state.listings.find((l) => l.id === id);
+    if (!listing) return { ok: false, error: "Listing not found." };
+    try {
+      const edited = editCommunity(listing, ME, changes);
+      set((s) => patchListing(s, id, () => edited));
+      return { ok: true };
+    } catch (error) { return { ok: false, error: error instanceof Error ? error.message : "Couldn't save changes." }; }
   },
   updateExperience(id: string, changes: ExperienceChanges): { ok: boolean; error?: string } {
     const listing = state.listings.find((l) => l.id === id);
@@ -297,6 +306,7 @@ async function observe(t: ExperienceTransfer): Promise<CheckOutcome> {
   const now = Date.now();
   if (t.asset.demo) return observeDemo(state.robloxWorld ?? {}, t.asset, now);
   try {
+    if (t.asset.mode === "community") return (await lookupLiveCommunityOwnership({ data: { groupId: t.asset.groupId! } })) as CheckOutcome;
     return (await lookupLiveOwnership({ data: { universeId: t.asset.universeId, groupId: t.asset.groupId } })) as CheckOutcome;
   } catch {
     return { error: "lookup failed", checkedAt: now };

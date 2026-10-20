@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { BadgeCheck, Building2, Check, FileUp, Link2, ShieldX, Upload } from "lucide-react";
+import { BadgeCheck, Building2, Check, FileUp, Link2, Lock, ShieldX, Upload, Users } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { GalleryEditor } from "@/components/sb/GalleryEditor";
 import { ListingImage } from "@/components/sb/ListingImage";
@@ -13,7 +13,7 @@ import { Button, PageHeader } from "@/components/sb/ui";
 import { computeEndsAt, defaultEndLocal, formatAuctionEnd, localTimezone, toLocalInputValue, validateAuctionEnd, type EndMode } from "@/lib/auction-end";
 import { centsToDollars } from "@/lib/currency";
 import { FILE_CATEGORIES, ME, ME_NAME, type FileCategory, type FileMeta, type Listing } from "@/lib/data";
-import { usd, usdPrecise } from "@/lib/format";
+import { usdPrecise } from "@/lib/format";
 import { img } from "@/lib/images";
 import { TagPicker } from "@/components/sb/TagPicker";
 import { suggestTags } from "@/lib/tags";
@@ -21,6 +21,10 @@ import { DEMO_OWNED_URL, DEMO_URLS, VERIFY_ERRORS, verifyOwnership, type Verifie
 import { actions, useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import mark from "@/assets/bestottr-icon-white.png";
+import { COMMUNITY_ERRORS, DEMO_COMMUNITY_URLS, verifyCommunityOwnership, type CommunityIdentity, type CommunityVerifyFailure } from "@/lib/community";
+import { getLiveCommunityFacts } from "@/lib/roblox-live.functions";
+import { CommunityBanner, RobloxVerifiedBadge } from "@/components/sb/CommunityHero";
+import { SELLER_PROVIDED_NOTE, validateReserve } from "@/lib/financials";
 
 export const Route = createFileRoute("/sell")({
   head: () => ({
@@ -37,6 +41,7 @@ export const Route = createFileRoute("/sell")({
 });
 
 const EXP_STEPS = ["Listing type", "Connect Roblox", "Experience link", "Customize listing", "Details", "Financials", "Sale format", "Assets", "Review"];
+const COMMUNITY_STEPS = ["Listing type", "Connect Roblox", "Community link", "Customize listing", "Sale details", "Review"];
 const FILE_STEPS = ["Listing type", "File upload", "Details", "Sale setup", "License & rights", "Review"];
 const ASSETS = ["Experience & all places", "Full source code", "Private packages", "Roblox group", "Game icon & thumbnails", "Discord server", "Social accounts", "Analytics dashboards"];
 const DEMO_FILES = [
@@ -50,17 +55,21 @@ const meSeller = { handle: ME, name: ME_NAME, rating: 4.9, sales: 2, joined: "20
 export function Sell({ editing }: { editing?: Listing } = {}) {
   const s = useAppState();
   const nav = useNavigate();
-  const [kind, setKind] = useState<"experience" | "file" | null>(editing ? "experience" : null);
+  const [kind, setKind] = useState<"experience" | "community" | "file" | null>(editing ? (editing.kind === "community" ? "community" : "experience") : null);
   const [step, setStep] = useState(editing ? 3 : 0);
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState<{ exp: VerifiedExperience; via?: string | undefined } | null>(null);
   const metadata = useServerFn(getRobloxMetadata);
+  const communityFacts = useServerFn(getLiveCommunityFacts);
+  const [community, setCommunity] = useState<CommunityIdentity | null>(editing?.community ?? null);
+  const [curl, setCurl] = useState("");
+  const [cerr, setCerr] = useState<CommunityVerifyFailure | null>(null);
   const [gallery, setGallery] = useState<GalleryImage[]>(editing ? normalizeGallery(editing) : []);
   const [identity, setIdentity] = useState(editing?.experience);
   const [verr, setVerr] = useState<VerifyFailure | null>(null);
-  const [d, setD] = useState({ title: "", tagline: "", description: "", rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 1000000, reserve: 1500000, buyNow: 2500000, endMode: "duration" as EndMode, days: 7, endAtLocal: defaultEndLocal(), assets: ASSETS.slice(0, 5), tags: [] as string[], ...(editing ? { title: editing.title, tagline: editing.tagline, description: editing.description, rev: editing.monthlyRevenue, profit: editing.monthlyProfit, format: editing.format, start: Math.round(editing.startingBid * 100), reserve: Math.round((editing.reserve ?? 0) * 100), buyNow: Math.round((editing.buyNow ?? 0) * 100), endMode: "datetime" as EndMode, endAtLocal: toLocalInputValue(editing.endsAt), assets: [...editing.assets], tags: [...(editing.tags ?? [])] } : {}) });
+  const [d, setD] = useState({ title: "", tagline: "", description: "", provideRevenue: false, rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 0, useReserve: false, reserve: 0, buyNow: 0, endMode: "duration" as EndMode, days: 7, endAtLocal: defaultEndLocal(), assets: ASSETS.slice(0, 5), tags: [] as string[], ...(editing ? { title: editing.title, tagline: editing.tagline, description: editing.description, provideRevenue: editing.financialsProvided !== false, rev: editing.financialsProvided === false ? 0 : Math.round(editing.monthlyRevenue * 100), profit: editing.financialsProvided === false ? 0 : Math.round(editing.monthlyProfit * 100), format: editing.format, start: Math.round(editing.startingBid * 100), useReserve: editing.reserve !== undefined, reserve: Math.round((editing.reserve ?? 0) * 100), buyNow: Math.round((editing.buyNow ?? 0) * 100), endMode: "datetime" as EndMode, endAtLocal: toLocalInputValue(editing.endsAt), assets: [...editing.assets], tags: [...(editing.tags ?? [])] } : {}) });
   const [extra, setExtra] = useState({ genre: editing?.genre ?? "", risks: editing?.risks.join("\n") ?? "", monthlyVisits: editing?.monthlyVisits ?? 0, ccu: editing?.ccu ?? 0, favorites: editing?.favorites ?? 0, ageMonths: editing?.ageMonths ?? 0, monetization: editing?.monetization ?? [] });
   const extraUp = (p: Partial<typeof extra>) => setExtra((x) => ({ ...x, ...p }));
   const up = (p: Partial<typeof d>) => setD((x) => ({ ...x, ...p }));
@@ -76,19 +85,25 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
   const [uploading, setUploading] = useState(false);
   const fup = (p: Partial<typeof fd>) => setFd((x) => ({ ...x, ...p }));
 
-  const steps = kind === "file" ? FILE_STEPS : EXP_STEPS;
+  const steps = kind === "file" ? FILE_STEPS : kind === "community" ? COMMUNITY_STEPS : EXP_STEPS;
+  const reserveErr = d.format === "auction" ? validateReserve(d.useReserve, d.reserve, d.start) : null;
+  const unchangedEnd = !!editing && d.endMode === "datetime" && d.endAtLocal === toLocalInputValue(editing.endsAt);
   const now = useNow();
 
   const expEnd = validateAuctionEnd(d.endMode, d.days, d.endAtLocal, now ?? Date.now());
   const fileEnd = validateAuctionEnd(fd.endMode, fd.days, fd.endAtLocal, now ?? Date.now());
   const publishable = kind === "file"
     ? !!file && (fd.format !== "auction" || fileEnd.ok)
-    : (!!editing || (!!verified && s.roblox.connected)) && gallery.length > 0 && d.title.trim().length > 2 && (d.format !== "auction" || expEnd.ok || (!!editing && d.endAtLocal === toLocalInputValue(editing.endsAt)));
-  const expCanNext = [kind !== null, s.roblox.connected, !!verified, d.title.trim().length > 2 && gallery.length > 0, d.title.length > 2, d.rev > 0, d.format === "auction" ? d.start > 0 && expEnd.ok : d.buyNow > 0, d.assets.length > 0, true][step];
+    : kind === "community"
+      ? (!!editing || (!!community && s.roblox.connected)) && d.title.trim().length > 2 && !reserveErr && (d.format === "auction" ? expEnd.ok || unchangedEnd : d.buyNow > 0)
+      : (!!editing || (!!verified && s.roblox.connected)) && gallery.length > 0 && d.title.trim().length > 2 && !reserveErr && (d.format !== "auction" || expEnd.ok || unchangedEnd);
+  const saleOk = d.format === "auction" ? (expEnd.ok || unchangedEnd) && !reserveErr : d.buyNow > 0;
+  const expCanNext = [kind !== null, s.roblox.connected, !!verified, d.title.trim().length > 2 && gallery.length > 0, d.title.length > 2, true, saleOk, d.assets.length > 0, true][step];
+  const comCanNext = [kind !== null, s.roblox.connected, !!community, d.title.trim().length > 2, saleOk, true][step];
   const fileCanNext = [kind !== null, !!file, fd.title.length > 2 && fd.compatibility.length > 2, fd.format === "auction" ? fd.start > 0 && fileEnd.ok : fd.buyNow > 0, fd.license.length > 5 && fd.attested, true][step];
-  const canNext = kind === "file" ? fileCanNext : (editing && step === 6 && d.format === "auction" && d.endMode === "datetime" && d.endAtLocal === toLocalInputValue(editing.endsAt) ? d.start > 0 : expCanNext);
+  const canNext = kind === "file" ? fileCanNext : kind === "community" ? comCanNext : expCanNext;
 
-  function pickType(k: "experience" | "file") {
+  function pickType(k: "experience" | "community" | "file") {
     setKind(k);
     setStep(1);
   }
@@ -115,12 +130,64 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
       setVerified({ exp, via: r.via });
       setIdentity({ placeId: exp.placeId, universeId: current.universeId, name: exp.title, creatorType: exp.creatorType, creatorName: exp.creatorName });
       setGallery(current.thumbnails);
-      up({ title: exp.title, rev: exp.monthlyRevenue, profit: exp.monthlyProfit });
+      up({ title: exp.title });
     } catch {
       setVerified({ exp: r.exp, via: r.via });
       setIdentity({ placeId: r.exp.placeId, name: r.exp.title, creatorType: r.exp.creatorType, creatorName: r.exp.creatorName });
-      up({ title: r.exp.title, rev: r.exp.monthlyRevenue, profit: r.exp.monthlyProfit });
+      up({ title: r.exp.title });
     } finally { setVerifying(false); }
+  }
+
+  async function runCommunityVerify() {
+    setVerifying(true);
+    setCerr(null);
+    setCommunity(null);
+    const r = verifyCommunityOwnership(curl, s.roblox);
+    if (!r.ok) { setCerr(r.reason); setVerifying(false); return; }
+    let c = r.community;
+    try {
+      const live = await communityFacts({ data: { groupId: c.groupId } });
+      // Live metadata refreshes name/icon/members but never changes the verified owner.
+      if (!live.unavailable && live.name && live.ownerUserId === c.ownerUserId) c = { ...c, name: live.name, memberCount: live.memberCount, iconUrl: live.iconUrl ?? c.iconUrl, bannerUrl: live.bannerUrl, verified: live.verified, fetchedAt: live.fetchedAt, source: live.source };
+    } catch { /* keep verified demo snapshot */ }
+    setCommunity(c);
+    up({ title: c.name, description: d.description || (c.description ?? "") });
+    setVerifying(false);
+  }
+
+  function publishCommunity() {
+    if (!community) return;
+    const end = validateAuctionEnd(d.endMode, d.days, d.endAtLocal);
+    if (d.format === "auction" && !unchangedEnd && !end.ok) { toast.error(end.error ?? "Choose a valid auction end."); setStep(4); return; }
+    if (reserveErr) { toast.error(reserveErr); setStep(4); return; }
+    const sale = {
+      format: d.format,
+      startingBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow),
+      reserve: d.format === "auction" && d.useReserve ? centsToDollars(d.reserve) : undefined,
+      buyNow: d.buyNow > 0 ? centsToDollars(d.buyNow) : undefined,
+      financialsProvided: d.provideRevenue,
+      monthlyRevenue: d.provideRevenue ? centsToDollars(d.rev) : 0,
+      monthlyProfit: d.provideRevenue ? centsToDollars(d.profit) : 0,
+    };
+    if (editing) {
+      const result = actions.updateCommunity(editing.id, { ...sale, title: d.title, tagline: d.tagline, description: d.description, tags: d.tags, assets: editing.assets, risks: editing.risks, endsAt: d.format === "auction" && !unchangedEnd ? (end.endsAt ?? editing.endsAt) : editing.endsAt });
+      if (!result.ok) { toast.error(result.error); return; }
+      toast.success("Listing changes saved");
+      void nav({ to: "/listing/$id", params: { id: editing.id } });
+      return;
+    }
+    if (!s.roblox.connected || d.title.trim().length < 3) return;
+    const endsAt = d.format === "auction" ? end.endsAt : computeEndsAt("duration", d.days, "");
+    if (endsAt === null) return;
+    const l: Listing = {
+      id: `new-${Date.now()}`, kind: "community", title: d.title, tagline: d.tagline, description: d.description, genre: "Community", tags: d.tags, image: community.iconUrl ?? "", community,
+      ...sale, currentBid: sale.startingBid, endsAt, bids: [], status: "review",
+      monthlyVisits: 0, ccu: 0, favorites: 0, ageMonths: 0, monetization: [], seller: meSeller, assets: ["Community ownership"], risks: [],
+      verified: { ownership: true, revenue: false, traffic: false }, hasGroup: true, createdAt: Date.now(),
+    };
+    actions.publishListing(l);
+    toast.success("Community listing submitted for review", { description: "Approve it from the Admin console to go live." });
+    nav({ to: "/seller" });
   }
 
   function disconnect() {
@@ -132,10 +199,9 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
 
   function publishExperience() {
     if (editing) {
-      const unchangedEnd = d.endAtLocal === toLocalInputValue(editing.endsAt) && d.endMode === "datetime";
       const end = validateAuctionEnd(d.endMode, d.days, d.endAtLocal);
       if (d.format === "auction" && !unchangedEnd && !end.ok) { toast.error(end.error); setStep(6); return; }
-      const result = actions.updateExperience(editing.id, { ...editing, ...extra, risks: extra.risks.split("\n").map((x) => x.trim()).filter(Boolean), title: d.title, tagline: d.tagline, description: d.description, tags: d.tags, gallery, monthlyRevenue: d.rev, monthlyProfit: d.profit, format: d.format, startingBid: centsToDollars(d.start), reserve: d.format === "auction" ? centsToDollars(d.reserve) : undefined, buyNow: centsToDollars(d.buyNow), endsAt: d.format === "auction" && !unchangedEnd ? (end.endsAt ?? editing.endsAt) : editing.endsAt, assets: d.assets });
+      const result = actions.updateExperience(editing.id, { ...editing, ...extra, risks: extra.risks.split("\n").map((x) => x.trim()).filter(Boolean), title: d.title, tagline: d.tagline, description: d.description, tags: d.tags, gallery, financialsProvided: d.provideRevenue, monthlyRevenue: d.provideRevenue ? centsToDollars(d.rev) : 0, monthlyProfit: d.provideRevenue ? centsToDollars(d.profit) : 0, format: d.format, startingBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow), reserve: d.format === "auction" && d.useReserve ? centsToDollars(d.reserve) : undefined, buyNow: d.buyNow > 0 ? centsToDollars(d.buyNow) : undefined, endsAt: d.format === "auction" && !unchangedEnd ? (end.endsAt ?? editing.endsAt) : editing.endsAt, assets: d.assets });
       if (!result.ok) { toast.error(result.error); return; }
       toast.success("Listing changes saved");
       void nav({ to: "/listing/$id", params: { id: editing.id } });
@@ -143,6 +209,7 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
     }
     if (!gallery.length || gallery.length > 5 || d.title.trim().length < 3) return;
     if (!verified || !s.roblox.connected) return;
+    if (reserveErr) { toast.error(reserveErr); setStep(6); return; }
     const end = validateAuctionEnd(d.endMode, d.days, d.endAtLocal);
     if (d.format === "auction" && !end.ok) {
       toast.error(end.error ?? "Choose a valid auction end.");
@@ -156,8 +223,8 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
     const l: Listing = {
       id, kind: "experience", title: d.title, tagline: d.tagline, description: d.description, genre: exp.genre, tags: d.tags, image: gallery[0]?.url ?? exp.image, gallery, experience: identity, format: d.format,
       startingBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow), currentBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow),
-      reserve: d.format === "auction" ? centsToDollars(d.reserve) : undefined, buyNow: centsToDollars(d.buyNow), endsAt, bids: [], status: "review",
-      monthlyRevenue: d.rev, monthlyProfit: d.profit, monthlyVisits: exp.monthlyVisits, ccu: exp.ccu, favorites: 12000, ageMonths: 10,
+      reserve: d.format === "auction" && d.useReserve ? centsToDollars(d.reserve) : undefined, buyNow: d.buyNow > 0 ? centsToDollars(d.buyNow) : undefined, endsAt, bids: [], status: "review",
+      financialsProvided: d.provideRevenue, monthlyRevenue: d.provideRevenue ? centsToDollars(d.rev) : 0, monthlyProfit: d.provideRevenue ? centsToDollars(d.profit) : 0, monthlyVisits: exp.monthlyVisits, ccu: exp.ccu, favorites: 12000, ageMonths: 10,
       monetization: [{ label: "Game passes", pct: 60 }, { label: "Developer products", pct: 40 }],
       seller: meSeller,
       assets: d.assets, risks: [], verified: { ownership: true, revenue: true, traffic: true }, hasGroup: d.assets.includes("Roblox group"), createdAt: Date.now(),
@@ -206,13 +273,19 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
         {steps.map((st, i) => <li key={st} className={cn("h-1.5 min-w-8 flex-1 rounded-full", i <= step ? "bg-foreground" : "bg-secondary")} />)}
       </ol>
       <div className="surface mt-6 p-4 sm:p-6">
-        {editing && <div className="mb-5 border-b border-border pb-4 text-sm text-muted-foreground">Verified Experience locked · {identity?.name ?? editing.title}{identity?.placeId ? ` · Place ${identity.placeId}` : ""}</div>}
+        {editing && editing.kind !== "community" && <div className="mb-5 border-b border-border pb-4 text-sm text-muted-foreground">Verified Experience locked · {identity?.name ?? editing.title}{identity?.placeId ? ` · Place ${identity.placeId}` : ""}</div>}
+        {editing && editing.kind === "community" && community && <div className="mb-5 flex items-center gap-2 border-b border-border pb-4 text-sm text-muted-foreground" data-testid="community-locked"><Lock className="h-4 w-4" />Verified Community locked · {community.name} · ID {community.groupId} · owner @{community.ownerUsername}</div>}
         {step === 0 && (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <button onClick={() => pickType("experience")} className="rounded-lg border border-border p-5 text-left hover:border-foreground">
               <Building2 className="h-6 w-6 text-muted-foreground" />
               <div className="mt-3 font-semibold">Experience / business</div>
               <p className="mt-1 text-sm text-muted-foreground">Sell a whole Roblox experience or studio. Verified metrics, auction or buy-now, managed ownership transfer.</p>
+            </button>
+            <button onClick={() => pickType("community")} className="rounded-lg border border-border p-5 text-left hover:border-foreground">
+              <Users className="h-6 w-6 text-muted-foreground" />
+              <div className="mt-3 font-semibold">Community</div>
+              <p className="mt-1 text-sm text-muted-foreground">Sell a Roblox Community you own. Strict owner verification, auction or buy-now, automatic ownership transfer.</p>
             </button>
             <button onClick={() => pickType("file")} className="rounded-lg border border-border p-5 text-left hover:border-foreground">
               <FileUp className="h-6 w-6 text-muted-foreground" />
@@ -223,7 +296,7 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
         )}
 
         {/* ---- Experience flow ---- */}
-        {kind === "experience" && step === 1 && (s.roblox.connected ? (
+        {kind !== "file" && kind !== null && step === 1 && (s.roblox.connected ? (
           <div>
             <div className="flex flex-wrap items-center gap-3 rounded-md border border-border p-3">
               <img src={mark} alt="" width={36} height={36} className="h-9 w-auto object-contain" />
@@ -233,7 +306,8 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
               </div>
               <Button variant="ghost" size="sm" onClick={disconnect}>Disconnect</Button>
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">Next you'll paste your experience link. We verify that this account owns the experience directly, or owns the group that owns it — group admins and developers don't qualify.</p>
+            <p className="mt-3 text-sm text-muted-foreground">{kind === "community" ? "Next you'll paste your Community link. Only the exact Community owner can list it — members, admins and high ranks don't qualify." : null}</p>
+            <p className={cn("text-sm text-muted-foreground", kind === "community" && "hidden")}>Next you'll paste your experience link. We verify that this account owns the experience directly, or owns the group that owns it — group admins and developers don't qualify.</p>
           </div>
         ) : (
           <div><img src={mark} alt="" width={40} height={40} loading="lazy" className="mb-3 h-10 w-auto" /><p className="text-sm text-muted-foreground">Connect your Roblox account so we can verify that you own the experience you want to list. (Demo — no credentials needed.)</p>
@@ -311,16 +385,12 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
           {editing && <F label="Risks & notes (one per line)"><textarea className="field h-24 py-2" value={extra.risks} onChange={(e) => extraUp({ risks: e.target.value })} /></F>}
           <TagPicker value={d.tags} onChange={(tags) => up({ tags })} suggested={suggestTags({ genre: verified?.exp.genre, title: d.title, tagline: d.tagline, description: d.description })} />
         </div>}
-        {kind === "experience" && step === 5 && <div className="grid gap-4 sm:grid-cols-2">
-          <p className="text-sm text-brand sm:col-span-2">{editing ? "Current saved financials" : "Pre-filled from verified Roblox analytics."}</p>
-          <F label="Monthly revenue (USD)"><input className="field num" inputMode="numeric" value={d.rev} onChange={(e) => up({ rev: Number(e.target.value.replace(/\D/g, "")) })} /></F>
-          <F label="Monthly profit (USD)"><input className="field num" inputMode="numeric" value={d.profit} onChange={(e) => up({ profit: Number(e.target.value.replace(/\D/g, "")) })} /></F>
-        </div>}
+        {kind === "experience" && step === 5 && <Financials d={d} up={up} />}
         {kind === "experience" && step === 5 && editing && <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {([['monthlyVisits', 'Monthly visits'], ['ccu', 'Average CCU'], ['favorites', 'Favorites'], ['ageMonths', 'Age (months)']] as const).map(([key, label]) => <F key={key} label={label}><input className="field num" inputMode="numeric" value={extra[key]} onChange={(e) => extraUp({ [key]: Number(e.target.value.replace(/\D/g, "")) })} /></F>)}
           <div className="space-y-3 sm:col-span-2"><h2 className="text-sm font-medium">Monetization breakdown</h2>{extra.monetization.map((m, n) => <div key={n} className="grid grid-cols-[1fr_90px] gap-2"><input aria-label={`Revenue source ${n + 1}`} className="field" value={m.label} onChange={(e) => extraUp({ monetization: extra.monetization.map((x, i) => i === n ? { ...x, label: e.target.value } : x) })} /><input aria-label={`Revenue percentage ${n + 1}`} className="field num" type="number" min="0" max="100" value={m.pct} onChange={(e) => extraUp({ monetization: extra.monetization.map((x, i) => i === n ? { ...x, pct: Math.max(0, Math.min(100, Number(e.target.value))) } : x) })} /></div>)}</div>
         </div>}
-        {kind === "experience" && step === 6 && <SaleFormat d={d} up={up} showInventory={false} />}
+        {kind === "experience" && step === 6 && <SaleFormat d={d} up={up} showInventory={false} reserveToggle />}
         {kind === "experience" && step === 7 && <div className="grid gap-2 sm:grid-cols-2">{ASSETS.map((a) => {
           const on = d.assets.includes(a);
           return <button key={a} onClick={() => up({ assets: on ? d.assets.filter((x) => x !== a) : [...d.assets, a] })} className="flex items-center gap-3 rounded-md border border-border p-3 text-left text-sm">
@@ -339,9 +409,71 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
           <ListingImage image={gallery[0]?.url ?? ""} alt="Listing cover" className="aspect-video w-full rounded-md object-cover" />
           <div className="text-lg font-semibold">{d.title}</div><div className="text-muted-foreground">{d.tagline}</div>
           {d.tags.length > 0 && <div className="flex flex-wrap gap-1.5" data-testid="review-tags">{d.tags.map((t) => <span key={t} className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">{t}</span>)}</div>}
-          <div className="num">Revenue {usd(d.rev)}/mo · Profit {usd(d.profit)}/mo</div>
-          <div className="num">{d.format === "auction" ? `Auction from ${usdPrecise(centsToDollars(d.start))}, reserve ${usdPrecise(centsToDollars(d.reserve))} · ends ${d.endMode === "datetime" ? formatAuctionEnd(new Date(d.endAtLocal).getTime()) : `in ${d.days} days`}` : "Buy now"} · Buy-now {usdPrecise(centsToDollars(d.buyNow))}</div>
+          <div className="num">{d.provideRevenue ? `Revenue ${usdPrecise(centsToDollars(d.rev))}/mo* · Profit ${usdPrecise(centsToDollars(d.profit))}/mo*` : "Monthly revenue: Not provided"}</div>
+          <SaleSummary d={d} />
           <div>{d.assets.join(", ")}</div>
+        </div>}
+
+        {/* ---- Community flow ---- */}
+        {kind === "community" && step === 2 && (!s.roblox.connected ? (
+          <div className="text-sm text-muted-foreground">Connect your Roblox account first — ownership verification runs against the connected account.</div>
+        ) : community ? (
+          <div>
+            <div className="flex items-start gap-3 rounded-md border border-brand bg-brand-soft p-3" data-testid="community-verified">
+              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border">{community.iconUrl ? <img src={img(community.iconUrl)} alt="" className="h-full w-full object-cover" /> : <Users className="m-4 h-6 w-6" />}</div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 font-semibold">{community.name} {community.verified && <RobloxVerifiedBadge />}</div>
+                <div className="num mt-0.5 text-xs text-muted-foreground">Community ID {community.groupId} · {community.memberCount ?? "—"} members · {community.bannerUrl ? "banner" : "no banner"}</div>
+                <div className="mt-1 text-xs font-medium text-brand">Ownership verified — @{s.roblox.username} is the exact owner</div>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" className="mt-3" onClick={() => { setCommunity(null); setCurl(""); }}>Use a different link</Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <F label="Roblox Community link">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative flex-1">
+                  <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <input className="field pl-9" placeholder="https://www.roblox.com/communities/…" value={curl} onChange={(e) => { setCurl(e.target.value); setCerr(null); }} aria-label="Roblox Community link" />
+                </div>
+                <Button disabled={verifying || !curl.trim()} onClick={runCommunityVerify}>{verifying ? "Verifying ownership…" : "Verify ownership"}</Button>
+              </div>
+            </F>
+            {cerr && <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm" role="alert"><ShieldX className="mt-0.5 h-4 w-4 shrink-0 text-destructive" /><span>{COMMUNITY_ERRORS[cerr]}</span></div>}
+            <div>
+              <div className="eyebrow mb-2">Demo links to try</div>
+              <div className="space-y-1.5">
+                {([["Owned (with banner, Roblox verified)", DEMO_COMMUNITY_URLS.owned], ["Owned (no banner)", DEMO_COMMUNITY_URLS.ownedNoBanner], ["Admin only — fails", DEMO_COMMUNITY_URLS.adminOnly], ["Member only — fails", DEMO_COMMUNITY_URLS.memberOnly]] as const).map(([label, u]) => (
+                  <button key={u} onClick={() => { setCurl(u); setCerr(null); }} className="block w-full rounded-md border border-border px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:border-foreground hover:text-foreground">
+                    <span className="font-medium text-foreground">{label}</span><span className="num block truncate">{u}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+        {kind === "community" && step === 3 && community && <div className="grid gap-6 md:grid-cols-[1fr_280px]">
+          <div className="min-w-0 space-y-4">
+            <F label="Listing title"><input className="field" value={d.title} onChange={(e) => up({ title: e.target.value })} /></F>
+            <p className="text-xs text-muted-foreground">The Roblox Community name, ID and owner stay locked: {community.name} · ID {community.groupId}.</p>
+            <F label="Tagline"><input className="field" value={d.tagline} onChange={(e) => up({ tagline: e.target.value })} /></F>
+            <F label="Description"><textarea className="field h-28 py-2" value={d.description} onChange={(e) => up({ description: e.target.value })} /></F>
+            <TagPicker value={d.tags} onChange={(tags) => up({ tags })} suggested={suggestTags({ genre: "Community", title: d.title, tagline: d.tagline, description: d.description })} />
+          </div>
+          <div>
+            <div className="eyebrow mb-2">Marketplace card preview</div>
+            <div className="surface overflow-hidden"><div className="aspect-video"><CommunityBanner c={community} /></div><div className="flex items-center gap-2 p-3 font-semibold"><span className="truncate">{d.title || "Untitled"}</span>{community.verified && <RobloxVerifiedBadge />}</div></div>
+          </div>
+        </div>}
+        {kind === "community" && step === 4 && <div className="space-y-6"><SaleFormat d={d} up={up} showInventory={false} reserveToggle /><Financials d={d} up={up} /></div>}
+        {kind === "community" && step === 5 && community && <div className="space-y-2 text-sm" data-testid="community-review">
+          <div className="surface overflow-hidden"><div className="aspect-[16/6]"><CommunityBanner c={community} /></div></div>
+          <div className="text-lg font-semibold">{d.title}</div><div className="text-muted-foreground">{d.tagline}</div>
+          <div className="num text-muted-foreground">Community ID {community.groupId} · owner @{community.ownerUsername} · {community.memberCount ?? "—"} members</div>
+          <SaleSummary d={d} />
+          <div className="num">{d.provideRevenue ? `Revenue ${usdPrecise(centsToDollars(d.rev))}/mo* · Profit ${usdPrecise(centsToDollars(d.profit))}/mo*` : "Monthly revenue: Not provided"}</div>
+          {d.provideRevenue && <p className="text-xs text-muted-foreground">{SELLER_PROVIDED_NOTE}</p>}
         </div>}
 
         {/* ---- File flow ---- */}
@@ -435,16 +567,46 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
           {editing && <Button variant="ghost" onClick={() => nav({ to: "/listing/$id", params: { id: editing.id } })}>Cancel</Button>}
           {step < steps.length - 1
             ? (step === 0 ? null : <Button disabled={!canNext} onClick={() => setStep(step + 1)}>Continue</Button>)
-            : <Button variant="brand" disabled={!publishable} onClick={kind === "file" ? publishFile : publishExperience}>{editing ? "Save changes" : "Publish listing"}</Button>}
+            : <Button variant="brand" disabled={!publishable} onClick={kind === "file" ? publishFile : kind === "community" ? publishCommunity : publishExperience}>{editing ? "Save changes" : "Publish listing"}</Button>}
         </div>
       </div>
     </div>
   );
 }
 
-type SaleState = { format: "auction" | "buy_now"; start: number; reserve: number; buyNow: number; endMode: EndMode; days: number; endAtLocal: string };
+type SaleState = { format: "auction" | "buy_now"; start: number; reserve: number; useReserve?: boolean; buyNow: number; endMode: EndMode; days: number; endAtLocal: string };
+type FinState = { provideRevenue: boolean; rev: number; profit: number };
 
-function SaleFormat({ d, up, showInventory }: { d: SaleState; up: (p: Partial<SaleState>) => void; showInventory: boolean }) {
+function SaleSummary({ d }: { d: SaleState }) {
+  const ends = d.endMode === "datetime" ? formatAuctionEnd(new Date(d.endAtLocal).getTime()) : `in ${d.days} days`;
+  return <div className="num" data-testid="sale-summary">{d.format === "auction" ? `Auction from ${usdPrecise(centsToDollars(d.start))} · ${d.useReserve ? `reserve ${usdPrecise(centsToDollars(d.reserve))}` : "No reserve"} · ends ${ends}${d.buyNow > 0 ? ` · Buy-now ${usdPrecise(centsToDollars(d.buyNow))}` : ""}` : `Buy now ${usdPrecise(centsToDollars(d.buyNow))}`}</div>;
+}
+
+function Check2({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex cursor-pointer items-center gap-3 text-sm font-medium">
+      <input type="checkbox" className="h-4 w-4 accent-current" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      {label}
+    </label>
+  );
+}
+
+function Financials({ d, up }: { d: FinState; up: (p: Partial<FinState>) => void }) {
+  return (
+    <div className="space-y-4" data-testid="financials">
+      <Check2 label="Provide monthly revenue" checked={d.provideRevenue} onChange={(v) => up({ provideRevenue: v, ...(v ? {} : { rev: 0, profit: 0 }) })} />
+      {d.provideRevenue ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <F label="Monthly revenue (USD)*"><CurrencyInput label="Monthly revenue" valueCents={d.rev} onChange={(c) => up({ rev: c })} /></F>
+          <F label="Monthly profit (USD, optional)*"><CurrencyInput label="Monthly profit" valueCents={d.profit} onChange={(c) => up({ profit: c })} /></F>
+          <p className="text-xs text-muted-foreground sm:col-span-2">{SELLER_PROVIDED_NOTE}</p>
+        </div>
+      ) : <p className="text-sm text-muted-foreground">Monthly revenue: Not provided. Buyers will see "Not provided".</p>}
+    </div>
+  );
+}
+
+function SaleFormat({ d, up, showInventory, reserveToggle = false }: { d: SaleState; up: (p: Partial<SaleState>) => void; showInventory: boolean; reserveToggle?: boolean }) {
   const now = useNow();
   const end = validateAuctionEnd(d.endMode, d.days, d.endAtLocal, now ?? Date.now());
   const tz = localTimezone();
@@ -454,10 +616,17 @@ function SaleFormat({ d, up, showInventory }: { d: SaleState; up: (p: Partial<Sa
       <div className="grid gap-4 sm:grid-cols-2">
         {d.format === "auction" && <>
           <F label="Starting bid"><CurrencyInput label="Starting bid" valueCents={d.start} onChange={(c) => up({ start: c })} /></F>
-          <F label="Reserve"><CurrencyInput label="Reserve" valueCents={d.reserve} onChange={(c) => up({ reserve: c })} /></F>
+          {!reserveToggle && <F label="Reserve"><CurrencyInput label="Reserve" valueCents={d.reserve} onChange={(c) => up({ reserve: c })} /></F>}
         </>}
-        <F label={showInventory && d.format === "buy_now" ? "Price" : "Buy-now price"}><CurrencyInput label="Buy-now price" valueCents={d.buyNow} onChange={(c) => up({ buyNow: c })} /></F>
+        <F label={showInventory && d.format === "buy_now" ? "Price" : reserveToggle && d.format === "auction" ? "Buy-now price (optional)" : "Buy-now price"}><CurrencyInput label="Buy-now price" valueCents={d.buyNow} onChange={(c) => up({ buyNow: c })} /></F>
       </div>
+      {reserveToggle && d.format === "auction" && (
+        <div className="space-y-3">
+          <Check2 label="Use a reserve price" checked={!!d.useReserve} onChange={(v) => up({ useReserve: v, reserve: 0 })} />
+          {d.useReserve ? <F label="Reserve"><CurrencyInput label="Reserve" valueCents={d.reserve} onChange={(c) => up({ reserve: c })} /></F> : <p className="text-xs text-muted-foreground">No reserve — the highest bid wins.</p>}
+          {d.useReserve && validateReserve(true, d.reserve, d.start) && <p className="text-xs text-destructive">{validateReserve(true, d.reserve, d.start)}</p>}
+        </div>
+      )}
       {d.format === "auction" && (
         <div>
           <span className="mb-1.5 block text-sm font-medium">Auction end</span>

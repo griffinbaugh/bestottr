@@ -26,6 +26,20 @@ export const resolveRobloxUser = createServerFn({ method: "GET" })
     }
   });
 
+/** Live Community ownership: the group's `owner.userId` only — roles/ranks are never read. */
+export const lookupLiveCommunityOwnership = createServerFn({ method: "GET" })
+  .inputValidator((input: unknown) => z.object({ groupId: id }).parse(input))
+  .handler(async ({ data }) => {
+    const checkedAt = Date.now();
+    try {
+      const grp = (await getJson(`https://groups.roblox.com/v1/groups/${data.groupId}`)) as { id?: number; owner?: { userId?: number } | null };
+      if (String(grp.id) !== data.groupId) return { error: "Community not found", checkedAt };
+      return { observation: { placeId: null, universeId: `community:${data.groupId}`, creatorType: "Group" as const, creatorId: data.groupId, groupOwnerId: grp.owner?.userId ? String(grp.owner.userId) : null, source: "roblox:groups v1", checkedAt } };
+    } catch (e) {
+      return { error: e instanceof Error ? e.message : "lookup failed", checkedAt };
+    }
+  });
+
 /**
  * Live ownership lookup from Roblox public APIs. Returns a raw observation only;
  * group ownership is the group's `owner.userId` — roles/ranks are never read.
