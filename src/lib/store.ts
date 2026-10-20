@@ -318,7 +318,6 @@ function stepAcq(dealId: string, fn: (t: ExperienceTransfer, now: number) => Ste
   return r.error ? { ok: r.ok, error: r.error } : { ok: r.ok };
 }
 
-const H = 3600_000;
 /** Attach acquisitions to Experience deals created before the automated flow (seed + saved state). */
 export function normalizeState(s: State, now: number): State {
   const deals = s.deals.map((d) => {
@@ -328,11 +327,11 @@ export function normalizeState(s: State, now: number): State {
     let t = createTransfer(d.id, assetFromListing(l), d.price + d.fee, d.createdAt);
     if (!d.funded) return { ...d, acquisition: t };
     const p = d.buyer === ME ? findDemoProfile(DEMO_USER_ID)! : findDemoProfile("90412277")!;
-    const fundedAt = now - Math.min(50 * H, Math.max(0, now - d.createdAt));
+    const fundedAt = now - Math.min(50 * 3600_000, Math.max(0, now - d.createdAt));
     t = chooseTarget(t, { ...p, profileUrl: profileUrlFor(p.userId), source: "profile_url" }, fundedAt).t;
     t = confirmTarget(t, fundedAt).t;
     t = fundTransfer(t, fundedAt).t;
-    if (d.stage >= 3) t = markTransferStarted(t, fundedAt + H).t;
+    if (d.stage >= 3) t = markTransferStarted(t, fundedAt + 3600_000).t;
     t = { ...t, verification: { ...t.verification, nextCheckAt: now }, events: [{ at: now, kind: "migrated", text: "Deal moved to automated ownership verification" }, ...t.events] };
     return { ...d, acquisition: t };
   });
