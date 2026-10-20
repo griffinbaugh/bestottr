@@ -111,7 +111,7 @@ describe("Community acquisition", () => {
     t = chooseTarget(t, { userId: "55018342", username: "alt", displayName: "Alt", profileUrl: profileUrlFor("55018342"), avatarUrl: null, source: "profile_url" }, T0).t;
     return fundTransfer(confirmTarget(t, T0).t, T0).t;
   };
-  const obs = (o: Partial<Observation>) => ({ observation: <Observation>{ placeId: null, universeId: "community:48120931", creatorType: "Group", creatorId: "48120931", groupOwnerId: "55018342", source: "test", checkedAt: T0 + 1, ...o } });
+  const obs = (o: Partial<Observation>) => ({ observation: { placeId: null, universeId: "community:48120931", creatorType: "Group", creatorId: "48120931", groupOwnerId: "55018342", source: "test", checkedAt: T0 + 1, ...o } as Observation });
   it("standalone Community completes only when the target owns the exact Community ID", () => {
     expect(funded().asset).toMatchObject({ mode: "community", groupId: "48120931", placeId: "" });
     expect(applyCheck(funded(), obs({}), T0 + 2).t.state).toBe("completed");
