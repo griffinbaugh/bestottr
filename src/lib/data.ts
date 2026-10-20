@@ -626,7 +626,7 @@ export function seedState(): State {
       log: [
         { at: now - 95 * H, text: "Auction closed at $36,000 — deal room opened" },
         { at: now - 80 * H, text: "Asset purchase agreement signed by both parties" },
-        { at: now - 60 * H, text: "Buyer funded escrow ($36,900)" },
+        { at: now - 60 * H, text: "Buyer funds protected ($36,900)" },
         { at: now - 20 * H, text: "Due diligence completed" },
       ],
       createdAt: now - 95 * H,
