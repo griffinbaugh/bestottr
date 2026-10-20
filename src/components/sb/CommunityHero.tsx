@@ -13,9 +13,8 @@ export function RobloxVerifiedBadge({ className }: { className?: string }) {
   );
 }
 
-/** Shared overlap geometry: icon is 70% of banner height, 40% of it hangs below the banner edge. */
+/** Shared geometry: icon is 70% of banner height, bottom-aligned inside the banner (no overhang). */
 export const COMMUNITY_ICON_RATIO = 0.7;
-export const COMMUNITY_ICON_OVERHANG = 0.4;
 export const COMMUNITY_ASPECT = { card: 16 / 9, hero: 16 / 6 } as const;
 
 // Fresh live banners (from LiveCommunityData refreshes) override saved snapshots for display only.
@@ -35,8 +34,6 @@ export function CommunityBanner({ c, size = "card", className }: { c: BannerComm
   const bannerUrl = live?.bannerUrl ?? c.bannerUrl;
   const iconUrl = live?.iconUrl ?? c.iconUrl;
   const aspect = COMMUNITY_ASPECT[size];
-  // Spacer height as % of width = overhang × icon height = OVERHANG × RATIO × (width / aspect).
-  const spacer = `${(COMMUNITY_ICON_OVERHANG * COMMUNITY_ICON_RATIO * 100) / aspect}%`;
   return (
     <div data-testid="community-media" data-size={size} className={cn("relative w-full", className)}>
       <div className="relative w-full" style={{ aspectRatio: String(aspect) }} data-testid="community-banner">
@@ -50,7 +47,7 @@ export function CommunityBanner({ c, size = "card", className }: { c: BannerComm
         <div
           data-testid="community-icon-tile"
           className={cn("absolute bottom-0 left-1/2 z-10 aspect-square overflow-hidden border border-border bg-card shadow-lg", size === "hero" ? "rounded-[14px]" : "rounded-[10px]")}
-          style={{ height: `${COMMUNITY_ICON_RATIO * 100}%`, transform: `translate(-50%, ${COMMUNITY_ICON_OVERHANG * 100}%)` }}
+          style={{ height: `${COMMUNITY_ICON_RATIO * 100}%`, transform: "translateX(-50%)" }}
         >
           {iconUrl ? (
             <img src={img(iconUrl)} alt={`${c.name} icon`} loading="lazy" className="h-full w-full object-cover" data-testid="community-icon" />
@@ -59,7 +56,6 @@ export function CommunityBanner({ c, size = "card", className }: { c: BannerComm
           )}
         </div>
       </div>
-      <div aria-hidden data-testid="community-icon-spacer" style={{ paddingTop: spacer }} />
     </div>
   );
 }
