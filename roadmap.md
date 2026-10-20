@@ -8,4 +8,4 @@
 - [x] Payment provider interface + exactly-once mock provider.
 - [x] Transfer state machine (target lock, 72h window, verification, payout/refund, extension, cancellation) with tests.
 - [x] Destination profile URL parsing + demo accounts/fixture IDs.
-- [ ] Wire engine into store, deal room UI, dashboards and background monitor (next turn).
+- [x] Wire engine into store, deal room UI, dashboards, copy and demo monitor.

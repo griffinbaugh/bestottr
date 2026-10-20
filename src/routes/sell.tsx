@@ -217,7 +217,7 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
             <button onClick={() => pickType("file")} className="rounded-lg border border-border p-5 text-left hover:border-foreground">
               <FileUp className="h-6 w-6 text-muted-foreground" />
               <div className="mt-3 font-semibold">File / digital asset</div>
-              <p className="mt-1 text-sm text-muted-foreground">Sell scripts, systems, models, UI kits, maps, audio and more. Instant delivery with escrow protection.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Sell scripts, systems, models, UI kits, maps, audio and more. Instant delivery with protected payments.</p>
             </button>
           </div>
         )}

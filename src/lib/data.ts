@@ -1,4 +1,6 @@
 import type { ExperienceIdentity, GalleryImage } from "./gallery";
+import type { ExperienceTransfer } from "./transfer";
+import type { DemoWorld } from "./roblox-ownership";
 export const ME = "you";
 export const ME_NAME = "Alex Rivera";
 
@@ -85,6 +87,8 @@ export type Deal = {
   delivery: { released: boolean; confirmed: boolean };
   log: { at: number; text: string }[];
   createdAt: number;
+  /** Experience deals only: automated acquisition transfer (target lock, protected funds, verification). */
+  acquisition?: ExperienceTransfer | undefined;
 };
 
 export type AdminItem = {
@@ -100,6 +104,8 @@ export type State = {
   watchlist: string[];
   deals: Deal[];
   roblox: { connected: boolean; username?: string; userId?: string };
+  /** DEMO ONLY simulated Roblox ownership state, keyed by universe ID. */
+  robloxWorld?: DemoWorld;
   admin: { users: AdminItem[]; disputes: AdminItem[]; flags: AdminItem[]; txn: Record<string, "approved" | "held"> };
 };
 
@@ -620,7 +626,7 @@ export function seedState(): State {
       log: [
         { at: now - 95 * H, text: "Auction closed at $36,000 — deal room opened" },
         { at: now - 80 * H, text: "Asset purchase agreement signed by both parties" },
-        { at: now - 60 * H, text: "Buyer funded escrow ($36,900)" },
+        { at: now - 60 * H, text: "Buyer funds protected ($36,900)" },
         { at: now - 20 * H, text: "Due diligence completed" },
       ],
       createdAt: now - 95 * H,

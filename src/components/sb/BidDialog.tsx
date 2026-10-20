@@ -93,7 +93,7 @@ export function BidDialog({ listing: l, open, onOpenChange }: { listing: Listing
 
           <label className="mt-4 flex items-start gap-2.5 text-sm text-muted-foreground">
             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="mt-0.5 h-5 w-5 accent-[var(--color-brand)]" />
-            I understand this bid is binding. If I win, funds are held in escrow until the transfer is verified.
+            I understand this bid is binding. If I win, funds are held by the payment provider until the transfer is verified.
           </label>
 
           {error && <p className="mt-3 rounded-md bg-live-soft px-3 py-2 text-sm text-destructive">{error}</p>}

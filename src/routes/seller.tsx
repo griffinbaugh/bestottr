@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Badge, Empty, PageHeader, Stat, buttonVariants } from "@/components/sb/ui";
-import { ME, dealStages } from "@/lib/data";
+import { ME } from "@/lib/data";
+import { dealStatus, isDealCompleted, isFundsProtected } from "@/lib/deal-status";
 import { usd } from "@/lib/format";
 import { stockLabel } from "@/lib/inventory";
 import { useAppState } from "@/lib/store";
@@ -26,7 +27,7 @@ function Seller() {
   const sold = mine.filter((l) => l.status === "sold" || l.status === "ended");
   const deals = s.deals.filter((d) => d.seller === ME);
   const bids = active.flatMap((l) => l.bids.map((b) => ({ ...b, title: l.title })));
-  const closed = deals.filter((d) => d.stage === 5).reduce((a, d) => a + d.price, 0);
+  const closed = deals.filter((d) => d.kind === "experience" && isDealCompleted(d)).reduce((a, d) => a + d.price, 0);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-6">
@@ -34,7 +35,7 @@ function Seller() {
       <div className="surface grid grid-cols-2 gap-5 p-5 md:grid-cols-4">
         <Stat label="Active listings" value={active.length} />
         <Stat label="Bids received" value={bids.length} />
-        <Stat label="In escrow" value={usd(deals.filter((d) => d.funded && d.stage < 5).reduce((a, d) => a + d.price, 0))} />
+        <Stat label="Funds protected" value={usd(deals.filter(isFundsProtected).reduce((a, d) => a + d.price, 0))} />
         <Stat label="Closed revenue" value={usd(closed)} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
@@ -55,7 +56,7 @@ function Seller() {
         <h2 className="mb-3 font-semibold">Sold & transactions</h2>
         {deals.length ? deals.map((d) => (
           <Link key={d.id} to="/deal/$id" params={{ id: d.id }} className="flex items-center justify-between border-t border-border py-3 first:border-0">
-            <span>{s.listings.find((l) => l.id === d.listingId)?.title} · <span className="num">{usd(d.price)}</span>{d.kind === "file" && <span className="text-xs text-muted-foreground"> · File sale — fulfilled automatically</span>}</span><Badge tone={d.kind === "file" || d.stage === dealStages(d).length - 1 ? "brand" : "warning"}>{d.kind === "file" ? "Completed" : dealStages(d)[d.stage]}</Badge>
+            <span>{s.listings.find((l) => l.id === d.listingId)?.title} · <span className="num">{usd(d.price)}</span>{d.kind === "file" && <span className="text-xs text-muted-foreground"> · File sale — fulfilled automatically</span>}</span><Badge tone={dealStatus(d).tone}>{dealStatus(d).label}</Badge>
           </Link>)) : <Empty title={sold.length ? "Sold listings pending" : "Nothing sold yet"} />}
       </section>
     </div>

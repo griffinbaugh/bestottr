@@ -15,7 +15,7 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SiteHeader } from "@/components/sb/SiteHeader";
-import { hydrateStore } from "@/lib/store";
+import { actions, hydrateStore } from "@/lib/store";
 import mark from "@/assets/bestottr-primary-white.png";
 
 function NotFoundComponent() {
@@ -114,6 +114,11 @@ function RootComponent() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   useEffect(() => {
     hydrateStore();
+    // DEMO monitor: drives the transfer engine from persisted nextCheckAt/expiresAt.
+    // Production must run actions.runMonitorTick's engine logic in a server scheduler/worker.
+    actions.runMonitorTick();
+    const t = setInterval(() => actions.runMonitorTick(), 5000);
+    return () => clearInterval(t);
   }, []);
 
   return (
