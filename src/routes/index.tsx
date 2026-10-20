@@ -1,3 +1,4 @@
+import { coverImage } from "@/lib/gallery";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BadgeCheck, FileSignature, Workflow } from "lucide-react";
 import { useState } from "react";
@@ -30,7 +31,7 @@ function Home() {
   const auctions = live.filter((l) => l.format === "auction");
   const buyNow = live.filter((l) => l.kind === "experience" && l.format === "buy_now");
   const files = live.filter((l) => l.kind === "file");
-  const heroImages = heroListings(listings).map((l) => l.image);
+  const heroImages = heroListings(listings).map(coverImage);
 
   return (
     <>

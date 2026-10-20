@@ -41,10 +41,10 @@ function Seller() {
         <section className="surface p-5">
           <h2 className="mb-3 font-semibold">Active listings</h2>
           {active.length ? active.map((l) => (
-            <Link key={l.id} to="/listing/$id" params={{ id: l.id }} className="flex items-center justify-between border-t border-border py-3 first:border-0">
+            <div key={l.id} className="flex flex-wrap items-center gap-2 border-t border-border py-3 first:border-0"><Link to="/listing/$id" params={{ id: l.id }} className="flex min-w-0 flex-1 items-center justify-between gap-3">
               <span className="min-w-0"><span className="block truncate">{l.title}</span>{l.kind === "file" && l.file && <span className="num text-xs text-muted-foreground">{l.file.category} · {stockLabel(l.file.inventory)}</span>}</span>
               <span className="flex shrink-0 items-center gap-2"><span className="num text-sm">{usd(l.currentBid)}</span><Badge tone={l.status === "review" ? "warning" : "brand"}>{l.status === "review" ? "In review" : "Live"}</Badge></span>
-            </Link>)) : <Empty title="No active listings" />}
+            </Link>{l.kind === "experience" && <Link to="/listing/$id_/edit" params={{ id: l.id }} className={buttonVariants({ variant: "outline", size: "sm" })}>Edit listing</Link>}</div>)) : <Empty title="No active listings" />}
         </section>
         <section className="surface p-5">
           <h2 className="mb-3 font-semibold">Recent bids</h2>

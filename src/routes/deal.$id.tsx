@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { Badge, Button, Empty, Stat, buttonVariants } from "@/components/sb/ui";
 import { DD_ITEMS, LICENSE_TERMS, ME, TRANSFER_ITEMS, dealStages, lastStage, type Deal, type Listing } from "@/lib/data";
 import { usd } from "@/lib/format";
-import { img } from "@/lib/images";
+import { coverImage } from "@/lib/gallery";
+import { ListingImage } from "@/components/sb/ListingImage";
 import { actions, stageDone, useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -102,7 +103,7 @@ function DealRoom() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
       <div className="flex flex-wrap items-center gap-4">
-        <img src={img(l.image)} alt="" className="h-16 w-28 rounded-md object-cover" />
+        <ListingImage image={coverImage(l)} alt="" className="h-16 w-28 rounded-md object-cover" />
         <div className="flex-1">
           <div className="eyebrow">Deal room · #{d.id}</div>
           <h1 className="text-2xl font-semibold tracking-tight">{l.title}</h1>

@@ -2,7 +2,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { FileDown, Search } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import type { Listing } from "@/lib/data";
-import { img } from "@/lib/images";
+import { coverImage } from "@/lib/gallery";
+import { ListingImage } from "./ListingImage";
 import { useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -127,7 +128,7 @@ export function SearchBox({
                   i === active ? "bg-accent" : "bg-transparent",
                 )}
               >
-                <img src={img(l.image)} alt="" width={56} height={32} loading="lazy" className="h-8 w-14 shrink-0 rounded border border-border object-cover" />
+                <ListingImage image={coverImage(l)} alt="" width={56} height={32} loading="lazy" className="h-8 w-14 shrink-0 rounded border border-border object-cover" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-foreground">{l.title}</span>
                   <span className="block truncate text-xs text-muted-foreground">

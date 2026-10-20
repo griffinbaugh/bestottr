@@ -1,3 +1,5 @@
+import { normalizeGallery } from "@/lib/gallery";
+import { ExperienceGallery } from "@/components/sb/ExperienceGallery";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, BadgeCheck, Check, Download, FileDown, Heart, ShieldCheck, Star, Trophy } from "lucide-react";
 import { useState } from "react";
@@ -58,9 +60,7 @@ function ListingPage() {
       </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="min-w-0 space-y-6">
-          <div className="surface overflow-hidden">
-            <img src={img(l.image)} alt={l.title} width={1088} height={608} className="aspect-video w-full object-cover" />
-          </div>
+          <ExperienceGallery key={l.id} images={normalizeGallery(l)} title={l.title} />
           <div>
             <div className="flex flex-wrap gap-2">
               <Badge tone={l.verified.ownership ? "brand" : "warning"}><BadgeCheck className="h-3.5 w-3.5" />Ownership {l.verified.ownership ? "verified" : "unverified"}</Badge>
@@ -69,7 +69,7 @@ function ListingPage() {
             </div>
             <h1 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">{l.title}</h1>
             <p className="mt-2 text-muted-foreground">{l.tagline}</p>
-            {(l.tags?.length ?? 0) > 0 && <div className="mt-3 flex flex-wrap gap-1.5" data-testid="listing-tags">{l.tags!.map((t) => <span key={t} className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">{t}</span>)}</div>}
+            {(l.tags?.length ?? 0) > 0 && <div className="mt-3 flex flex-wrap gap-1.5" data-testid="listing-tags">{l.tags?.map((t) => <span key={t} className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">{t}</span>)}</div>}
           </div>
 
           <div className="surface grid grid-cols-2 gap-x-5 gap-y-6 p-5 sm:grid-cols-4">
@@ -171,7 +171,7 @@ function ListingPage() {
                 )}
               </>
             )}
-            {mine && <div className="mt-4 rounded-md bg-secondary px-3 py-2 text-sm">This is your listing.</div>}
+            {mine && <Link to="/listing/$id_/edit" params={{ id: l.id }} className={buttonVariants({ variant: "outline", className: "mt-4 w-full" })}>Edit listing</Link>}
             {deal && (
               <Link to="/deal/$id" params={{ id: deal.id }} className={buttonVariants({ variant: "brand", size: "lg", className: "mt-4 w-full" })}>
                 Open deal room
