@@ -8,6 +8,11 @@ import { BidDialog } from "@/components/sb/BidDialog";
 import { Countdown, useNow } from "@/components/sb/Countdown";
 import { Badge, Button, Empty, Stat, buttonVariants } from "@/components/sb/ui";
 import { LICENSE_TERMS, ME } from "@/lib/data";
+import { SELLER_PROVIDED_NOTE, sellerProfit, sellerRevenue } from "@/lib/financials";
+import { CommunityBanner, RobloxVerifiedBadge } from "@/components/sb/CommunityHero";
+import { LiveCommunityData, LiveExperienceData } from "@/components/sb/LiveRobloxData";
+import { SellerLink } from "@/components/sb/SellerLink";
+import { SAFETY_COPY } from "@/components/sb/AcquisitionRoom";
 import { ago, compact, usd } from "@/lib/format";
 import { img } from "@/lib/images";
 import { stockLabel } from "@/lib/inventory";
@@ -52,49 +57,80 @@ function ListingPage() {
   if (l.kind === "file" && l.file) {
     return <FileListing l={l} ended={ended} mine={mine} watched={watched} deal={deal} goDeal={goDeal} />;
   }
+  const rev = sellerRevenue(l);
+  const profit = sellerProfit(l);
+  const isCommunity = l.kind === "community" && !!l.community;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 md:py-8">
       <div className="mb-4 text-sm text-muted-foreground">
-        <Link to="/browse" search={{ q: "" }} className="hover:text-foreground">Marketplace</Link> / {l.genre}
+        <Link to="/browse" search={{ q: "" }} className="hover:text-foreground">Marketplace</Link> / {isCommunity ? "Communities" : l.genre}
       </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="min-w-0 space-y-6">
-          <ExperienceGallery key={l.id} images={normalizeGallery(l)} title={l.title} />
+          {isCommunity ? (
+            <div className="surface aspect-[16/7] overflow-hidden" data-testid="community-hero"><CommunityBanner c={l.community!} size="hero" /></div>
+          ) : <ExperienceGallery key={l.id} images={normalizeGallery(l)} title={l.title} />}
           <div>
+            {isCommunity ? (
+              <div className="flex flex-wrap gap-2">
+                <Badge tone="brand"><BadgeCheck className="h-3.5 w-3.5" />Owner verified</Badge>
+                <Badge tone="neutral">Roblox Community</Badge>
+                {l.community!.verified && <Badge tone="brand">Roblox verified</Badge>}
+              </div>
+            ) : (
             <div className="flex flex-wrap gap-2">
               <Badge tone={l.verified.ownership ? "brand" : "warning"}><BadgeCheck className="h-3.5 w-3.5" />Ownership {l.verified.ownership ? "verified" : "unverified"}</Badge>
               <Badge tone={l.verified.revenue ? "brand" : "warning"}>{l.verified.revenue ? <Check className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}Revenue {l.verified.revenue ? "verified" : "unverified"}</Badge>
               <Badge tone={l.verified.traffic ? "brand" : "warning"}>{l.verified.traffic ? <Check className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}Traffic {l.verified.traffic ? "verified" : "unverified"}</Badge>
             </div>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">{l.title}</h1>
+            )}
+            <h1 className="mt-3 flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight md:text-3xl">{l.title}{isCommunity && l.community!.verified && <RobloxVerifiedBadge />}</h1>
             <p className="mt-2 text-muted-foreground">{l.tagline}</p>
             {(l.tags?.length ?? 0) > 0 && <div className="mt-3 flex flex-wrap gap-1.5" data-testid="listing-tags">{l.tags?.map((t) => <span key={t} className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">{t}</span>)}</div>}
           </div>
 
-          <div className="surface grid grid-cols-2 gap-x-5 gap-y-6 p-5 sm:grid-cols-4">
-            <Stat label="Revenue / mo" value={usd(l.monthlyRevenue)} hint="Trailing 90-day avg" />
-            <Stat label="Profit / mo" value={usd(l.monthlyProfit)} hint={`${Math.round((l.monthlyProfit / l.monthlyRevenue) * 100)}% margin`} />
-            <Stat label="Visits / mo" value={compact(l.monthlyVisits)} />
-            <Stat label="Avg CCU" value={compact(l.ccu)} />
-            <Stat label="Favorites" value={compact(l.favorites)} />
-            <Stat label="Age" value={`${l.ageMonths} months`} />
-            <Stat label="Multiple" value={`${(l.currentBid / (l.monthlyProfit * 12)).toFixed(2)}x`} hint="Annual profit" />
-            <Stat label="Annual profit" value={usd(l.monthlyProfit * 12)} />
-          </div>
+          {isCommunity ? <LiveCommunityData l={l} /> : <LiveExperienceData l={l} />}
 
-          <Section title="About this experience"><p className="text-sm leading-relaxed text-muted-foreground">{l.description}</p></Section>
+          <section className="surface p-5" data-testid="seller-financials">
+            <h2 className="mb-4 font-semibold">Seller-provided financials</h2>
+            <div className="grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-4">
+              <Stat label="Revenue / mo" value={rev === null ? "Not provided" : `${usd(rev)}*`} />
+              <Stat label="Profit / mo" value={profit === null ? "Not provided" : `${usd(profit)}*`} hint={rev && profit !== null ? `${Math.round((profit / rev) * 100)}% margin` : undefined} />
+              {!isCommunity && <>
+                <Stat label="Visits / mo" value={`${compact(l.monthlyVisits)}*`} />
+                <Stat label="Avg CCU" value={`${compact(l.ccu)}*`} />
+                <Stat label="Age" value={`${l.ageMonths} months`} />
+                {profit ? <Stat label="Multiple" value={`${(l.currentBid / (profit * 12)).toFixed(2)}x*`} hint="Annual profit" /> : null}
+                {profit !== null && <Stat label="Annual profit" value={`${usd(profit * 12)}*`} />}
+              </>}
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">{SELLER_PROVIDED_NOTE}</p>
+          </section>
 
-          <Section title="Monetization breakdown">
+          <Section title={isCommunity ? "About this Community" : "About this experience"}><p className="text-sm leading-relaxed text-muted-foreground">{l.description}</p></Section>
+
+          {isCommunity && (
+            <Section title="Acquisition safety">
+              <p className="text-sm text-muted-foreground">{SAFETY_COPY}</p>
+              <ul className="mt-3 space-y-2 text-sm">
+                <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />Funds are protected before the seller transfers anything.</li>
+                <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />bestottr checks Roblox automatically until your locked account is the exact owner of Community {l.community!.groupId}.</li>
+                <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" />Admin, member or high-rank roles don't count. No ownership within 72 hours means an automatic refund.</li>
+              </ul>
+            </Section>
+          )}
+
+          {!isCommunity && l.monetization.length > 0 && <Section title="Monetization breakdown">
             <div className="space-y-3">
               {l.monetization.map((m) => (
                 <div key={m.label}>
-                  <div className="flex justify-between text-sm"><span>{m.label}</span><span className="num text-muted-foreground">{m.pct}% · {usd(Math.round((l.monthlyRevenue * m.pct) / 100))}/mo</span></div>
+                  <div className="flex justify-between text-sm"><span>{m.label}</span><span className="num text-muted-foreground">{m.pct}%{rev !== null ? ` · ${usd(Math.round((rev * m.pct) / 100))}/mo*` : ""}</span></div>
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-foreground" style={{ width: `${m.pct}%` }} /></div>
                 </div>
               ))}
             </div>
-          </Section>
+          </Section>}
 
           <div className="grid gap-6 md:grid-cols-2">
             <Section title="Included assets">
@@ -171,6 +207,7 @@ function ListingPage() {
                 )}
               </>
             )}
+            {l.reserve === undefined && isAuction && <div className="mt-2 text-xs text-muted-foreground">No reserve</div>}
             {mine && <Link to="/listing/$id/edit" params={{ id: l.id }} className={buttonVariants({ variant: "outline", className: "mt-4 w-full" })}>Edit listing</Link>}
             {deal && (
               <Link to="/deal/$id" params={{ id: deal.id }} className={buttonVariants({ variant: "brand", size: "lg", className: "mt-4 w-full" })}>
@@ -375,9 +412,9 @@ function SellerCard({ l }: { l: ListingT }) {
     <div className="surface p-5">
       <div className="eyebrow">Seller</div>
       <div className="mt-3 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary font-semibold">{l.seller.name.slice(0, 2)}</div>
+        <SellerLink handle={l.seller.handle} className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary font-semibold">{l.seller.name.slice(0, 2)}</SellerLink>
         <div className="min-w-0">
-          <div className="flex items-center gap-1 font-semibold">{l.seller.name}{l.seller.verified && <BadgeCheck className="h-4 w-4 text-brand" />}</div>
+          <div className="flex items-center gap-1 font-semibold"><SellerLink handle={l.seller.handle}>{l.seller.name}</SellerLink>{l.seller.verified && <BadgeCheck className="h-4 w-4 text-brand" />}</div>
           <div className="text-sm text-muted-foreground">@{l.seller.handle}</div>
         </div>
       </div>
@@ -387,6 +424,7 @@ function SellerCard({ l }: { l: ListingT }) {
         <Stat label="Since" value={l.seller.joined} />
       </div>
       <div className="mt-3 text-xs text-muted-foreground">Typically responds {l.seller.responseTime}</div>
+      <SellerLink handle={l.seller.handle} className={buttonVariants({ variant: "outline", size: "sm", className: "mt-3 w-full" })}>View seller profile</SellerLink>
     </div>
   );
 }
