@@ -62,6 +62,14 @@ describe("Roblox metadata", () => {
     expect(result.thumbnails).toEqual([]);
     expect(result.thumbnailsUnavailable).toBe(true);
   });
+  it("uses demo fallback when Roblox returns an unavailable title and placeholder thumbnail", async () => {
+    const request = vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({ universeId: 123 })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ name: "[TITLE UNAVAILABLE]" }] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ thumbnails: [{ state: "Completed", imageUrl: "https://tr.rbxcdn.com/placeholder.png" }] }] })));
+    const result = await fetchRobloxMetadata("4920175538", DEMO_EXPERIENCES[0], request);
+    expect(result.name).toBe("Coastline Rescue Roleplay");
+    expect(result.thumbnails).toEqual([]);
+  });
 });
 
 describe("Experience edits", () => {
