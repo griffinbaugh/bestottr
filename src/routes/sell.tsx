@@ -84,7 +84,7 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
     : (!!editing || (!!verified && s.roblox.connected)) && gallery.length > 0 && d.title.trim().length > 2 && (d.format !== "auction" || expEnd.ok || (!!editing && d.endAtLocal === toLocalInputValue(editing.endsAt)));
   const expCanNext = [kind !== null, s.roblox.connected, !!verified, d.title.trim().length > 2 && gallery.length > 0, d.title.length > 2, d.rev > 0, d.format === "auction" ? d.start > 0 && expEnd.ok : d.buyNow > 0, d.assets.length > 0, true][step];
   const fileCanNext = [kind !== null, !!file, fd.title.length > 2 && fd.compatibility.length > 2, fd.format === "auction" ? fd.start > 0 && fileEnd.ok : fd.buyNow > 0, fd.license.length > 5 && fd.attested, true][step];
-  const canNext = kind === "file" ? fileCanNext : expCanNext;
+  const canNext = kind === "file" ? fileCanNext : (editing && step === 6 && d.format === "auction" && d.endMode === "datetime" && d.endAtLocal === toLocalInputValue(editing.endsAt) ? d.start > 0 : expCanNext);
 
   function pickType(k: "experience" | "file") {
     setKind(k);

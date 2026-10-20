@@ -18,11 +18,13 @@ export async function fetchRobloxMetadata(placeId: string, fallback: VerifiedExp
       json(`https://games.roblox.com/v1/games?universeIds=${result.universeId}`),
       json(`https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds=${result.universeId}&countPerUniverse=10&size=768x432&format=Png&isCircular=false`),
     ]);
-    if (details.status === "fulfilled" && details.value.data?.[0]?.name) {
+    const currentName = details.status === "fulfilled" ? details.value.data?.[0]?.name : undefined;
+    const unavailable = typeof currentName === "string" && /\[.*unavailable.*\]/i.test(currentName);
+    if (currentName && !unavailable) {
       result.name = details.value.data[0].name;
       result.live = true;
     }
-    if (thumbs.status === "fulfilled") {
+    if (thumbs.status === "fulfilled" && !unavailable) {
       const images = thumbs.value.data?.[0]?.thumbnails ?? [];
       result.thumbnails = uniqueGallery(images.filter((t: { state: string; imageUrl?: string }) => t.state === "Completed" && t.imageUrl?.startsWith("https://")).map((t: { imageUrl: string }, i: number) => ({ id: `roblox-${placeId}-${i}`, url: t.imageUrl, source: "roblox" as const })));
       result.thumbnailsUnavailable = result.thumbnails.length === 0;

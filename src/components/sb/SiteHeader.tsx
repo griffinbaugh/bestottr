@@ -20,7 +20,7 @@ export function SiteHeader() {
         <Link to="/" className="mr-2 flex shrink-0 items-center py-2" aria-label="bestottr home">
           <img src={lockup} alt="bestottr" width={591} height={187} className="h-auto w-[118px] object-contain lg:w-[140px]" />
         </Link>
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           {nav.map((n) => (
             <Link key={n.to} to={n.to} search={n.search} className="rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground" activeProps={{ className: "text-foreground bg-secondary" }}>
               {n.label}
@@ -53,7 +53,7 @@ export function SiteHeader() {
           <div className="ml-1 flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-semibold">AR</div>
         </div>
       </div>
-      <nav className="flex gap-1 overflow-x-auto border-t border-border px-3 py-1.5 md:hidden">
+      <nav className="flex gap-1 overflow-x-auto border-t border-border px-3 py-1.5 lg:hidden">
         {nav.map((n) => (
           <Link key={n.to} to={n.to} search={n.search} className="shrink-0 rounded-md px-3 py-2 text-sm text-muted-foreground" activeProps={{ className: "text-foreground bg-secondary" }}>
             {n.label}
