@@ -4,3 +4,8 @@
 - [x] Add owner-only editing with locked identity and stable listing IDs.
 - [x] Update image consumers and touch-friendly detail galleries.
 - [x] Test rules, run all tests, and verify create/edit flows on desktop and mobile.
+## Automated Experience transfer
+- [x] Payment provider interface + exactly-once mock provider.
+- [x] Transfer state machine (target lock, 72h window, verification, payout/refund, extension, cancellation) with tests.
+- [x] Destination profile URL parsing + demo accounts/fixture IDs.
+- [ ] Wire engine into store, deal room UI, dashboards and background monitor (next turn).

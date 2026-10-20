@@ -50,13 +50,14 @@ export function parseRobloxPlaceId(input: string): string | null {
   return null;
 }
 
-type DemoExp = VerifiedExperience & { ownerUserId?: string; groupOwnerId?: string };
+type DemoExp = VerifiedExperience & { ownerUserId?: string; groupOwnerId?: string; universeId: string; groupId?: string };
 
 /** Deterministic demo registry standing in for the Roblox API. */
 export const DEMO_EXPERIENCES: DemoExp[] = [
   {
     // Primary demo fixture: guaranteed to verify as directly owned by the demo account.
     placeId: "4920175538",
+    universeId: "1702934411",
     title: "Coastline Rescue Roleplay",
     genre: "Roleplay",
     image: "g7",
@@ -70,6 +71,7 @@ export const DEMO_EXPERIENCES: DemoExp[] = [
   },
   {
     placeId: "1830291743",
+    universeId: "1702934412",
     title: "Sky Kingdom Builders",
     genre: "Simulator",
     image: "g6",
@@ -83,6 +85,8 @@ export const DEMO_EXPERIENCES: DemoExp[] = [
   },
   {
     placeId: "2711356802",
+    universeId: "1702934413",
+    groupId: "3310001",
     title: "Rail Rush Tycoon",
     genre: "Tycoon",
     image: "g1",
@@ -96,6 +100,7 @@ export const DEMO_EXPERIENCES: DemoExp[] = [
   },
   {
     placeId: "5522001198",
+    universeId: "1702934414",
     title: "Midnight Courier",
     genre: "Horror",
     image: "g2",
@@ -109,6 +114,8 @@ export const DEMO_EXPERIENCES: DemoExp[] = [
   },
   {
     placeId: "6602947184",
+    universeId: "1702934415",
+    groupId: "3310002",
     title: "Harbor Life Roleplay",
     genre: "Roleplay",
     image: "g4",
@@ -153,3 +160,54 @@ export const VERIFY_ERRORS: Record<VerifyFailure, string> = {
   not_group_owner:
     "This experience is owned by a group, and the connected account is not the group owner. Being a member, admin or developer is not enough — only the group owner can list it.",
 };
+
+/* ---------------- Destination account (acquisition transfers) ---------------- */
+
+export type RobloxProfile = { userId: string; username: string; displayName: string; avatarUrl: string | null };
+export type ProfileParseFailure = "empty" | "invalid_url" | "not_profile" | "username_only";
+export type ProfileParse = { ok: true; userId: string; profileUrl: string } | { ok: false; reason: ProfileParseFailure };
+
+export const profileUrlFor = (userId: string) => `https://www.roblox.com/users/${userId}/profile`;
+
+/**
+ * Parse a Roblox profile URL (roblox.com/users/{id}/profile) into a numeric user ID.
+ * Rejects other sites, game/group/community links, malformed IDs and bare usernames
+ * (usernames can change and are ambiguous; we only accept the immutable numeric ID).
+ */
+export function parseRobloxProfileUrl(input: string): ProfileParse {
+  const s = input.trim();
+  if (!s) return { ok: false, reason: "empty" };
+  if (/^@?[A-Za-z0-9_]{3,20}$/.test(s) && !/^\d+$/.test(s)) return { ok: false, reason: "username_only" };
+  let u: URL;
+  try {
+    u = new URL(/^https?:\/\//i.test(s) ? s : `https://${s}`);
+  } catch {
+    return { ok: false, reason: "invalid_url" };
+  }
+  const host = u.hostname.toLowerCase();
+  if (!["roblox.com", "www.roblox.com", "m.roblox.com", "web.roblox.com"].includes(host)) return { ok: false, reason: "invalid_url" };
+  if (u.protocol !== "https:" && u.protocol !== "http:") return { ok: false, reason: "invalid_url" };
+  const m = u.pathname.match(/^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?users\/(\d+)(?:\/profile)?\/?$/i);
+  if (!m) return { ok: false, reason: /user\.aspx/i.test(u.pathname) || u.searchParams.has("username") ? "username_only" : "not_profile" };
+  const id = m[1]!;
+  if (id.length > 19 || /^0/.test(id)) return { ok: false, reason: "invalid_url" };
+  return { ok: true, userId: id, profileUrl: profileUrlFor(id) };
+}
+
+export const PROFILE_ERRORS: Record<ProfileParseFailure | "not_found", string> = {
+  empty: "Paste the destination account's Roblox profile link.",
+  invalid_url: "That isn't a valid Roblox profile link. Use roblox.com/users/{userId}/profile.",
+  not_profile: "That's a Roblox link, but not a user profile. Game, group and community links can't receive a transfer.",
+  username_only: "Usernames can change, so we need the profile link with the numeric user ID (roblox.com/users/{userId}/profile).",
+  not_found: "We couldn't find a Roblox user with that ID.",
+};
+
+/** Deterministic demo accounts so the transfer flow works without Roblox network access. */
+export const DEMO_PROFILES: RobloxProfile[] = [
+  { userId: DEMO_USER_ID, username: DEMO_USERNAME, displayName: "Alex Rivera", avatarUrl: null },
+  { userId: "55018342", username: "alexr_studio", displayName: "Alex — Studio Alt", avatarUrl: null },
+  { userId: "90412277", username: "northpeak_rbx", displayName: "Northpeak", avatarUrl: null },
+  { userId: "77120453", username: "nightshift_studios", displayName: "Nightshift Studios", avatarUrl: null },
+];
+export const DEMO_TARGET_URL = profileUrlFor("55018342");
+export const findDemoProfile = (userId: string) => DEMO_PROFILES.find((p) => p.userId === userId) ?? null;
