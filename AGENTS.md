@@ -15,3 +15,8 @@
 - Support tickets are created only through the security-definer `submit_support_ticket` RPC (called from a server function with validation + honeypot); the table has no public insert/select, and admin reads/updates are gated by `has_role(..., 'admin')` RLS. Why: public users must never enumerate tickets.
 
 - Support ticket emails send through Resend (RESEND_API_KEY, direct HTTPS API) via `deliverTicketEmails` in `src/lib/support-email.server.ts`; inbound support@ stays on Cloudflare Email Routing; Lovable email templates are unused for support. Why: the owner chose Resend for outbound.
+
+- Experience galleries use ordered source-tagged entries and a shared cover resolver; legacy image-only listings normalize at read time. Why: preserve existing marketplace assets and stable listing IDs.
+- Public Roblox metadata is fetched through a server function only after the separate strict demo ownership verifier passes; metadata never authorizes ownership. Why: avoid CORS without weakening verification.
+- The demo marketplace keeps uploaded images in IndexedDB behind a replaceable media adapter and stores durable references in its existing local listing state, not object URLs. Why: persist uploads across reloads without implying hosted or cross-device storage.
+- Experience edits pass through a field allowlist and the demo current-seller check; IDs, seller, verified identity, bids and status remain immutable. Why: update an existing listing without changing its ownership or public link; production account authorization remains outside this demo marketplace.

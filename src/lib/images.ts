@@ -14,4 +14,4 @@ import f5 from "@/assets/f5.jpg";
 import f6 from "@/assets/f6.jpg";
 
 export const IMAGES: Record<string, string> = { g1, g2, g3, g4, g5, g6, g7, g8, f1, f2, f3, f4, f5, f6 };
-export const img = (key: string) => IMAGES[key] ?? g1;
+export const img = (key: string) => IMAGES[key] ?? (/^https:\/\//.test(key) ? key : g1);

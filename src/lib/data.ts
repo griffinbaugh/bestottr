@@ -1,3 +1,4 @@
+import type { ExperienceIdentity, GalleryImage } from "./gallery";
 export const ME = "you";
 export const ME_NAME = "Alex Rivera";
 
@@ -41,6 +42,8 @@ export type Listing = {
   /** Roblox discovery tags (experiences only). */
   tags?: string[] | undefined;
   image: string;
+  gallery?: GalleryImage[] | undefined;
+  experience?: ExperienceIdentity | undefined;
   format: "auction" | "buy_now";
   startingBid: number;
   currentBid: number;

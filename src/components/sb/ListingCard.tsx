@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { BadgeCheck, FileDown, Heart, Users } from "lucide-react";
 import type { Listing } from "@/lib/data";
 import { compact, usdCompact } from "@/lib/format";
-import { img } from "@/lib/images";
+import { coverImage } from "@/lib/gallery";
+import { ListingImage } from "./ListingImage";
 import { stockLabel } from "@/lib/inventory";
 import { actions, useAppState } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -22,7 +23,7 @@ export function ListingCard({ listing: l }: { listing: Listing }) {
   return (
     <div className="surface lift group relative flex flex-col overflow-hidden">
       <Link to="/listing/$id" params={{ id: l.id }} className="relative block aspect-video overflow-hidden bg-muted">
-        <img src={img(l.image)} alt={l.title} loading="lazy" width={1088} height={608} className="h-full w-full object-cover" />
+        <ListingImage image={coverImage(l)} alt={l.title} loading="lazy" width={1088} height={608} className="h-full w-full object-cover" />
         <div className="absolute left-3 top-3 flex gap-1.5">
           {l.format === "auction" && live ? (
             <Badge tone="overlay">

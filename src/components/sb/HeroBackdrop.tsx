@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { img } from "@/lib/images";
+import { ListingImage } from "./ListingImage";
 
 const DWELL = 6500;
 
@@ -31,7 +32,8 @@ export function HeroBackdrop({ images }: { images: string[] }) {
   useEffect(() => {
     if (images.length < 2) return;
     const n = new Image();
-    n.src = img(images[(i + 1) % images.length]!);
+    const next = images[(i + 1) % images.length];
+    if (next && !next.startsWith("local-image:")) n.src = img(next);
   }, [i, images]);
 
   if (!images.length) return null;
@@ -45,9 +47,9 @@ export function HeroBackdrop({ images }: { images: string[] }) {
         if (idx !== active && idx !== next && idx !== prev) return null;
         const on = idx === active;
         return (
-          <img
+          <ListingImage
             key={key}
-            src={img(key)}
+            image={key}
             alt=""
             decoding="async"
             className={`hero-bg absolute inset-0 h-full w-full object-cover ${on ? "opacity-100" : "opacity-0"} ${on && !reduced ? "hero-kb" : ""}`}

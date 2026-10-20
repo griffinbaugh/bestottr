@@ -1,5 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BadgeCheck, Building2, Check, FileUp, Link2, ShieldX, Upload } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { GalleryEditor } from "@/components/sb/GalleryEditor";
+import { ListingImage } from "@/components/sb/ListingImage";
+import { normalizeGallery, type GalleryImage } from "@/lib/gallery";
+import { getRobloxMetadata } from "@/lib/roblox-metadata.functions";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CurrencyInput } from "@/components/sb/CurrencyInput";
@@ -31,7 +36,7 @@ export const Route = createFileRoute("/sell")({
   component: Sell,
 });
 
-const EXP_STEPS = ["Listing type", "Connect Roblox", "Experience link", "Details", "Financials", "Sale format", "Assets", "Review"];
+const EXP_STEPS = ["Listing type", "Connect Roblox", "Experience link", "Customize listing", "Details", "Financials", "Sale format", "Assets", "Review"];
 const FILE_STEPS = ["Listing type", "File upload", "Details", "Sale setup", "License & rights", "Review"];
 const ASSETS = ["Experience & all places", "Full source code", "Private packages", "Roblox group", "Game icon & thumbnails", "Discord server", "Social accounts", "Analytics dashboards"];
 const DEMO_FILES = [
@@ -42,17 +47,22 @@ const DEMO_FILES = [
 const PREVIEWS = ["f1", "f2", "f3", "f4", "f5", "f6"];
 const meSeller = { handle: ME, name: ME_NAME, rating: 4.9, sales: 2, joined: "2020", verified: true, responseTime: "< 1h" };
 
-function Sell() {
+export function Sell({ editing }: { editing?: Listing } = {}) {
   const s = useAppState();
   const nav = useNavigate();
-  const [kind, setKind] = useState<"experience" | "file" | null>(null);
-  const [step, setStep] = useState(0);
+  const [kind, setKind] = useState<"experience" | "file" | null>(editing ? "experience" : null);
+  const [step, setStep] = useState(editing ? 3 : 0);
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState<{ exp: VerifiedExperience; via?: string | undefined } | null>(null);
+  const metadata = useServerFn(getRobloxMetadata);
+  const [gallery, setGallery] = useState<GalleryImage[]>(editing ? normalizeGallery(editing) : []);
+  const [identity, setIdentity] = useState(editing?.experience);
   const [verr, setVerr] = useState<VerifyFailure | null>(null);
-  const [d, setD] = useState({ title: "", tagline: "", description: "", rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 1000000, reserve: 1500000, buyNow: 2500000, endMode: "duration" as EndMode, days: 7, endAtLocal: defaultEndLocal(), assets: ASSETS.slice(0, 5), tags: [] as string[] });
+  const [d, setD] = useState({ title: "", tagline: "", description: "", rev: 0, profit: 0, format: "auction" as "auction" | "buy_now", start: 1000000, reserve: 1500000, buyNow: 2500000, endMode: "duration" as EndMode, days: 7, endAtLocal: defaultEndLocal(), assets: ASSETS.slice(0, 5), tags: [] as string[], ...(editing ? { title: editing.title, tagline: editing.tagline, description: editing.description, rev: editing.monthlyRevenue, profit: editing.monthlyProfit, format: editing.format, start: Math.round(editing.startingBid * 100), reserve: Math.round((editing.reserve ?? 0) * 100), buyNow: Math.round((editing.buyNow ?? 0) * 100), endMode: "datetime" as EndMode, endAtLocal: toLocalInputValue(editing.endsAt), assets: [...editing.assets], tags: [...(editing.tags ?? [])] } : {}) });
+  const [extra, setExtra] = useState({ genre: editing?.genre ?? "", risks: editing?.risks.join("\n") ?? "", monthlyVisits: editing?.monthlyVisits ?? 0, ccu: editing?.ccu ?? 0, favorites: editing?.favorites ?? 0, ageMonths: editing?.ageMonths ?? 0, monetization: editing?.monetization ?? [] });
+  const extraUp = (p: Partial<typeof extra>) => setExtra((x) => ({ ...x, ...p }));
   const up = (p: Partial<typeof d>) => setD((x) => ({ ...x, ...p }));
 
   // File listing state
@@ -73,10 +83,10 @@ function Sell() {
   const fileEnd = validateAuctionEnd(fd.endMode, fd.days, fd.endAtLocal, now ?? Date.now());
   const publishable = kind === "file"
     ? !!file && (fd.format !== "auction" || fileEnd.ok)
-    : !!verified && s.roblox.connected && (d.format !== "auction" || expEnd.ok);
-  const expCanNext = [kind !== null, s.roblox.connected, !!verified, d.title.length > 2, d.rev > 0, d.format === "auction" ? d.start > 0 && expEnd.ok : d.buyNow > 0, d.assets.length > 0, true][step];
+    : (!!editing || (!!verified && s.roblox.connected)) && gallery.length > 0 && d.title.trim().length > 2 && (d.format !== "auction" || expEnd.ok || (!!editing && d.endAtLocal === toLocalInputValue(editing.endsAt)));
+  const expCanNext = [kind !== null, s.roblox.connected, !!verified, d.title.trim().length > 2 && gallery.length > 0, d.title.length > 2, d.rev > 0, d.format === "auction" ? d.start > 0 && expEnd.ok : d.buyNow > 0, d.assets.length > 0, true][step];
   const fileCanNext = [kind !== null, !!file, fd.title.length > 2 && fd.compatibility.length > 2, fd.format === "auction" ? fd.start > 0 && fileEnd.ok : fd.buyNow > 0, fd.license.length > 5 && fd.attested, true][step];
-  const canNext = kind === "file" ? fileCanNext : expCanNext;
+  const canNext = kind === "file" ? fileCanNext : (editing && step === 6 && d.format === "auction" && d.endMode === "datetime" && d.endAtLocal === toLocalInputValue(editing.endsAt) ? d.start > 0 : expCanNext);
 
   function pickType(k: "experience" | "file") {
     setKind(k);
@@ -92,21 +102,25 @@ function Sell() {
     }, 900);
   }
 
-  function runVerify() {
+  async function runVerify() {
     setVerifying(true);
     setVerr(null);
     setVerified(null);
-    // Simulated network latency — the real implementation will call the Roblox API here.
-    setTimeout(() => {
-      const r = verifyOwnership(url, s.roblox);
-      if (r.ok) {
-        setVerified({ exp: r.exp, via: r.via });
-        up({ title: r.exp.title, rev: r.exp.monthlyRevenue, profit: r.exp.monthlyProfit });
-      } else {
-        setVerr(r.reason);
-      }
-      setVerifying(false);
-    }, 900);
+    setGallery([]);
+    const r = verifyOwnership(url, s.roblox);
+    if (!r.ok) { setVerr(r.reason); setVerifying(false); return; }
+    try {
+      const current = await metadata({ data: { placeId: r.exp.placeId } });
+      const exp = { ...r.exp, title: current.name || r.exp.title };
+      setVerified({ exp, via: r.via });
+      setIdentity({ placeId: exp.placeId, universeId: current.universeId, name: exp.title, creatorType: exp.creatorType, creatorName: exp.creatorName });
+      setGallery(current.thumbnails);
+      up({ title: exp.title, rev: exp.monthlyRevenue, profit: exp.monthlyProfit });
+    } catch {
+      setVerified({ exp: r.exp, via: r.via });
+      setIdentity({ placeId: r.exp.placeId, name: r.exp.title, creatorType: r.exp.creatorType, creatorName: r.exp.creatorName });
+      up({ title: r.exp.title, rev: r.exp.monthlyRevenue, profit: r.exp.monthlyProfit });
+    } finally { setVerifying(false); }
   }
 
   function disconnect() {
@@ -117,11 +131,22 @@ function Sell() {
   }
 
   function publishExperience() {
+    if (editing) {
+      const unchangedEnd = d.endAtLocal === toLocalInputValue(editing.endsAt) && d.endMode === "datetime";
+      const end = validateAuctionEnd(d.endMode, d.days, d.endAtLocal);
+      if (d.format === "auction" && !unchangedEnd && !end.ok) { toast.error(end.error); setStep(6); return; }
+      const result = actions.updateExperience(editing.id, { ...editing, ...extra, risks: extra.risks.split("\n").map((x) => x.trim()).filter(Boolean), title: d.title, tagline: d.tagline, description: d.description, tags: d.tags, gallery, monthlyRevenue: d.rev, monthlyProfit: d.profit, format: d.format, startingBid: centsToDollars(d.start), reserve: d.format === "auction" ? centsToDollars(d.reserve) : undefined, buyNow: centsToDollars(d.buyNow), endsAt: d.format === "auction" && !unchangedEnd ? (end.endsAt ?? editing.endsAt) : editing.endsAt, assets: d.assets });
+      if (!result.ok) { toast.error(result.error); return; }
+      toast.success("Listing changes saved");
+      void nav({ to: "/listing/$id", params: { id: editing.id } });
+      return;
+    }
+    if (!gallery.length || gallery.length > 5 || d.title.trim().length < 3) return;
     if (!verified || !s.roblox.connected) return;
     const end = validateAuctionEnd(d.endMode, d.days, d.endAtLocal);
     if (d.format === "auction" && !end.ok) {
       toast.error(end.error ?? "Choose a valid auction end.");
-      setStep(5);
+      setStep(6);
       return;
     }
     const id = `new-${Date.now()}`;
@@ -129,7 +154,7 @@ function Sell() {
     const endsAt = d.format === "auction" ? end.endsAt : computeEndsAt("duration", d.days, "");
     if (endsAt === null) return;
     const l: Listing = {
-      id, kind: "experience", title: d.title, tagline: d.tagline, description: d.description, genre: exp.genre, tags: d.tags, image: exp.image, format: d.format,
+      id, kind: "experience", title: d.title, tagline: d.tagline, description: d.description, genre: exp.genre, tags: d.tags, image: gallery[0]?.url ?? exp.image, gallery, experience: identity, format: d.format,
       startingBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow), currentBid: centsToDollars(d.format === "auction" ? d.start : d.buyNow),
       reserve: d.format === "auction" ? centsToDollars(d.reserve) : undefined, buyNow: centsToDollars(d.buyNow), endsAt, bids: [], status: "review",
       monthlyRevenue: d.rev, monthlyProfit: d.profit, monthlyVisits: exp.monthlyVisits, ccu: exp.ccu, favorites: 12000, ageMonths: 10,
@@ -176,11 +201,12 @@ function Sell() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
-      <PageHeader title="Create a listing" subtitle={`Step ${step + 1} of ${steps.length} · ${steps[step]}`} />
+      <PageHeader title={editing ? "Edit listing" : "Create a listing"} subtitle={`Step ${step + 1} of ${steps.length} · ${steps[step]}`} />
       <ol className="mt-6 flex gap-1 overflow-x-auto">
         {steps.map((st, i) => <li key={st} className={cn("h-1.5 min-w-8 flex-1 rounded-full", i <= step ? "bg-foreground" : "bg-secondary")} />)}
       </ol>
-      <div className="surface mt-6 p-6">
+      <div className="surface mt-6 p-4 sm:p-6">
+        {editing && <div className="mb-5 border-b border-border pb-4 text-sm text-muted-foreground">Verified Experience locked · {identity?.name ?? editing.title}{identity?.placeId ? ` · Place ${identity.placeId}` : ""}</div>}
         {step === 0 && (
           <div className="grid gap-3 sm:grid-cols-2">
             <button onClick={() => pickType("experience")} className="rounded-lg border border-border p-5 text-left hover:border-foreground">
@@ -276,25 +302,32 @@ function Sell() {
             </div>
           </div>
         ))}
-        {kind === "experience" && step === 3 && <div className="space-y-4">
+        {kind === "experience" && step === 3 && <GalleryEditor title={d.title} onTitleChange={(title) => up({ title })} images={gallery} onChange={setGallery} />}
+        {kind === "experience" && step === 4 && <div className="space-y-4">
           <F label="Title"><input className="field" value={d.title} onChange={(e) => up({ title: e.target.value })} /></F>
+          {editing && <F label="Genre"><input className="field" value={extra.genre} onChange={(e) => extraUp({ genre: e.target.value })} /></F>}
           <F label="Tagline"><input className="field" value={d.tagline} onChange={(e) => up({ tagline: e.target.value })} /></F>
           <F label="Description"><textarea className="field h-28 py-2" value={d.description} onChange={(e) => up({ description: e.target.value })} /></F>
+          {editing && <F label="Risks & notes (one per line)"><textarea className="field h-24 py-2" value={extra.risks} onChange={(e) => extraUp({ risks: e.target.value })} /></F>}
           <TagPicker value={d.tags} onChange={(tags) => up({ tags })} suggested={suggestTags({ genre: verified?.exp.genre, title: d.title, tagline: d.tagline, description: d.description })} />
         </div>}
-        {kind === "experience" && step === 4 && <div className="grid gap-4 sm:grid-cols-2">
-          <p className="text-sm text-brand sm:col-span-2">Pre-filled from verified Roblox analytics.</p>
+        {kind === "experience" && step === 5 && <div className="grid gap-4 sm:grid-cols-2">
+          <p className="text-sm text-brand sm:col-span-2">{editing ? "Current saved financials" : "Pre-filled from verified Roblox analytics."}</p>
           <F label="Monthly revenue (USD)"><input className="field num" inputMode="numeric" value={d.rev} onChange={(e) => up({ rev: Number(e.target.value.replace(/\D/g, "")) })} /></F>
           <F label="Monthly profit (USD)"><input className="field num" inputMode="numeric" value={d.profit} onChange={(e) => up({ profit: Number(e.target.value.replace(/\D/g, "")) })} /></F>
         </div>}
-        {kind === "experience" && step === 5 && <SaleFormat d={d} up={up} showInventory={false} />}
-        {kind === "experience" && step === 6 && <div className="grid gap-2 sm:grid-cols-2">{ASSETS.map((a) => {
+        {kind === "experience" && step === 5 && editing && <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {([['monthlyVisits', 'Monthly visits'], ['ccu', 'Average CCU'], ['favorites', 'Favorites'], ['ageMonths', 'Age (months)']] as const).map(([key, label]) => <F key={key} label={label}><input className="field num" inputMode="numeric" value={extra[key]} onChange={(e) => extraUp({ [key]: Number(e.target.value.replace(/\D/g, "")) })} /></F>)}
+          <div className="space-y-3 sm:col-span-2"><h2 className="text-sm font-medium">Monetization breakdown</h2>{extra.monetization.map((m, n) => <div key={n} className="grid grid-cols-[1fr_90px] gap-2"><input aria-label={`Revenue source ${n + 1}`} className="field" value={m.label} onChange={(e) => extraUp({ monetization: extra.monetization.map((x, i) => i === n ? { ...x, label: e.target.value } : x) })} /><input aria-label={`Revenue percentage ${n + 1}`} className="field num" type="number" min="0" max="100" value={m.pct} onChange={(e) => extraUp({ monetization: extra.monetization.map((x, i) => i === n ? { ...x, pct: Math.max(0, Math.min(100, Number(e.target.value))) } : x) })} /></div>)}</div>
+        </div>}
+        {kind === "experience" && step === 6 && <SaleFormat d={d} up={up} showInventory={false} />}
+        {kind === "experience" && step === 7 && <div className="grid gap-2 sm:grid-cols-2">{ASSETS.map((a) => {
           const on = d.assets.includes(a);
           return <button key={a} onClick={() => up({ assets: on ? d.assets.filter((x) => x !== a) : [...d.assets, a] })} className="flex items-center gap-3 rounded-md border border-border p-3 text-left text-sm">
             <span className={cn("flex h-5 w-5 items-center justify-center rounded border", on ? "border-brand bg-brand text-brand-foreground" : "border-input")}>{on && <Check className="h-3.5 w-3.5" />}</span>{a}</button>;
         })}</div>}
-        {kind === "experience" && step === 7 && verified && <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-3 rounded-md border border-brand bg-brand-soft p-3">
+        {kind === "experience" && step === 8 && (verified || editing) && <div className="space-y-2 text-sm">
+          {verified && <div className="flex items-center gap-3 rounded-md border border-brand bg-brand-soft p-3">
             <img src={img(verified.exp.image)} alt="" className="h-12 w-20 shrink-0 rounded-md border border-border object-cover" />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 font-semibold">{verified.exp.title} <BadgeCheck className="h-4 w-4 shrink-0 text-brand" /></div>
@@ -302,7 +335,8 @@ function Sell() {
                 {verified.exp.creatorType === "Group" ? `Group-owned · ${verified.exp.creatorName}` : "User-owned"} · Place ID <span className="num">{verified.exp.placeId}</span> · ownership verified
               </div>
             </div>
-          </div>
+          </div>}
+          <ListingImage image={gallery[0]?.url ?? ""} alt="Listing cover" className="aspect-video w-full rounded-md object-cover" />
           <div className="text-lg font-semibold">{d.title}</div><div className="text-muted-foreground">{d.tagline}</div>
           {d.tags.length > 0 && <div className="flex flex-wrap gap-1.5" data-testid="review-tags">{d.tags.map((t) => <span key={t} className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">{t}</span>)}</div>}
           <div className="num">Revenue {usd(d.rev)}/mo · Profit {usd(d.profit)}/mo</div>
@@ -397,10 +431,11 @@ function Sell() {
         </div>}
 
         <div className="mt-8 flex justify-between border-t border-border pt-4">
-          <Button variant="outline" disabled={step === 0} onClick={() => setStep(step - 1)}>Back</Button>
+          <Button variant="outline" disabled={step === 0 || (!!editing && step === 3)} onClick={() => setStep(step - 1)}>Back</Button>
+          {editing && <Button variant="ghost" onClick={() => nav({ to: "/listing/$id", params: { id: editing.id } })}>Cancel</Button>}
           {step < steps.length - 1
             ? (step === 0 ? null : <Button disabled={!canNext} onClick={() => setStep(step + 1)}>Continue</Button>)
-            : <Button variant="brand" disabled={!publishable} onClick={kind === "file" ? publishFile : publishExperience}>Publish listing</Button>}
+            : <Button variant="brand" disabled={!publishable} onClick={kind === "file" ? publishFile : publishExperience}>{editing ? "Save changes" : "Publish listing"}</Button>}
         </div>
       </div>
     </div>
