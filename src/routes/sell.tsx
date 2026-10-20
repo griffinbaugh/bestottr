@@ -13,7 +13,7 @@ import { Button, PageHeader } from "@/components/sb/ui";
 import { computeEndsAt, defaultEndLocal, formatAuctionEnd, localTimezone, toLocalInputValue, validateAuctionEnd, type EndMode } from "@/lib/auction-end";
 import { centsToDollars } from "@/lib/currency";
 import { FILE_CATEGORIES, ME, ME_NAME, type FileCategory, type FileMeta, type Listing } from "@/lib/data";
-import { usd, usdPrecise } from "@/lib/format";
+import { usdPrecise } from "@/lib/format";
 import { img } from "@/lib/images";
 import { TagPicker } from "@/components/sb/TagPicker";
 import { suggestTags } from "@/lib/tags";
