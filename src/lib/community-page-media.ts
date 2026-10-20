@@ -65,12 +65,12 @@ export function extractCommunityPageMedia(html: string, excludeUrls: (string | n
   return ranked.length ? { bannerUrl: ranked[0]!, pageMediaUrls: ranked, bannerSource: "community_page" } : EMPTY;
 }
 
-/** Fetch https://www.roblox.com/communities/{id} without cookies, following redirects only within Roblox. */
+/** Fetch https://www.roblox.com/communities/{id} (server-side fetch sends no cookies), following redirects only within Roblox. */
 export async function fetchCommunityPageMedia(groupId: string, request: typeof fetch = fetch, excludeUrls: (string | null)[] = []): Promise<CommunityPageMedia> {
   let url = `https://www.roblox.com/communities/${groupId}`;
   try {
     for (let hop = 0; hop < 4; hop++) {
-      const r = await request(url, { redirect: "manual", credentials: "omit", headers: { accept: "text/html" }, signal: AbortSignal.timeout(6000) });
+      const r = await request(url, { redirect: "manual", headers: { accept: "text/html" }, signal: AbortSignal.timeout(6000) });
       if (r.status >= 300 && r.status < 400) {
         const next = new URL(r.headers.get("location") ?? "", url);
         if (next.protocol !== "https:" || !PAGE_HOST.test(next.hostname)) return EMPTY;
