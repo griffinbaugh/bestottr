@@ -8,7 +8,7 @@ import { demoFactsForListing, likeRatio, REFRESH_COOLDOWN_MS, type LiveCommunity
 import { getLiveCommunityFacts, getLiveExperienceFacts } from "@/lib/roblox-live.functions";
 import { Button, Stat } from "./ui";
 import { ExternalLink } from "./SellerLink";
-import { RobloxVerifiedBadge } from "./CommunityHero";
+import { publishFreshCommunityMedia, RobloxVerifiedBadge } from "./CommunityHero";
 
 const memo = new Map<string, unknown>();
 const when = (ms: number) => new Date(ms).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
@@ -106,7 +106,10 @@ export function LiveCommunityData({ l }: { l: Listing }) {
   const snapshot: LiveCommunityFacts = { ...c, unavailable: false };
   const { facts, busy, refresh, canRefresh } = useLive<LiveCommunityFacts>(`grp:${c.groupId}`, load, snapshot);
   // Unknown/unavailable live data falls back to the verified snapshot saved with the listing.
-  const f = facts && !facts.unavailable && facts.name ? facts : snapshot;
+  const liveOk = !!facts && !facts.unavailable && !!facts.name;
+  const f = liveOk ? { ...facts, bannerUrl: facts.bannerUrl ?? c.bannerUrl, bannerSource: facts.bannerUrl ? facts.bannerSource : c.bannerSource } : snapshot;
+  // Display-only: newer live banner/icon override the saved snapshot; identity/owner never change.
+  useEffect(() => { if (liveOk && facts.bannerUrl) publishFreshCommunityMedia(c.groupId, { bannerUrl: facts.bannerUrl, iconUrl: facts.iconUrl ?? c.iconUrl }); }, [liveOk, facts, c.groupId, c.iconUrl]);
   return (
     <section className="surface p-5" data-testid="live-roblox-data">
       <Header fetchedAt={f.fetchedAt} source={f.source} unavailable={!!facts?.unavailable} busy={busy} canRefresh={canRefresh} refresh={refresh} />
@@ -118,7 +121,7 @@ export function LiveCommunityData({ l }: { l: Listing }) {
       </div>
       <dl className="num mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 border-t border-border pt-4 text-sm">
         <dt className="text-muted-foreground">Current owner</dt><dd className="min-w-0 break-words">@{f.ownerUsername || "—"} <span className="text-muted-foreground">(ID {f.ownerUserId || "—"})</span></dd>
-        <dt className="text-muted-foreground">Banner</dt><dd>{f.bannerUrl ? "Provided" : "None on Roblox"}</dd>
+        <dt className="text-muted-foreground">Banner</dt><dd data-testid="banner-source">{f.bannerUrl ? (f.bannerSource === "community_page" ? "From Roblox Community page" : f.bannerSource === "demo" ? "Demo banner" : "Saved snapshot") : "None found"}</dd>
       </dl>
       <div className="mt-4"><ExternalLink href={communityUrl(c.groupId)}><LinkIcon className="h-4 w-4" />View on Roblox</ExternalLink></div>
     </section>

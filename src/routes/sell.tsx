@@ -148,7 +148,7 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
     try {
       const live = await communityFacts({ data: { groupId: c.groupId } });
       // Live metadata refreshes name/icon/members but never changes the verified owner.
-      if (!live.unavailable && live.name && live.ownerUserId === c.ownerUserId) c = { ...c, name: live.name, memberCount: live.memberCount, iconUrl: live.iconUrl ?? c.iconUrl, bannerUrl: live.bannerUrl, verified: live.verified, fetchedAt: live.fetchedAt, source: live.source };
+      if (!live.unavailable && live.name && live.ownerUserId === c.ownerUserId) c = { ...c, name: live.name, memberCount: live.memberCount, iconUrl: live.iconUrl ?? c.iconUrl, bannerUrl: live.bannerUrl, bannerSource: live.bannerSource, pageMediaUrls: live.pageMediaUrls, verified: live.verified, fetchedAt: live.fetchedAt, source: live.source };
     } catch { /* keep verified demo snapshot */ }
     setCommunity(c);
     up({ title: c.name, description: d.description || (c.description ?? "") });
@@ -463,12 +463,12 @@ export function Sell({ editing }: { editing?: Listing } = {}) {
           </div>
           <div>
             <div className="eyebrow mb-2">Marketplace card preview</div>
-            <div className="surface overflow-hidden"><div className="aspect-video"><CommunityBanner c={community} /></div><div className="flex items-center gap-2 p-3 font-semibold"><span className="truncate">{d.title || "Untitled"}</span>{community.verified && <RobloxVerifiedBadge />}</div></div>
+            <div className="surface overflow-hidden" data-testid="sell-community-preview"><CommunityBanner c={community} /><div className="flex min-w-0 flex-wrap items-center justify-center gap-2 p-3 font-semibold"><span className="truncate">{d.title || "Untitled"}</span>{community.verified && <RobloxVerifiedBadge />}</div></div>
           </div>
         </div>}
         {kind === "community" && step === 4 && <div className="space-y-6"><SaleFormat d={d} up={up} showInventory={false} reserveToggle /><Financials d={d} up={up} /></div>}
         {kind === "community" && step === 5 && community && <div className="space-y-2 text-sm" data-testid="community-review">
-          <div className="surface overflow-hidden"><div className="aspect-[16/6]"><CommunityBanner c={community} /></div></div>
+          <div className="surface overflow-hidden"><CommunityBanner c={community} size="hero" /></div>
           <div className="text-lg font-semibold">{d.title}</div><div className="text-muted-foreground">{d.tagline}</div>
           <div className="num text-muted-foreground">Community ID {community.groupId} · owner @{community.ownerUsername} · {community.memberCount ?? "—"} members</div>
           <SaleSummary d={d} />
