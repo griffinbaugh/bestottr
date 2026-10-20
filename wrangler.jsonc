@@ -1,0 +1,16 @@
+// Cloudflare Workers config for self-hosting bestottr (migration prep; Lovable hosting is unaffected).
+// `npm run build` emits the Worker to dist/server and static assets to dist/client.
+// Deploy with: npm run cf:deploy   (uses this file explicitly, not the generated dist/server/wrangler.json)
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bestottr",
+  "main": "dist/server/index.mjs",
+  "compatibility_date": "2026-10-01",
+  // Server bundle imports node:async_hooks / node:buffer / node:stream / node:process.
+  "compatibility_flags": ["nodejs_compat"],
+  "no_bundle": true,
+  "rules": [{ "type": "ESModule", "globs": ["**/*.mjs", "**/*.js"] }],
+  "assets": { "binding": "ASSETS", "directory": "dist/client" },
+  "observability": { "enabled": true }
+  // Secrets (RESEND_API_KEY etc.) are set with `wrangler secret put`, never committed here.
+}
