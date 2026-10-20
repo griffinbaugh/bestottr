@@ -26,7 +26,8 @@ export type TransferState =
   | "cancelled"
   | "manual_review";
 
-export type OwnershipMode = "user" | "group";
+/** user = personally-owned Experience; group = group-owned Experience; community = standalone Community listing. */
+export type OwnershipMode = "user" | "group" | "community";
 
 export type AssetIdentity = {
   placeId: string;
@@ -227,6 +228,13 @@ export function requestExtension(t: ExperienceTransfer, by: Party, now: number):
 
 /** Strict ownership comparison against the immutable asset identity and locked target. */
 export function evaluateOwnership(asset: AssetIdentity, targetUserId: string, o: Observation): OwnershipResult {
+  if (asset.mode === "community") {
+    // Standalone Community: the exact listed group ID must be owned by the locked target. Roles never count.
+    if (!o.creatorType || !o.creatorId) return "ambiguous";
+    if (o.creatorType !== "Group" || o.creatorId !== asset.groupId) return "mismatch";
+    if (!o.groupOwnerId) return "ambiguous";
+    return o.groupOwnerId === targetUserId ? "match" : "mismatch";
+  }
   if (!o.universeId || !o.creatorType || !o.creatorId) return "ambiguous";
   if (o.universeId !== asset.universeId) return "mismatch";
   if (o.placeId !== null && o.placeId !== asset.placeId) return "mismatch";
@@ -276,7 +284,7 @@ export function applyCheck(t: ExperienceTransfer, outcome: CheckOutcome, now: nu
   const result = evaluateOwnership(t.asset, t.target.userId, o);
   const evidence: Evidence = {
     targetUserId: t.target.userId,
-    observedOwnerId: t.asset.mode === "group" ? o.groupOwnerId : o.creatorId,
+    observedOwnerId: t.asset.mode === "user" ? o.creatorId : o.groupOwnerId,
     placeId: o.placeId,
     universeId: o.universeId,
     groupId: t.asset.groupId,
@@ -286,7 +294,7 @@ export function applyCheck(t: ExperienceTransfer, outcome: CheckOutcome, now: nu
   };
   const base = { ...v, lastCheckedAt: checkedAt, lastResult: result, consecutiveErrors: 0, evidence };
   if (result === "match") {
-    const n = ev({ ...t, state: "ownership_confirmed", verification: { ...base, ambiguousCount: 0, nextCheckAt: null, confirmedAt: checkedAt } }, now, "confirmed", `Ownership confirmed: Roblox reports ${t.asset.mode === "group" ? "group owner" : "owner"} ${evidence.observedOwnerId} = locked destination`);
+    const n = ev({ ...t, state: "ownership_confirmed", verification: { ...base, ambiguousCount: 0, nextCheckAt: null, confirmedAt: checkedAt } }, now, "confirmed", `Ownership confirmed: Roblox reports ${t.asset.mode === "user" ? "owner" : "Community owner"} ${evidence.observedOwnerId} = locked destination`);
     return releasePayout(n, now, provider);
   }
   if (result === "ambiguous") {

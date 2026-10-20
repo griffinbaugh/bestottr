@@ -163,7 +163,6 @@ export const SELLERS = {
   me: { handle: ME, name: ME_NAME, rating: 4.9, sales: 2, joined: "2020", verified: true, responseTime: "< 1h", robloxUserId: "24816309", robloxUsername: "alexr_dev" },
   neon: { handle: "voltkart", name: "VoltKart Team", rating: 0, sales: 0, joined: "2024", verified: false, responseTime: "—" },
 } satisfies Record<string, Seller>;
-const sellers = SELLERS;
 
 const stdAssets = ["Experience & all places", "Full source code", "Private packages", "Game icon & thumbnails", "Discord server"];
 
