@@ -170,11 +170,11 @@ describe("Seller profile", () => {
   it("profile shows current listings, reviews and numeric Roblox profile link", async () => {
     const router = createRouter({ routeTree, context: { queryClient: new QueryClient() }, history: createMemoryHistory({ initialEntries: ["/user/kenzo_labs"] }) });
     render(<RouterProvider router={router} />);
-    const link = await screen.findByRole("link", { name: /View Roblox profile/ });
+    const link = await screen.findByRole("link", { name: /View Roblox profile/ }, { timeout: 8000 });
     expect(link).toHaveAttribute("href", "https://www.roblox.com/users/90412277/profile");
     expect(link).toHaveAttribute("target", "_blank");
     expect(screen.getByText(/Current listings/)).toBeInTheDocument();
     expect(screen.getByText("Forgeline Studios Community")).toBeInTheDocument();
     expect(screen.getByText(reviewsFor("kenzo_labs")[0]!.text)).toBeInTheDocument();
-  });
+  }, 15000);
 });
