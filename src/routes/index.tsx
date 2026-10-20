@@ -75,6 +75,13 @@ function Home() {
         </div>
       </section>
 
+      {communities.length > 0 && <section className="mx-auto max-w-7xl px-4 pb-10 md:px-6">
+        <SectionHead title="Roblox Communities" link="/browse" />
+        <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {communities.slice(0, 3).map((l) => <ListingCard key={l.id} listing={l} />)}
+        </div>
+      </section>}
+
       <section className="mx-auto max-w-7xl px-4 pb-10 md:px-6">
         <SectionHead title="Creator files" link="/browse" />
         <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
