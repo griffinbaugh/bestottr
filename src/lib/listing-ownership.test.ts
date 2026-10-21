@@ -22,11 +22,15 @@ function requestFor(type = "User", owner = 42, groupOwner: number | null = 42) {
         creatorTargetId: type === "Group" ? 300 : owner,
         creatorType: type,
       });
-    if (url.includes("/groups/300"))
+    if (url === "https://groups.roblox.com/v2/groups?groupIds=300")
       return Response.json({
-        id: 300,
-        name: "My group",
-        owner: groupOwner === null ? null : { userId: groupOwner },
+        data: [
+          {
+            id: 300,
+            name: "My group",
+            owner: groupOwner === null ? null : { id: groupOwner, type: "User" },
+          },
+        ],
       });
     return new Response(null, { status: 404 });
   });
@@ -88,8 +92,10 @@ describe("Production listing ownership", () => {
           creatorTargetId: 35895529,
           creatorName: "Evergames",
         });
-      if (url === "https://groups.roblox.com/v1/groups/35895529")
-        return Response.json({ id: 35895529, name: "Evergames", owner: { userId: 18091355 } });
+      if (url === "https://groups.roblox.com/v2/groups?groupIds=35895529")
+        return Response.json({
+          data: [{ id: 35895529, name: "Evergames", owner: { id: 18091355, type: "User" } }],
+        });
       return new Response(null, { status: 404 });
     });
     const url = "https://www.roblox.com/games/84930684116704/Fuse-an-Egg";
@@ -179,10 +185,14 @@ describe("Production listing ownership", () => {
     ).rejects.toThrow("must own");
     const request = vi.fn(async () =>
       Response.json({
-        id: 300,
-        name: "Group",
-        owner: { userId: 43 },
-        roles: [{ userId: 42, rank: 255 }],
+        data: [
+          {
+            id: 300,
+            name: "Group",
+            owner: { id: 43, type: "User" },
+            roles: [{ userId: 42, rank: 255 }],
+          },
+        ],
       }),
     );
     await expect(verifyDraftOwnership("community", groupLink, "42", request)).rejects.toThrow(
@@ -234,9 +244,31 @@ describe("Production listing ownership", () => {
         "community",
         groupLink,
         "42",
-        vi.fn(async () => Response.json({ id: 301, name: "Wrong", owner: { userId: 42 } })),
+        vi.fn(async () =>
+          Response.json({ data: [{ id: 301, name: "Wrong", owner: { id: 42, type: "User" } }] }),
+        ),
       ),
     ).rejects.toThrow("different community");
+  });
+  it("rejects empty, duplicate, non-user, or malformed batch owners", async () => {
+    for (const data of [
+      [],
+      [{ id: 300, name: "Group", owner: { id: 42, type: "Group" } }],
+      [{ id: 300, name: "Group", owner: { userId: 42 } }],
+      [
+        { id: 300, name: "Group", owner: { id: 42, type: "User" } },
+        { id: 300, name: "Group", owner: { id: 42, type: "User" } },
+      ],
+    ]) {
+      await expect(
+        verifyDraftOwnership(
+          "community",
+          groupLink,
+          "42",
+          vi.fn(async () => Response.json({ data })),
+        ),
+      ).rejects.toThrow();
+    }
   });
   it("rejects unknown creator types", async () => {
     await expect(

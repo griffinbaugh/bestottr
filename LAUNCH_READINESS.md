@@ -1,3 +1,9 @@
+## Group lookup update (2026-10-21)
+
+Production logs confirmed GROUP HTTP 429 from the single-group v1 lookup after the countdown update. Private draft verification now requests the documented groups v2 batch endpoint with exactly one group ID, validates exactly one returned group with the requested ID, and matches owner.id only when owner.type is User. Empty, duplicate, malformed, non-user and wrong-owner results fail closed. This replaces the v1 call; it does not retry alternate endpoints after a 429 or bypass cooldowns. No environment or database changes. The real Evergames response returned owner 18091355; deployed Cloudflare behavior still needs verification. If throttling persists, investigate shared request origins and an authenticated Open Cloud integration rather than repeatedly changing endpoints.
+
+Patch: bestottr-group-lookup-fix.patch, based on main 8072454. Validation: ownership tests and Cloudflare workerd request checks; full suite/build results reported with delivery.
+
 # BestOttr account release and launch readiness
 
 ## Roblox rate-limit handling
