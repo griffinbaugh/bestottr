@@ -21,3 +21,5 @@
 - Self-hosting on Cloudflare deploys the standard build output with root `wrangler.jsonc` (adds nodejs_compat); see MIGRATION_CLOUDFLARE.md. Why: generated dist/server/wrangler.json lacks required flags.
 
 - Email authentication callbacks are processed explicitly by `completeEmailCallback`; keep browser `detectSessionInUrl` disabled through `EMAIL_AUTH_OPTIONS`. Why: SDK auto-initialization and explicit callback exchange can race to consume a single-use PKCE code. Preserve flow IDs and recovery destinations.
+
+- Production `/sell` uses private database-backed drafts and the live-only `verifyDraftOwnership` server helper. Always authenticate and derive the Roblox identity from the linked account; recheck ownership on every save. Never reuse demo ownership/metadata fallbacks or trust client-provided seller/verification fields. Drafts do not authorize public trading or money movement.

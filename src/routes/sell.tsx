@@ -1,4 +1,6 @@
 import { MarketplaceGate } from "@/components/account/MarketplaceGate";
+import { ListingDrafts } from "@/components/account/ListingDrafts";
+import { IS_DEMO } from "@/lib/app-mode";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BadgeCheck, Building2, Check, FileUp, Link2, Lock, ShieldX, Upload, Users } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -28,6 +30,7 @@ import { CommunityBanner, RobloxVerifiedBadge } from "@/components/sb/CommunityH
 import { SELLER_PROVIDED_NOTE, validateReserve } from "@/lib/financials";
 
 export const Route = createFileRoute("/sell")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Create a listing — bestottr" },
@@ -38,7 +41,7 @@ export const Route = createFileRoute("/sell")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <MarketplaceGate><Sell /></MarketplaceGate>,
+  component: () => IS_DEMO ? <MarketplaceGate><Sell /></MarketplaceGate> : <ListingDrafts />,
 });
 
 const EXP_STEPS = ["Listing type", "Connect Roblox", "Experience link", "Customize listing", "Details", "Financials", "Sale format", "Assets", "Review"];

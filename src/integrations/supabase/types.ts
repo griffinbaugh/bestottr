@@ -8,6 +8,15 @@ export type Database = {
   };
   public: {
     Tables: {
+      listing_drafts: {
+        Row: import("@/lib/listing-drafts").ListingDraft;
+        Insert: Omit<
+          import("@/lib/listing-drafts").ListingDraft,
+          "id" | "created_at" | "updated_at"
+        > & { id?: string; created_at?: string; updated_at?: string };
+        Update: Partial<import("@/lib/listing-drafts").ListingDraft>;
+        Relationships: [];
+      };
       account_preferences: {
         Row: {
           currency: string;
