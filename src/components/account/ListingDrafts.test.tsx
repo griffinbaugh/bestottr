@@ -31,6 +31,7 @@ vi.mock("@/lib/listing-drafts.functions", () => ({
   saveListingDraft: mocks.save,
   deleteListingDraft: vi.fn(),
 }));
+vi.mock("./DraftMedia", () => ({ DraftMedia: () => null }));
 import { ListingDrafts } from "./ListingDrafts";
 it("restores the retry deadline after a page reload", async () => {
   vi.useFakeTimers();
@@ -73,4 +74,22 @@ it("keeps edits while counting down a rate limit and does not retry automaticall
   expect(screen.getByRole("button", { name: "Verify ownership & save draft" })).toBeEnabled();
   expect(mocks.save).toHaveBeenCalledTimes(1);
   expect(screen.getByLabelText("Listing title")).toHaveValue("My saved title");
+});
+
+it("lets a file seller draft without a Roblox link or false verification claim", async () => {
+  mocks.list.mockResolvedValue([]);
+  mocks.save.mockResolvedValue({ ok: true, id: "aa000000-0000-4000-8000-000000000001" });
+  render(<ListingDrafts />);
+  await act(async () => {});
+  fireEvent.change(screen.getByLabelText("Listing type"), { target: { value: "file" } });
+  expect(screen.queryByLabelText("Roblox link")).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Listing title"), { target: { value: "Models pack" } });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Save file draft" }));
+  });
+  expect(mocks.save).toHaveBeenCalledWith(
+    expect.objectContaining({
+      data: expect.objectContaining({ draft: expect.objectContaining({ kind: "file", url: "" }) }),
+    }),
+  );
 });

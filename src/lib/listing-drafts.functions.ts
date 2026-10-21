@@ -26,48 +26,81 @@ export const saveListingDraft = createServerFn({ method: "POST" })
     const { verifiedAccount } = await import("./account.server");
     const user = await verifiedAccount(data.token);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: link, error } = await supabaseAdmin
-      .from("roblox_accounts")
-      .select("roblox_user_id")
-      .eq("user_id", user.id)
-      .single();
-    if (error || !link)
-      return { ok: false as const, error: "Connect your Roblox account before saving a listing." };
     // Check existing ownership before doing external requests. Neither seller ID nor verification fields come from the browser.
     if (data.draft.id) {
       const { data: existing, error } = await supabaseAdmin
         .from("listing_drafts")
-        .select("id")
+        .select("id,kind")
         .eq("id", data.draft.id)
         .eq("seller_id", user.id)
         .maybeSingle();
-      if (error || !existing)
+      if (error || !existing || existing.kind !== data.draft.kind)
         return { ok: false as const, error: "This draft could not be found." };
     }
-    const { verifyListingDraftOwnership } = await import("./listing-draft-verifier.server");
-    let identity;
-    try {
-      identity = await verifyListingDraftOwnership(
-        data.draft.kind,
-        data.draft.url,
-        link.roblox_user_id,
-      );
-    } catch (e) {
-      return {
-        ok: false as const,
-        retryAfterSeconds: e instanceof RobloxRateLimitError ? e.retryAfterSeconds : 0,
-        error:
-          e instanceof z.ZodError
-            ? "Roblox returned incomplete information. Ownership could not be verified."
-            : e instanceof Error
-              ? e.message
-              : "Ownership could not be checked. Please try again.",
+    if (
+      data.draft.format === "auction" &&
+      data.draft.auctionEndsAt != null &&
+      data.draft.auctionEndsAt <= Date.now()
+    )
+      return { ok: false as const, error: "Choose an auction end in the future." };
+    let identity: Pick<
+      Database["public"]["Tables"]["listing_drafts"]["Row"],
+      | "kind"
+      | "asset_id"
+      | "place_id"
+      | "creator_type"
+      | "creator_id"
+      | "asset_name"
+      | "roblox_user_id"
+      | "ownership_checked_at"
+    >;
+    if (data.draft.kind === "file") {
+      identity = {
+        kind: "file",
+        asset_id: null,
+        place_id: null,
+        creator_type: null,
+        creator_id: null,
+        asset_name: data.draft.title,
+        roblox_user_id: null,
+        ownership_checked_at: null,
       };
+    } else {
+      const { data: link, error } = await supabaseAdmin
+        .from("roblox_accounts")
+        .select("roblox_user_id")
+        .eq("user_id", user.id)
+        .single();
+      if (error || !link)
+        return {
+          ok: false as const,
+          error: "Connect your Roblox account before saving a listing.",
+        };
+      const { verifyListingDraftOwnership } = await import("./listing-draft-verifier.server");
+      try {
+        identity = await verifyListingDraftOwnership(
+          data.draft.kind,
+          data.draft.url,
+          link.roblox_user_id,
+        );
+      } catch (e) {
+        return {
+          ok: false as const,
+          retryAfterSeconds: e instanceof RobloxRateLimitError ? e.retryAfterSeconds : 0,
+          error:
+            e instanceof z.ZodError
+              ? "Roblox returned incomplete information. Ownership could not be verified."
+              : e instanceof Error
+                ? e.message
+                : "Ownership could not be checked. Please try again.",
+        };
+      }
     }
     const d = data.draft;
     const row: Database["public"]["Tables"]["listing_drafts"]["Insert"] = {
       ...identity,
       seller_id: user.id,
+      auction_ends_at: d.format === "auction" ? (d.auctionEndsAt ?? null) : null,
       title: d.title,
       description: d.description,
       format: d.format,
@@ -95,6 +128,8 @@ export const deleteListingDraft = createServerFn({ method: "POST" })
     const { verifiedAccount } = await import("./account.server");
     const user = await verifiedAccount(data.token);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { deleteDraftAssets } = await import("./listing-assets.server");
+    await deleteDraftAssets(user.id, data.id);
     const { error } = await supabaseAdmin
       .from("listing_drafts")
       .delete()

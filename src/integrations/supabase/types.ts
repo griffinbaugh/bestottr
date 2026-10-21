@@ -8,12 +8,27 @@ export type Database = {
   };
   public: {
     Tables: {
+      listing_assets: {
+        Row: import("@/lib/listing-assets").ListingAsset;
+        Insert: Omit<
+          import("@/lib/listing-assets").ListingAsset,
+          "id" | "created_at" | "status" | "position"
+        > & { id?: string; created_at?: string; status?: "pending" | "ready"; position?: number };
+        Update: Partial<import("@/lib/listing-assets").ListingAsset>;
+        Relationships: [];
+      };
       listing_drafts: {
         Row: import("@/lib/listing-drafts").ListingDraft;
         Insert: Omit<
           import("@/lib/listing-drafts").ListingDraft,
-          "id" | "created_at" | "updated_at"
-        > & { id?: string; created_at?: string; updated_at?: string };
+          "id" | "created_at" | "updated_at" | "cover_asset_id" | "auction_ends_at"
+        > & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          cover_asset_id?: string | null;
+          auction_ends_at?: number | null;
+        };
         Update: Partial<import("@/lib/listing-drafts").ListingDraft>;
         Relationships: [];
       };
@@ -169,6 +184,21 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      reserve_listing_asset: {
+        Args: {
+          p_seller: string;
+          p_draft: string;
+          p_category: string;
+          p_filename: string;
+          p_content_type: string;
+          p_size: number;
+        };
+        Returns: import("@/lib/listing-assets").ListingAsset;
+      };
+      move_listing_image: {
+        Args: { p_seller: string; p_asset: string; p_direction: string };
+        Returns: undefined;
+      };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];
