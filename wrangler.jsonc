@@ -1,6 +1,6 @@
-// Cloudflare Workers config for self-hosting bestottr (migration prep; Lovable hosting is unaffected).
+// Cloudflare Workers config for independently hosted BestOttr.
 // `npm run build` emits the Worker to .output/server and static assets to .output/public.
-// Deploy with: npm run cf:deploy   (uses this file explicitly, not the generated dist/server/wrangler.json)
+// Deploy with: npm run cf:deploy   (uses this file explicitly, not an editor-managed deployment config)
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "bestottr",
