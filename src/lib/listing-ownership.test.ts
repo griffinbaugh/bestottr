@@ -1,9 +1,15 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { verifyDraftOwnership } from "./listing-ownership.server";
 import { parseDraftAsset, draftFields } from "./listing-drafts";
 
 const gameLink = "https://www.roblox.com/games/100/Game";
 const groupLink = "https://www.roblox.com/communities/300/Group";
+beforeEach(() => {
+  vi.spyOn(console, "warn").mockImplementation(() => {});
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 function requestFor(type = "User", owner = 42, groupOwner: number | null = 42) {
   return vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
@@ -26,6 +32,43 @@ function requestFor(type = "User", owner = 42, groupOwner: number | null = 42) {
   });
 }
 describe("Production listing ownership", () => {
+  it("reports the actual failing Roblox endpoint and status without logging response bodies", async () => {
+    const fixture = requestFor("Group");
+    const request: typeof fetch = async (input) =>
+      String(input).includes("develop.roblox.com")
+        ? new Response("private response body", { status: 403 })
+        : fixture(input);
+    await expect(verifyDraftOwnership("experience", gameLink, "42", request)).rejects.toThrow(
+      "RBX-UNIVERSE-403",
+    );
+    expect(console.warn).toHaveBeenCalledWith("Roblox ownership request failed", {
+      stage: "UNIVERSE",
+      status: 403,
+    });
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain(
+      "private response body",
+    );
+  });
+  it("distinguishes rate limits from missing ownership", async () => {
+    const request = vi.fn(async () => new Response(null, { status: 429 }));
+    await expect(verifyDraftOwnership("community", groupLink, "42", request)).rejects.toThrow(
+      "Wait a minute before trying again. Reference: RBX-GROUP-429",
+    );
+  });
+  it.each(["TimeoutError", "TypeError"])(
+    "labels %s without exposing network error contents",
+    async (name) => {
+      const error = new Error("sensitive diagnostic contents");
+      error.name = name;
+      const request = vi.fn(async () => {
+        throw error;
+      });
+      await expect(verifyDraftOwnership("experience", gameLink, "42", request)).rejects.toThrow(
+        name === "TimeoutError" ? "RBX-PLACE-TIMEOUT" : "RBX-PLACE-NETWORK",
+      );
+      expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain(error.message);
+    },
+  );
   it("verifies the observed private Fuse an Egg universe through its actual group owner", async () => {
     // Public API snapshot from 2026-10-21. games/v1 hid this game behind a zero-ID placeholder.
     const request = vi.fn(async (input: RequestInfo | URL) => {

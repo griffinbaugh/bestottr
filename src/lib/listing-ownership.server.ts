@@ -29,19 +29,40 @@ export async function verifyDraftOwnership(
         ? "Paste a full https://www.roblox.com/games/… link."
         : "Paste a full Roblox community or group link.",
     );
-  const json = async (endpoint: string) => {
-    const r = await request(endpoint, {
-      headers: { accept: "application/json" },
-      // Workers supports manual/follow only. Reject redirects via the non-2xx check below.
-      redirect: "manual",
-      signal: AbortSignal.timeout(6000),
-    });
-    if (!r.ok)
-      throw new Error("Roblox is unavailable or this asset could not be read. Try again shortly.");
+  const json = async (endpoint: string, stage: "PLACE" | "UNIVERSE" | "GROUP") => {
+    let r: Response;
+    try {
+      r = await request(endpoint, {
+        headers: { accept: "application/json" },
+        // Workers supports manual/follow only. Reject redirects via the non-2xx check below.
+        redirect: "manual",
+        signal: AbortSignal.timeout(6000),
+      });
+    } catch (error) {
+      const code =
+        error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")
+          ? "TIMEOUT"
+          : "NETWORK";
+      console.warn("Roblox ownership request failed", { stage, code });
+      throw new Error(
+        `Roblox could not be reached. Try again shortly. Reference: RBX-${stage}-${code}.`,
+      );
+    }
+    if (!r.ok) {
+      // Log only fixed endpoint identifiers and response status, never sessions or response bodies.
+      console.warn("Roblox ownership request failed", { stage, status: r.status });
+      const message =
+        r.status === 429
+          ? "Roblox is limiting ownership checks. Wait a minute before trying again."
+          : "Roblox is unavailable or this asset could not be read. Try again shortly.";
+      throw new Error(`${message} Reference: RBX-${stage}-${r.status}.`);
+    }
     return r.json() as Promise<unknown>;
   };
   const group = async (groupId: string) => {
-    const g = groupSchema.parse(await json(`https://groups.roblox.com/v1/groups/${groupId}`));
+    const g = groupSchema.parse(
+      await json(`https://groups.roblox.com/v1/groups/${groupId}`, "GROUP"),
+    );
     if (g.id !== groupId) throw new Error("Roblox returned a different community. Try again.");
     if (g.owner?.userId !== linkedUserId)
       throw new Error(
@@ -64,11 +85,11 @@ export async function verifyDraftOwnership(
   }
   const universe = z
     .object({ universeId: apiId })
-    .parse(await json(`https://apis.roblox.com/universes/v1/places/${inputId}/universe`));
+    .parse(await json(`https://apis.roblox.com/universes/v1/places/${inputId}/universe`, "PLACE"));
   // games/v1 replaces private/content-restricted experiences with zero-ID placeholders.
   // The documented public universe-details endpoint supplies creator identity for private drafts.
   const game = universeDetailsSchema.parse(
-    await json(`https://develop.roblox.com/v1/universes/${universe.universeId}`),
+    await json(`https://develop.roblox.com/v1/universes/${universe.universeId}`, "UNIVERSE"),
   );
   if (game.id !== universe.universeId)
     throw new Error("Roblox returned a different experience. Try again.");
