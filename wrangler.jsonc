@@ -5,6 +5,8 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "bestottr",
   "keep_vars": true,
+  // Cloudflare runs `wrangler preview` for PR branches; this block enables that command.
+  "previews": {},
   "main": ".output/server/index.mjs",
   "compatibility_date": "2026-10-01",
   // Server bundle imports node:async_hooks / node:buffer / node:stream / node:process.
