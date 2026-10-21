@@ -29,6 +29,31 @@ function requestFor(type = "User", owner = 42, groupOwner: number | null = 42) {
   });
 }
 describe("Production listing ownership", () => {
+  it("uses Cloudflare-compatible manual redirects on every API request", async () => {
+    const fixture = requestFor("Group");
+    const request: typeof fetch = async (input, init) => {
+      if (init?.redirect === "error") throw new TypeError("Unsupported redirect mode in Workers");
+      expect(init?.redirect).toBe("manual");
+      return fixture(input);
+    };
+    await expect(
+      verifyDraftOwnership("experience", gameLink, "42", request),
+    ).resolves.toMatchObject({ asset_id: "200" });
+    expect(fixture).toHaveBeenCalledTimes(3);
+  });
+  it.each([301, 302, 303, 307, 308])(
+    "rejects an upstream %i redirect without following it",
+    async (status) => {
+      const request = vi.fn(
+        async () =>
+          new Response(null, { status, headers: { Location: "https://example.invalid/" } }),
+      );
+      await expect(verifyDraftOwnership("experience", gameLink, "42", request)).rejects.toThrow(
+        "Roblox is unavailable",
+      );
+      expect(request).toHaveBeenCalledTimes(1);
+    },
+  );
   it("accepts direct ownership only for the server's linked identity", async () => {
     const r = await verifyDraftOwnership("experience", gameLink, "42", requestFor());
     expect(r).toMatchObject({
