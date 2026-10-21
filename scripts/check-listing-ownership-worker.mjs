@@ -25,7 +25,7 @@ const { outputFiles } = await build({
           if (r.redirect !== 'manual') throw new Error('Expected manual redirects');
           calls++;
           if (r.url.includes('/places/100/universe')) return Response.json({ universeId: 200 });
-          if (r.url.includes('games?universeIds=200')) return Response.json({ data: [{ id: 200, name: 'Game', rootPlaceId: 100, creator: { type: 'Group', id: 300 } }] });
+          if (r.url === 'https://develop.roblox.com/v1/universes/200') return Response.json({ id: 200, name: 'Game', rootPlaceId: 100, creatorType: 'Group', creatorTargetId: 300, isActive: false, privacyType: 'Private' });
           if (r.url.includes('/groups/300')) return Response.json({ id: 300, name: 'Group', owner: { userId: 42 } });
           throw new Error('Unexpected endpoint');
         };

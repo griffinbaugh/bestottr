@@ -7,11 +7,12 @@ const groupSchema = z.object({
   name: z.string().min(1).max(200),
   owner: z.object({ userId: apiId }).nullable(),
 });
-const gameSchema = z.object({
+const universeDetailsSchema = z.object({
   id: apiId,
   name: z.string().min(1).max(200),
   rootPlaceId: apiId,
-  creator: z.object({ id: apiId, type: z.enum(["User", "Group"]) }),
+  creatorType: z.enum(["User", "Group"]),
+  creatorTargetId: apiId,
 });
 
 /** No demo fixtures, browser-supplied identity, group roles, or fallback ownership. Every save calls Roblox again. */
@@ -36,7 +37,7 @@ export async function verifyDraftOwnership(
       signal: AbortSignal.timeout(6000),
     });
     if (!r.ok)
-      throw new Error("Roblox is unavailable or this asset is not public. Try again shortly.");
+      throw new Error("Roblox is unavailable or this asset could not be read. Try again shortly.");
     return r.json() as Promise<unknown>;
   };
   const group = async (groupId: string) => {
@@ -64,21 +65,22 @@ export async function verifyDraftOwnership(
   const universe = z
     .object({ universeId: apiId })
     .parse(await json(`https://apis.roblox.com/universes/v1/places/${inputId}/universe`));
-  const result = z
-    .object({ data: z.array(gameSchema).length(1) })
-    .parse(await json(`https://games.roblox.com/v1/games?universeIds=${universe.universeId}`));
-  const game = result.data[0]!;
+  // games/v1 replaces private/content-restricted experiences with zero-ID placeholders.
+  // The documented public universe-details endpoint supplies creator identity for private drafts.
+  const game = universeDetailsSchema.parse(
+    await json(`https://develop.roblox.com/v1/universes/${universe.universeId}`),
+  );
   if (game.id !== universe.universeId)
     throw new Error("Roblox returned a different experience. Try again.");
-  if (game.creator.type === "Group") await group(game.creator.id);
-  else if (game.creator.id !== linkedUserId)
+  if (game.creatorType === "Group") await group(game.creatorTargetId);
+  else if (game.creatorTargetId !== linkedUserId)
     throw new Error("Your connected Roblox account does not own this experience.");
   return {
     kind,
     asset_id: game.id,
     place_id: game.rootPlaceId,
-    creator_type: game.creator.type,
-    creator_id: game.creator.id,
+    creator_type: game.creatorType,
+    creator_id: game.creatorTargetId,
     asset_name: game.name,
     roblox_user_id: linkedUserId,
     ownership_checked_at: new Date().toISOString(),
