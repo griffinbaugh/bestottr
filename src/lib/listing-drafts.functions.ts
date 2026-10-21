@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { draftFields } from "./listing-drafts";
+import { RobloxRateLimitError } from "./roblox-rate-limit";
 import type { Database } from "@/integrations/supabase/types";
 const token = z.string().min(20).max(10000);
 
@@ -43,13 +44,18 @@ export const saveListingDraft = createServerFn({ method: "POST" })
       if (error || !existing)
         return { ok: false as const, error: "This draft could not be found." };
     }
-    const { verifyDraftOwnership } = await import("./listing-ownership.server");
+    const { verifyListingDraftOwnership } = await import("./listing-draft-verifier.server");
     let identity;
     try {
-      identity = await verifyDraftOwnership(data.draft.kind, data.draft.url, link.roblox_user_id);
+      identity = await verifyListingDraftOwnership(
+        data.draft.kind,
+        data.draft.url,
+        link.roblox_user_id,
+      );
     } catch (e) {
       return {
         ok: false as const,
+        retryAfterSeconds: e instanceof RobloxRateLimitError ? e.retryAfterSeconds : 0,
         error:
           e instanceof z.ZodError
             ? "Roblox returned incomplete information. Ownership could not be verified."
