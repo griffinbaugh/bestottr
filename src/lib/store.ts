@@ -1,3 +1,4 @@
+import { IS_DEMO, requireDemo } from "./app-mode";
 import { editCommunity, editExperience, type CommunityChanges, type ExperienceChanges } from "./listing-edit";
 import { useSyncExternalStore } from "react";
 import { DD_ITEMS, FILE_STAGES, ME, TRANSFER_ITEMS, seedState, type AdminItem, type Deal, type Listing, type State } from "./data";
@@ -12,7 +13,10 @@ import {
 import { lookupLiveCommunityOwnership, lookupLiveOwnership } from "./roblox-transfer.functions";
 
 const KEY = "bestottr-demo-v2";
-const initial = normalizeState(seedState(), Date.now());
+const initial: State = IS_DEMO ? normalizeState(seedState(), Date.now()) : {
+  listings: [], watchlist: [], deals: [], roblox: { connected: false },
+  admin: { users: [], disputes: [], flags: [], txn: {} },
+};
 let state: State = initial;
 const listeners = new Set<() => void>();
 
@@ -20,6 +24,7 @@ function emit() {
   listeners.forEach((l) => l());
 }
 function set(fn: (s: State) => State) {
+  requireDemo();
   state = fn(state);
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
@@ -30,6 +35,7 @@ function set(fn: (s: State) => State) {
 }
 
 export function hydrateStore() {
+  if (!IS_DEMO) return;
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
@@ -234,6 +240,7 @@ export const actions = {
    * same engine from a server scheduler/worker with a row lock per deal.
    */
   runMonitorTick() {
+    if (!IS_DEMO) return;
     for (const d of state.deals) {
       const t = d.acquisition;
       if (!t || !(MONITORED.includes(t.state) || t.state === "payout_releasing" || t.state === "refunding")) continue;
@@ -314,6 +321,7 @@ async function observe(t: ExperienceTransfer): Promise<CheckOutcome> {
 }
 
 function stepAcq(dealId: string, fn: (t: ExperienceTransfer, now: number) => StepResult): { ok: boolean; error?: string } {
+  requireDemo();
   const d = state.deals.find((x) => x.id === dealId);
   if (!d?.acquisition) return { ok: false, error: "Not an Experience acquisition." };
   const r = fn(d.acquisition, Date.now());

@@ -10,21 +10,41 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SellRouteImport } from './routes/sell'
 import { Route as SellerRouteImport } from './routes/seller'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SupportRouteImport } from './routes/support'
+import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as AccountConnectionsRouteImport } from './routes/account_.connections'
+import { Route as AccountNotificationsRouteImport } from './routes/account_.notifications'
+import { Route as AccountPaymentsRouteImport } from './routes/account_.payments'
+import { Route as AccountPayoutsRouteImport } from './routes/account_.payouts'
+import { Route as AccountProfileRouteImport } from './routes/account_.profile'
+import { Route as AccountSecurityRouteImport } from './routes/account_.security'
+import { Route as AccountVerificationRouteImport } from './routes/account_.verification'
 import { Route as AdminSupportRouteImport } from './routes/admin_.support'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as DealIdRouteImport } from './routes/deal.$id'
 import { Route as ListingIdRouteImport } from './routes/listing.$id'
 import { Route as UserHandleRouteImport } from './routes/user.$handle'
+import { Route as ApiRobloxCallbackRouteImport } from './routes/api.roblox.callback'
 import { Route as ListingIdEditRouteImport } from './routes/listing.$id_.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -42,6 +62,21 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SellRoute = SellRouteImport.update({
   id: '/sell',
   path: '/sell',
@@ -52,14 +87,64 @@ const SellerRoute = SellerRouteImport.update({
   path: '/seller',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupportRoute = SupportRouteImport.update({
   id: '/support',
   path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifyEmailRoute = VerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountConnectionsRoute = AccountConnectionsRouteImport.update({
+  id: '/account_/connections',
+  path: '/account/connections',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountNotificationsRoute = AccountNotificationsRouteImport.update({
+  id: '/account_/notifications',
+  path: '/account/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountPaymentsRoute = AccountPaymentsRouteImport.update({
+  id: '/account_/payments',
+  path: '/account/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountPayoutsRoute = AccountPayoutsRouteImport.update({
+  id: '/account_/payouts',
+  path: '/account/payouts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountProfileRoute = AccountProfileRouteImport.update({
+  id: '/account_/profile',
+  path: '/account/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountSecurityRoute = AccountSecurityRouteImport.update({
+  id: '/account_/security',
+  path: '/account/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountVerificationRoute = AccountVerificationRouteImport.update({
+  id: '/account_/verification',
+  path: '/account/verification',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSupportRoute = AdminSupportRouteImport.update({
   id: '/admin_/support',
   path: '/admin/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DealIdRoute = DealIdRouteImport.update({
@@ -77,6 +162,11 @@ const UserHandleRoute = UserHandleRouteImport.update({
   path: '/user/$handle',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRobloxCallbackRoute = ApiRobloxCallbackRouteImport.update({
+  id: '/api/roblox/callback',
+  path: '/api/roblox/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListingIdEditRoute = ListingIdEditRouteImport.update({
   id: '/listing/$id_/edit',
   path: '/listing/$id/edit',
@@ -85,104 +175,209 @@ const ListingIdEditRoute = ListingIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
   '/browse': typeof BrowseRoute
   '/dashboard': typeof DashboardRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sell': typeof SellRoute
   '/seller': typeof SellerRoute
+  '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/verify-email': typeof VerifyEmailRoute
+  '/account/connections': typeof AccountConnectionsRoute
+  '/account/notifications': typeof AccountNotificationsRoute
+  '/account/payments': typeof AccountPaymentsRoute
+  '/account/payouts': typeof AccountPayoutsRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/security': typeof AccountSecurityRoute
+  '/account/verification': typeof AccountVerificationRoute
   '/admin/support': typeof AdminSupportRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/deal/$id': typeof DealIdRoute
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
+  '/api/roblox/callback': typeof ApiRobloxCallbackRoute
   '/listing/$id/edit': typeof ListingIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
   '/browse': typeof BrowseRoute
   '/dashboard': typeof DashboardRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sell': typeof SellRoute
   '/seller': typeof SellerRoute
+  '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/verify-email': typeof VerifyEmailRoute
+  '/account/connections': typeof AccountConnectionsRoute
+  '/account/notifications': typeof AccountNotificationsRoute
+  '/account/payments': typeof AccountPaymentsRoute
+  '/account/payouts': typeof AccountPayoutsRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/security': typeof AccountSecurityRoute
+  '/account/verification': typeof AccountVerificationRoute
   '/admin/support': typeof AdminSupportRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/deal/$id': typeof DealIdRoute
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
+  '/api/roblox/callback': typeof ApiRobloxCallbackRoute
   '/listing/$id/edit': typeof ListingIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/admin': typeof AdminRoute
   '/browse': typeof BrowseRoute
   '/dashboard': typeof DashboardRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/sell': typeof SellRoute
   '/seller': typeof SellerRoute
+  '/signup': typeof SignupRoute
   '/support': typeof SupportRoute
+  '/verify-email': typeof VerifyEmailRoute
+  '/account_/connections': typeof AccountConnectionsRoute
+  '/account_/notifications': typeof AccountNotificationsRoute
+  '/account_/payments': typeof AccountPaymentsRoute
+  '/account_/payouts': typeof AccountPayoutsRoute
+  '/account_/profile': typeof AccountProfileRoute
+  '/account_/security': typeof AccountSecurityRoute
+  '/account_/verification': typeof AccountVerificationRoute
   '/admin_/support': typeof AdminSupportRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/deal/$id': typeof DealIdRoute
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
+  '/api/roblox/callback': typeof ApiRobloxCallbackRoute
   '/listing/$id_/edit': typeof ListingIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account'
     | '/admin'
     | '/browse'
     | '/dashboard'
+    | '/forgot-password'
+    | '/login'
+    | '/reset-password'
     | '/sell'
     | '/seller'
+    | '/signup'
     | '/support'
+    | '/verify-email'
+    | '/account/connections'
+    | '/account/notifications'
+    | '/account/payments'
+    | '/account/payouts'
+    | '/account/profile'
+    | '/account/security'
+    | '/account/verification'
     | '/admin/support'
+    | '/auth/callback'
     | '/deal/$id'
     | '/listing/$id'
     | '/user/$handle'
+    | '/api/roblox/callback'
     | '/listing/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/account'
     | '/admin'
     | '/browse'
     | '/dashboard'
+    | '/forgot-password'
+    | '/login'
+    | '/reset-password'
     | '/sell'
     | '/seller'
+    | '/signup'
     | '/support'
+    | '/verify-email'
+    | '/account/connections'
+    | '/account/notifications'
+    | '/account/payments'
+    | '/account/payouts'
+    | '/account/profile'
+    | '/account/security'
+    | '/account/verification'
     | '/admin/support'
+    | '/auth/callback'
     | '/deal/$id'
     | '/listing/$id'
     | '/user/$handle'
+    | '/api/roblox/callback'
     | '/listing/$id/edit'
   id:
     | '__root__'
     | '/'
+    | '/account'
     | '/admin'
     | '/browse'
     | '/dashboard'
+    | '/forgot-password'
+    | '/login'
+    | '/reset-password'
     | '/sell'
     | '/seller'
+    | '/signup'
     | '/support'
+    | '/verify-email'
+    | '/account_/connections'
+    | '/account_/notifications'
+    | '/account_/payments'
+    | '/account_/payouts'
+    | '/account_/profile'
+    | '/account_/security'
+    | '/account_/verification'
     | '/admin_/support'
+    | '/auth/callback'
     | '/deal/$id'
     | '/listing/$id'
     | '/user/$handle'
+    | '/api/roblox/callback'
     | '/listing/$id_/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRoute
   AdminRoute: typeof AdminRoute
   BrowseRoute: typeof BrowseRoute
   DashboardRoute: typeof DashboardRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SellRoute: typeof SellRoute
   SellerRoute: typeof SellerRoute
+  SignupRoute: typeof SignupRoute
   SupportRoute: typeof SupportRoute
+  VerifyEmailRoute: typeof VerifyEmailRoute
+  AccountConnectionsRoute: typeof AccountConnectionsRoute
+  AccountNotificationsRoute: typeof AccountNotificationsRoute
+  AccountPaymentsRoute: typeof AccountPaymentsRoute
+  AccountPayoutsRoute: typeof AccountPayoutsRoute
+  AccountProfileRoute: typeof AccountProfileRoute
+  AccountSecurityRoute: typeof AccountSecurityRoute
+  AccountVerificationRoute: typeof AccountVerificationRoute
   AdminSupportRoute: typeof AdminSupportRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   DealIdRoute: typeof DealIdRoute
   ListingIdRoute: typeof ListingIdRoute
   UserHandleRoute: typeof UserHandleRoute
+  ApiRobloxCallbackRoute: typeof ApiRobloxCallbackRoute
   ListingIdEditRoute: typeof ListingIdEditRoute
 }
 
@@ -193,6 +388,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -216,6 +418,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sell': {
       id: '/sell'
       path: '/sell'
@@ -230,6 +453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SellerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/support': {
       id: '/support'
       path: '/support'
@@ -237,11 +467,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verify-email': {
+      id: '/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof VerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account_/connections': {
+      id: '/account_/connections'
+      path: '/account/connections'
+      fullPath: '/account/connections'
+      preLoaderRoute: typeof AccountConnectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account_/notifications': {
+      id: '/account_/notifications'
+      path: '/account/notifications'
+      fullPath: '/account/notifications'
+      preLoaderRoute: typeof AccountNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account_/payments': {
+      id: '/account_/payments'
+      path: '/account/payments'
+      fullPath: '/account/payments'
+      preLoaderRoute: typeof AccountPaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account_/payouts': {
+      id: '/account_/payouts'
+      path: '/account/payouts'
+      fullPath: '/account/payouts'
+      preLoaderRoute: typeof AccountPayoutsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account_/profile': {
+      id: '/account_/profile'
+      path: '/account/profile'
+      fullPath: '/account/profile'
+      preLoaderRoute: typeof AccountProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account_/security': {
+      id: '/account_/security'
+      path: '/account/security'
+      fullPath: '/account/security'
+      preLoaderRoute: typeof AccountSecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account_/verification': {
+      id: '/account_/verification'
+      path: '/account/verification'
+      fullPath: '/account/verification'
+      preLoaderRoute: typeof AccountVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin_/support': {
       id: '/admin_/support'
       path: '/admin/support'
       fullPath: '/admin/support'
       preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/deal/$id': {
@@ -265,6 +558,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserHandleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/roblox/callback': {
+      id: '/api/roblox/callback'
+      path: '/api/roblox/callback'
+      fullPath: '/api/roblox/callback'
+      preLoaderRoute: typeof ApiRobloxCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/listing/$id_/edit': {
       id: '/listing/$id_/edit'
       path: '/listing/$id/edit'
@@ -277,16 +577,31 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRoute,
   AdminRoute: AdminRoute,
   BrowseRoute: BrowseRoute,
   DashboardRoute: DashboardRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SellRoute: SellRoute,
   SellerRoute: SellerRoute,
+  SignupRoute: SignupRoute,
   SupportRoute: SupportRoute,
+  VerifyEmailRoute: VerifyEmailRoute,
+  AccountConnectionsRoute: AccountConnectionsRoute,
+  AccountNotificationsRoute: AccountNotificationsRoute,
+  AccountPaymentsRoute: AccountPaymentsRoute,
+  AccountPayoutsRoute: AccountPayoutsRoute,
+  AccountProfileRoute: AccountProfileRoute,
+  AccountSecurityRoute: AccountSecurityRoute,
+  AccountVerificationRoute: AccountVerificationRoute,
   AdminSupportRoute: AdminSupportRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   DealIdRoute: DealIdRoute,
   ListingIdRoute: ListingIdRoute,
   UserHandleRoute: UserHandleRoute,
+  ApiRobloxCallbackRoute: ApiRobloxCallbackRoute,
   ListingIdEditRoute: ListingIdEditRoute,
 }
 export const routeTree = rootRouteImport

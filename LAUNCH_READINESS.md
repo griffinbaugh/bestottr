@@ -1,0 +1,70 @@
+# BestOttr account release and launch readiness
+
+This release adds real Supabase accounts. It does **not** open trading or accept money. No escrow or payment provider has been selected. Production ignores local demo settings and starts with no sample listings, balances, deals or reviews.
+
+## Included
+
+- Signup, login, email confirmation/resend, password recovery and callback handling.
+- Profile dropdown, account overview, public profile, email/password settings, authenticator enrollment and challenge, session sign-out, notification preferences.
+- Private connected-account and verification pages. Roblox OAuth code uses state, PKCE and an encrypted browser-bound callback cookie; verified identity is written only by the server.
+- Payment methods and deposits/payouts pages describe unavailable services without creating fake cards, balances or successful payments.
+- Database profiles/preferences provision automatically. RLS and column grants restrict account edits. Roblox identity cannot be self-certified. Existing support tickets and admin permissions remain intact; enrolled MFA also protects staff ticket access.
+
+## Publish this code
+
+The additive account migrations were applied to the owner-controlled Supabase project `dkaqxhjoshlynuwxbwbu`. Do not reapply them manually. Their recorded versions match the files in `supabase/migrations`.
+
+The GitHub connection has read access but its write operations return HTTP 403. Apply the supplied patch in the existing Codespace, based on the merged migration code:
+
+```sh
+git fetch origin
+git switch -c launch/accounts-settings origin/main
+git apply --index bestottr-accounts.patch
+git commit -m "Add real accounts and prelaunch settings"
+git push -u origin launch/accounts-settings
+```
+
+Open and merge the branch PR to trigger the existing Cloudflare build. If the apply check fails because main changed, resolve the differences before applying; do not rerun the earlier migration patch or force-push.
+
+## Account email setup before public registration
+
+In Supabase Authentication, configure:
+
+- Site URL: `https://bestottr.com`.
+- Allowed redirect URLs: `https://bestottr.com/auth/callback` and `https://bestottr.com/auth/callback?next=/reset-password`.
+- Email signup and email confirmation enabled. Keep secure email change enabled (confirm both inboxes).
+- Password minimum at least 12 characters; enable current-password requirement for password changes and leaked-password protection where available.
+- Authenticator TOTP enrollment and verification enabled.
+- Custom SMTP using the verified Resend domain. The existing Worker `RESEND_API_KEY` sends support mail; it does not automatically configure Supabase Auth.
+
+Resend SMTP settings: host `smtp.resend.com`, port `465`, username `resend`, password a Resend API key entered directly into Supabase. Use a verified sender such as `support@bestottr.com` and sender name `bestottr`. Disable email click tracking for authentication links. Review Auth email rate limits and bot protection before public promotion.
+
+Default Supabase mail delivery is restricted to project team addresses and is unsuitable for public registration. Documentation: https://supabase.com/docs/guides/auth/auth-smtp and https://resend.com/docs/send-with-supabase-smtp.
+
+Test signup with a non-team email, confirmation in the originating browser (PKCE), logout/login, recovery, email change, MFA enrollment, logout/login MFA challenge, profile persistence across devices and staff queue access. The automated checks do not replace these provider-delivery tests.
+
+## Enable Roblox identity linking
+
+Register an owner-controlled Roblox OAuth application with `openid profile` scopes and the exact redirect `https://bestottr.com/api/roblox/callback`. Complete Roblox's application requirements before making it publicly available.
+
+Set **Worker runtime variables** `ROBLOX_CLIENT_ID` and `SITE_URL=https://bestottr.com`. Set **Worker secrets** `ROBLOX_CLIENT_SECRET`, `ROBLOX_OAUTH_STATE_SECRET` (a securely generated random secret of at least 32 characters) and `SUPABASE_SERVICE_ROLE_KEY`. Existing runtime `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` must remain configured. Never put privileged values in `VITE_` variables or Git. Use the actual Supabase service-role/secret key, not the public publishable key.
+
+The connection button stays disabled until server configuration is present. Linking starts only on the canonical host. Test consent, cancel, expiration, repeat linking and prevention of linking one Roblox identity to two BestOttr accounts. The server discards provider tokens after obtaining identity. Identity confirmation alone does not prove ownership of a listing.
+
+## Remaining marketplace work
+
+These are launch blockers, not features completed by this account release:
+
+1. Select a payment/escrow provider that explicitly supports the business model, countries, Roblox digital-asset transactions and the required holding/release arrangement. Complete business onboarding and provider approval. Decide supported currencies, funding, refunds, disputes and payout rules before writing the adapter. Do not describe a conventional payment hold as escrow.
+2. Implement production listings, upload storage, moderation, bids and deal records with server authorization and ownership verification. The old local marketplace remains available only for deliberate local development/tests.
+3. Implement the provider adapter, authenticated checkout, verified and idempotent webhooks, integer-cent ledger, reconciliation and provider-managed payment/payout destinations. Never store raw card numbers or bank credentials. Connect the existing pure transfer engine to durable transactions and a server scheduler; require verified ownership and exactly-once release/refund.
+4. Exercise sandbox success/failure, duplicate events, concurrent bids, timeout, cancellation, refund and transfer mismatch. Keep money features closed until live credentials and provider onboarding are confirmed.
+5. Complete business terms, privacy notice and transaction/refund policies for the actual operating model. Publish them before inviting users to transact.
+
+No payment account, card token, payout destination or funded balance has been created by this release. Payment, payout and trading availability are hardcoded off server-side as well as gated in the UI.
+
+## Verification
+
+All 132 Vitest tests passed. TypeScript, the production build and the Cloudflare deployment dry run passed. Transactional Supabase checks passed for account bootstrap, owner edits, cross-account denial, preference isolation and blocked client-written Roblox identities; the test users were rolled back. Browser QA confirmed signup rendering and the unsigned-in account gate. Fresh-user confirmation delivery and signed-in settings still need end-to-end verification after the code is deployed and Supabase SMTP is configured.
+
+Listings, uploads, instant file delivery/entitlements, inventory allocation, watchlists and participant messages still need production database/storage implementations. Auction settlement and ownership monitoring must run on a server scheduler. Those are separate from the account pages delivered here.

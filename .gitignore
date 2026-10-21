@@ -37,3 +37,6 @@ dist-ssr
 !.env.example
 .dev.vars*
 private-migration/
+
+# Supabase CLI local state
+supabase/.temp/
