@@ -21,7 +21,6 @@ import { Route as DealIdRouteImport } from './routes/deal.$id'
 import { Route as ListingIdRouteImport } from './routes/listing.$id'
 import { Route as UserHandleRouteImport } from './routes/user.$handle'
 import { Route as ListingIdEditRouteImport } from './routes/listing.$id_.edit'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -83,12 +82,6 @@ const ListingIdEditRoute = ListingIdEditRouteImport.update({
   path: '/listing/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -103,7 +96,6 @@ export interface FileRoutesByFullPath {
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
   '/listing/$id/edit': typeof ListingIdEditRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,7 +110,6 @@ export interface FileRoutesByTo {
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
   '/listing/$id/edit': typeof ListingIdEditRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,7 +125,6 @@ export interface FileRoutesById {
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
   '/listing/$id_/edit': typeof ListingIdEditRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,7 +141,6 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/user/$handle'
     | '/listing/$id/edit'
-    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,7 +155,6 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/user/$handle'
     | '/listing/$id/edit'
-    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -181,7 +169,6 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/user/$handle'
     | '/listing/$id_/edit'
-    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,7 +184,6 @@ export interface RootRouteChildren {
   ListingIdRoute: typeof ListingIdRoute
   UserHandleRoute: typeof UserHandleRoute
   ListingIdEditRoute: typeof ListingIdEditRoute
-  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -286,13 +272,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListingIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -309,7 +288,6 @@ const rootRouteChildren: RootRouteChildren = {
   ListingIdRoute: ListingIdRoute,
   UserHandleRoute: UserHandleRoute,
   ListingIdEditRoute: ListingIdEditRoute,
-  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
