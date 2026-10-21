@@ -1,5 +1,9 @@
 # BestOttr account release and launch readiness
 
+## Roblox request diagnostics
+
+The current live Worker was independently checked through its existing read-only server functions: the place-to-universe lookup and Evergames group-owner lookup succeeded. This did not reproduce the failing save or establish the cause of its non-2xx response. Ownership request errors now include `RBX-PLACE-{status}`, `RBX-UNIVERSE-{status}`, or `RBX-GROUP-{status}`; timeouts/network errors have distinct codes. A 429 asks the user to wait before retrying. Worker logs contain only stage/status (or network category), never sessions, provider tokens or upstream response bodies. Ownership checks continue to fail closed, with no cached approval or guessed identity. Apply `bestottr-roblox-diagnostics.patch`, retry once on the live site, and use the returned reference to investigate the actual failing response. This is diagnostic instrumentation, not a claimed fix for the unobserved Cloudflare response. All 176 unit tests, TypeScript, workerd checks, production build and dry run pass.
+
 ## Private listing drafts
 
 Production `/sell` now lets a signed-in, email-confirmed user with a linked Roblox account create, edit and delete private experience/community drafts. The server loads the OAuth-linked identity and checks live Roblox ownership on every save. Direct ownership or ownership of the creator group is required; membership/admin roles, demo fixtures and browser-supplied identity never authorize a draft. A draft records when the ownership check happened; this does not establish perpetual ownership or transfer readiness.
