@@ -31,6 +31,7 @@ export function ListingDrafts() {
 }
 function DraftEditor() {
   const { session, roblox } = useAuth();
+  const cooldownKey = `bestottr-listing-retry:${session?.user.id}`;
   const [draft, setDraft] = useState(empty);
   const [drafts, setDrafts] = useState<ListingDraft[]>([]);
   const [busy, setBusy] = useState(false);
@@ -38,8 +39,28 @@ function DraftEditor() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [retryAt, setRetryAt] = useState(() => {
+    try {
+      const stored = Number(sessionStorage.getItem(cooldownKey));
+      return Number.isFinite(stored) && stored > Date.now() ? stored : 0;
+    } catch {
+      return 0;
+    }
+  });
+  const [retryIn, setRetryIn] = useState(0);
   const up = (patch: Partial<DraftInput>) => setDraft((d) => ({ ...d, ...patch }));
   const token = session?.access_token;
+  useEffect(() => {
+    const tick = () => {
+      const remaining = Math.max(0, Math.ceil((retryAt - Date.now()) / 1000));
+      setRetryIn(remaining);
+      if (!remaining) setRetryAt(0);
+    };
+    tick();
+    if (retryAt <= Date.now()) return;
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [retryAt]);
   useEffect(() => {
     let active = true;
     setError("");
@@ -83,7 +104,7 @@ function DraftEditor() {
   }
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (!token || busy) return;
+    if (!token || busy || retryAt > Date.now()) return;
     setError("");
     setSuccess("");
     const parsed = draftFields.safeParse(draft);
@@ -96,6 +117,15 @@ function DraftEditor() {
       const result = await saveListingDraft({ data: { token, draft: parsed.data } });
       if (!result.ok) {
         setError(result.error);
+        if ("retryAfterSeconds" in result && result.retryAfterSeconds > 0) {
+          const until = Date.now() + result.retryAfterSeconds * 1000;
+          setRetryAt(until);
+          try {
+            sessionStorage.setItem(cooldownKey, String(until));
+          } catch {
+            /* Optional persistence. */
+          }
+        }
         return;
       }
       up({ id: result.id });
@@ -131,9 +161,8 @@ function DraftEditor() {
       <p className="eyebrow mb-3">Selling on bestottr</p>
       <h1 className="text-3xl font-semibold tracking-tight">Prepare your listing</h1>
       <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-        Save a private draft for an experience or community you own. Ownership is checked with
-        Roblox each time you save. Public listings and transactions will open when checkout is
-        ready.
+        Save a private draft for an experience or community you own. Roblox ownership is verified
+        before saving. Public listings and transactions will open when checkout is ready.
       </p>
       {!session?.user.email_confirmed_at ? (
         <div className="mt-8">
@@ -256,9 +285,18 @@ function DraftEditor() {
                     </p>
                   </>
                 )}
-                <Button type="submit" className="w-full">
-                  {busy ? "Checking ownership and saving…" : "Verify ownership & save draft"}
+                <Button type="submit" className="w-full" disabled={retryIn > 0}>
+                  {busy
+                    ? "Checking ownership and saving…"
+                    : retryIn > 0
+                      ? `Try again in ${retryIn}s`
+                      : "Verify ownership & save draft"}
                 </Button>
+                {retryIn > 0 && (
+                  <p role="status" className="text-xs text-muted-foreground">
+                    This save hasn’t completed. You can keep editing while waiting.
+                  </p>
+                )}
               </fieldset>
               {draft.id && (
                 <Button

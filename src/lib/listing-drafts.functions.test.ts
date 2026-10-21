@@ -17,9 +17,12 @@ vi.mock("@tanstack/react-start", () => ({
   }),
 }));
 vi.mock("./account.server", () => ({ verifiedAccount: mocks.verifiedAccount }));
-vi.mock("./listing-ownership.server", () => ({ verifyDraftOwnership: mocks.verifyDraftOwnership }));
+vi.mock("./listing-draft-verifier.server", () => ({
+  verifyListingDraftOwnership: mocks.verifyDraftOwnership,
+}));
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: { from: mocks.from } }));
 import { getListingDrafts, saveListingDraft, deleteListingDraft } from "./listing-drafts.functions";
+import { RobloxRateLimitError } from "./roblox-rate-limit";
 const token = "test-session-token-not-a-real-key";
 const id = "aa000000-0000-4000-8000-000000000001";
 const input = {
@@ -74,6 +77,15 @@ beforeEach(() => {
   });
 });
 describe("Draft server authorization", () => {
+  it("returns the provider cooldown to the editor without writing a draft", async () => {
+    mocks.verifyDraftOwnership.mockRejectedValue(new RobloxRateLimitError("GROUP", 90));
+    expect(await saveListingDraft({ data: { token, draft: input } })).toMatchObject({
+      ok: false,
+      retryAfterSeconds: 90,
+    });
+    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
   it("rejects an invalid or unverified session before any privileged database access", async () => {
     mocks.verifiedAccount.mockRejectedValue(new Error("Not signed in"));
     await expect(saveListingDraft({ data: { token, draft: input } })).rejects.toThrow(
@@ -121,7 +133,7 @@ describe("Draft server authorization", () => {
   });
   it("writes nothing if Roblox ownership cannot be proved", async () => {
     mocks.verifyDraftOwnership.mockRejectedValue(new Error("Not the owner"));
-    expect(await saveListingDraft({ data: { token, draft: input } })).toEqual({
+    expect(await saveListingDraft({ data: { token, draft: input } })).toMatchObject({
       ok: false,
       error: "Not the owner",
     });

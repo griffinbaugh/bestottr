@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { parseDraftAsset, type DraftInput } from "./listing-drafts";
+import { RobloxRateLimitError, retryAfterSeconds, type OwnershipStage } from "./roblox-rate-limit";
 
 const apiId = z.number().int().positive().max(Number.MAX_SAFE_INTEGER).transform(String);
 const groupSchema = z.object({
@@ -15,7 +16,7 @@ const universeDetailsSchema = z.object({
   creatorTargetId: apiId,
 });
 
-/** No demo fixtures, browser-supplied identity, group roles, or fallback ownership. Every save calls Roblox again. */
+/** Fresh authoritative lookup. No demo fixtures, browser-supplied identity, roles, or fallback ownership. */
 export async function verifyDraftOwnership(
   kind: DraftInput["kind"],
   url: string,
@@ -29,7 +30,7 @@ export async function verifyDraftOwnership(
         ? "Paste a full https://www.roblox.com/games/… link."
         : "Paste a full Roblox community or group link.",
     );
-  const json = async (endpoint: string, stage: "PLACE" | "UNIVERSE" | "GROUP") => {
+  const json = async (endpoint: string, stage: OwnershipStage) => {
     let r: Response;
     try {
       r = await request(endpoint, {
@@ -51,11 +52,11 @@ export async function verifyDraftOwnership(
     if (!r.ok) {
       // Log only fixed endpoint identifiers and response status, never sessions or response bodies.
       console.warn("Roblox ownership request failed", { stage, status: r.status });
-      const message =
-        r.status === 429
-          ? "Roblox is limiting ownership checks. Wait a minute before trying again."
-          : "Roblox is unavailable or this asset could not be read. Try again shortly.";
-      throw new Error(`${message} Reference: RBX-${stage}-${r.status}.`);
+      if (r.status === 429)
+        throw new RobloxRateLimitError(stage, retryAfterSeconds(r.headers.get("retry-after")));
+      throw new Error(
+        `Roblox is unavailable or this asset could not be read. Try again shortly. Reference: RBX-${stage}-${r.status}.`,
+      );
     }
     return r.json() as Promise<unknown>;
   };

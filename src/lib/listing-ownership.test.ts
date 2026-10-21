@@ -52,7 +52,7 @@ describe("Production listing ownership", () => {
   it("distinguishes rate limits from missing ownership", async () => {
     const request = vi.fn(async () => new Response(null, { status: 429 }));
     await expect(verifyDraftOwnership("community", groupLink, "42", request)).rejects.toThrow(
-      "Wait a minute before trying again. Reference: RBX-GROUP-429",
+      "Try again in 60 seconds. Reference: RBX-GROUP-429",
     );
   });
   it.each(["TimeoutError", "TypeError"])(
