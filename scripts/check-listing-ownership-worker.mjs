@@ -26,7 +26,7 @@ const { outputFiles } = await build({
           calls++;
           if (r.url.includes('/places/100/universe')) return Response.json({ universeId: 200 });
           if (r.url === 'https://develop.roblox.com/v1/universes/200') return Response.json({ id: 200, name: 'Game', rootPlaceId: 100, creatorType: 'Group', creatorTargetId: 300, isActive: false, privacyType: 'Private' });
-          if (r.url.includes('/groups/300')) return Response.json({ id: 300, name: 'Group', owner: { userId: 42 } });
+          if (r.url === 'https://groups.roblox.com/v2/groups?groupIds=300') return Response.json({ data: [{ id: 300, name: 'Group', owner: { id: 42, type: 'User' } }] });
           throw new Error('Unexpected endpoint');
         };
         const result = await verifyDraftOwnership('experience', 'https://www.roblox.com/games/100', '42', request);

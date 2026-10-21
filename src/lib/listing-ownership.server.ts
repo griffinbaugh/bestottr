@@ -6,7 +6,7 @@ const apiId = z.number().int().positive().max(Number.MAX_SAFE_INTEGER).transform
 const groupSchema = z.object({
   id: apiId,
   name: z.string().min(1).max(200),
-  owner: z.object({ userId: apiId }).nullable(),
+  owner: z.object({ id: apiId, type: z.literal("User") }).nullable(),
 });
 const universeDetailsSchema = z.object({
   id: apiId,
@@ -61,11 +61,12 @@ export async function verifyDraftOwnership(
     return r.json() as Promise<unknown>;
   };
   const group = async (groupId: string) => {
-    const g = groupSchema.parse(
-      await json(`https://groups.roblox.com/v1/groups/${groupId}`, "GROUP"),
-    );
+    const response = z
+      .object({ data: z.array(groupSchema).length(1) })
+      .parse(await json(`https://groups.roblox.com/v2/groups?groupIds=${groupId}`, "GROUP"));
+    const g = response.data[0]!;
     if (g.id !== groupId) throw new Error("Roblox returned a different community. Try again.");
-    if (g.owner?.userId !== linkedUserId)
+    if (g.owner?.id !== linkedUserId)
       throw new Error(
         "Your connected Roblox account must own this community. Admin roles and membership do not qualify.",
       );
