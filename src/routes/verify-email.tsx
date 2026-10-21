@@ -64,7 +64,7 @@ function Verify() {
       description={
         session?.user.email_confirmed_at
           ? "Your email address is confirmed."
-          : "Open the confirmation link from bestottr to verify your email. You can use this page to request a fresh link."
+          : "Open the confirmation link from bestottr, or try signing in if no email arrives."
       }
     >
       {session?.user.email_confirmed_at ? (
@@ -73,11 +73,26 @@ function Verify() {
         </Link>
       ) : (
         <>
+          <div className="mb-6 rounded-lg border border-border p-4">
+            <h2 className="text-sm font-medium">No confirmation email?</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Your email provider may have opened the link automatically and verified your account
+              already. Try signing in with the email and password you chose—you may not need to
+              wait.
+            </p>
+            <Link to="/login" className={buttonVariants({ className: "mt-4 w-full" })}>
+              Try signing in
+            </Link>
+            <p className="mt-3 text-xs text-muted-foreground">
+              If sign-in says your email still needs confirmation, return here to request a new
+              link.
+            </p>
+          </div>
           <Message
             error={error}
             success={
               sent
-                ? "If this account still needs confirmation, we’ve requested a new link. If you already opened a confirmation email, try signing in instead."
+                ? "If your account still needs confirmation, we’ve requested a new link. Already verified accounts won’t receive another signup email—try signing in if nothing arrives."
                 : null
             }
           />
@@ -107,8 +122,8 @@ function Verify() {
             </Button>
           </form>
           <p className="mt-5 text-xs text-muted-foreground">
-            Confirmed accounts do not receive another signup email. Check your spam folder, and use
-            only the newest link in the browser where you signed up.
+            Check your spam or junk folder. Confirmed accounts do not receive another signup email.
+            If you receive a link, use only the newest one in the browser where you signed up.
           </p>
           <Link to="/login" className="mt-4 inline-block text-sm underline">
             Back to sign in
