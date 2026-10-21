@@ -32,6 +32,7 @@ function Verify() {
     e.preventDefault();
     setBusy(true);
     setError("");
+    setSent(false);
     try {
       const { error } = await supabase.auth.resend({
         type: "signup",
@@ -39,7 +40,14 @@ function Verify() {
         options: { emailRedirectTo: authCallback() },
       });
       if (error) {
-        setError("We couldn’t send another link. Check the address and try again shortly.");
+        setError(
+          error.status === 429 ||
+            error.code === "over_email_send_rate_limit" ||
+            error.code === "over_request_rate_limit"
+            ? "Too many email requests. Wait a few minutes before trying again."
+            : "We couldn’t request another link. Please try again shortly or contact support.",
+        );
+        if (error.status === 429) setCooldown(60);
         return;
       }
       setSent(true);
@@ -68,7 +76,9 @@ function Verify() {
           <Message
             error={error}
             success={
-              sent ? "If confirmation is needed for this address, a new link is on its way." : null
+              sent
+                ? "If this account still needs confirmation, we’ve requested a new link. If you already opened a confirmation email, try signing in instead."
+                : null
             }
           />
           <form onSubmit={resend} className="mt-4 space-y-4">
@@ -97,7 +107,8 @@ function Verify() {
             </Button>
           </form>
           <p className="mt-5 text-xs text-muted-foreground">
-            Check your spam folder. Older links may expire after you request a new one.
+            Confirmed accounts do not receive another signup email. Check your spam folder, and use
+            only the newest link in the browser where you signed up.
           </p>
           <Link to="/login" className="mt-4 inline-block text-sm underline">
             Back to sign in

@@ -1,6 +1,7 @@
 // Browser client for the independently managed Supabase project.
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
+import { EMAIL_AUTH_OPTIONS } from "@/lib/email-auth";
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith("sb_publishable_") || value.startsWith("sb_secret_");
@@ -77,11 +78,7 @@ function createSupabaseClient() {
     global: {
       fetch: createSupabaseFetch(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY),
     },
-    auth: {
-      flowType: "pkce",
-      persistSession: true,
-      autoRefreshToken: true,
-    },
+    auth: EMAIL_AUTH_OPTIONS,
   });
 }
 
