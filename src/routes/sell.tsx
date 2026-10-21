@@ -1,3 +1,4 @@
+import { MarketplaceGate } from "@/components/account/MarketplaceGate";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { BadgeCheck, Building2, Check, FileUp, Link2, Lock, ShieldX, Upload, Users } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/sell")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: Sell,
+  component: () => <MarketplaceGate><Sell /></MarketplaceGate>,
 });
 
 const EXP_STEPS = ["Listing type", "Connect Roblox", "Experience link", "Customize listing", "Details", "Financials", "Sale format", "Assets", "Review"];

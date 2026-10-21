@@ -11,13 +11,23 @@ export default defineConfig(({ command }) => ({
     tsConfigPaths(),
     tanstackStart({
       server: { entry: "server" },
-      importProtection: { behavior: "error", client: { files: ["**/server/**"], specifiers: ["server-only"] } },
+      importProtection: {
+        behavior: "error",
+        client: { files: ["**/server/**"], specifiers: ["server-only"] },
+      },
     }),
     ...(command === "build" ? [nitro({ preset: "cloudflare-module" })] : []),
     react(),
   ],
   resolve: {
-    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
+    dedupe: [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "@tanstack/react-query",
+      "@tanstack/query-core",
+    ],
   },
-  server: { host: "0.0.0.0", port: 8080 },
+  server: { host: "0.0.0.0", port: 8080, allowedHosts: ["terminal.local"] },
 }));

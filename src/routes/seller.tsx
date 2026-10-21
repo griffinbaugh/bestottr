@@ -1,3 +1,4 @@
+import { MarketplaceGate } from "@/components/account/MarketplaceGate";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Badge, Empty, PageHeader, Stat, buttonVariants } from "@/components/sb/ui";
 import { ME } from "@/lib/data";
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/seller")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: Seller,
+  component: () => <MarketplaceGate><Seller /></MarketplaceGate>,
 });
 
 function Seller() {
