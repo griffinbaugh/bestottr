@@ -19,3 +19,5 @@
 - Community banners come from a best-effort server-side public Community page extractor (`src/lib/community-page-media.ts`), restricted to https Roblox/rbxcdn hosts; the official thumbnails API stays the icon source, and page data never changes identity/owner. Why: Roblox has no documented banner API.
 - Community banner/icon geometry (icon bottom-aligned inside the banner) lives only in the shared `CommunityBanner` component. Why: consistent card/detail/preview composition.
 - Self-hosting on Cloudflare deploys the standard build output with root `wrangler.jsonc` (adds nodejs_compat); see MIGRATION_CLOUDFLARE.md. Why: generated dist/server/wrangler.json lacks required flags.
+
+- Email authentication callbacks are processed explicitly by `completeEmailCallback`; keep browser `detectSessionInUrl` disabled through `EMAIL_AUTH_OPTIONS`. Why: SDK auto-initialization and explicit callback exchange can race to consume a single-use PKCE code. Preserve flow IDs and recovery destinations.
