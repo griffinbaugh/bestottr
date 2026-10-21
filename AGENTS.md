@@ -23,3 +23,5 @@
 - Email authentication callbacks are processed explicitly by `completeEmailCallback`; keep browser `detectSessionInUrl` disabled through `EMAIL_AUTH_OPTIONS`. Why: SDK auto-initialization and explicit callback exchange can race to consume a single-use PKCE code. Preserve flow IDs and recovery destinations.
 
 - Production `/sell` uses private database-backed drafts and the live-only `verifyDraftOwnership` server helper. Always authenticate and derive the Roblox identity from the linked account; recheck ownership on every save. Never reuse demo ownership/metadata fallbacks or trust client-provided seller/verification fields. Drafts do not authorize public trading or money movement.
+
+- Cloudflare Workers does not support fetch `redirect: "error"`. Use `redirect: "manual"` and reject non-2xx responses when redirects are forbidden. Verify ownership-request changes with `node scripts/check-listing-ownership-worker.mjs`; a build/dry run alone does not execute runtime request construction.

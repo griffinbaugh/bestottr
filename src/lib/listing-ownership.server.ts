@@ -31,7 +31,8 @@ export async function verifyDraftOwnership(
   const json = async (endpoint: string) => {
     const r = await request(endpoint, {
       headers: { accept: "application/json" },
-      redirect: "error",
+      // Workers supports manual/follow only. Reject redirects via the non-2xx check below.
+      redirect: "manual",
       signal: AbortSignal.timeout(6000),
     });
     if (!r.ok)

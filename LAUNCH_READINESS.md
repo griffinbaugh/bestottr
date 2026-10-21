@@ -12,6 +12,8 @@ Validation: 164 unit tests, TypeScript, production build and Cloudflare dry run 
 
 After deployment, visit `/sell`, save an owned experience, reload to confirm persistence, edit it, and test a different owner's game is rejected. These provider/API tests should be repeated with the actual linked account; automated network mocks cannot prove Roblox availability from Cloudflare.
 
+Cloudflare redirect correction: ownership fetches now use `manual` and reject non-2xx responses, including redirects. Workers rejects the standard `error` redirect option before issuing a request. All 170 unit tests and TypeScript pass, including six regression checks for Worker-compatible redirect mode and rejected 301/302/303/307/308 responses. `node scripts/check-listing-ownership-worker.mjs` also executes the helper in the actual local workerd runtime with fixture responses, checking successful group ownership and redirect rejection without live credentials. Production build and Cloudflare dry run pass. Apply `bestottr-ownership-redirect-fix.patch` after the listing-drafts release; no database or variable changes are needed.
+
 This release adds real Supabase accounts. It does **not** open trading or accept money. No escrow or payment provider has been selected. Production ignores local demo settings and starts with no sample listings, balances, deals or reviews.
 
 ## Included
