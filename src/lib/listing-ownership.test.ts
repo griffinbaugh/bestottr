@@ -8,16 +8,13 @@ function requestFor(type = "User", owner = 42, groupOwner: number | null = 42) {
   return vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
     if (url.includes("/places/100/universe")) return Response.json({ universeId: 200 });
-    if (url.includes("games?universeIds=200"))
+    if (url === "https://develop.roblox.com/v1/universes/200")
       return Response.json({
-        data: [
-          {
-            id: 200,
-            name: "My game",
-            rootPlaceId: 100,
-            creator: { id: type === "Group" ? 300 : owner, type },
-          },
-        ],
+        id: 200,
+        name: "My game",
+        rootPlaceId: 100,
+        creatorTargetId: type === "Group" ? 300 : owner,
+        creatorType: type,
       });
     if (url.includes("/groups/300"))
       return Response.json({
@@ -29,6 +26,64 @@ function requestFor(type = "User", owner = 42, groupOwner: number | null = 42) {
   });
 }
 describe("Production listing ownership", () => {
+  it("verifies the observed private Fuse an Egg universe through its actual group owner", async () => {
+    // Public API snapshot from 2026-10-21. games/v1 hid this game behind a zero-ID placeholder.
+    const request = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "https://apis.roblox.com/universes/v1/places/84930684116704/universe")
+        return Response.json({ universeId: 10768658755 });
+      if (url === "https://develop.roblox.com/v1/universes/10768658755")
+        return Response.json({
+          id: 10768658755,
+          name: "Fuse an Egg",
+          description: null,
+          rootPlaceId: 84930684116704,
+          isArchived: false,
+          isActive: false,
+          privacyType: "Private",
+          creatorType: "Group",
+          creatorTargetId: 35895529,
+          creatorName: "Evergames",
+        });
+      if (url === "https://groups.roblox.com/v1/groups/35895529")
+        return Response.json({ id: 35895529, name: "Evergames", owner: { userId: 18091355 } });
+      return new Response(null, { status: 404 });
+    });
+    const url = "https://www.roblox.com/games/84930684116704/Fuse-an-Egg";
+    expect(await verifyDraftOwnership("experience", url, "18091355", request)).toMatchObject({
+      asset_id: "10768658755",
+      place_id: "84930684116704",
+      creator_id: "35895529",
+      roblox_user_id: "18091355",
+      asset_name: "Fuse an Egg",
+    });
+    await expect(verifyDraftOwnership("experience", url, "42", request)).rejects.toThrow(
+      "must own",
+    );
+    expect(request.mock.calls.every(([input]) => !String(input).includes("games.roblox.com"))).toBe(
+      true,
+    );
+  });
+  it("rejects zero-ID placeholder or incomplete universe details without inventing an owner", async () => {
+    for (const details of [
+      {
+        id: 0,
+        rootPlaceId: 0,
+        name: "[TITLE UNAVAILABLE]",
+        creatorType: "Group",
+        creatorTargetId: 0,
+      },
+      { id: 200, rootPlaceId: 100, name: "My game", creatorType: "Group" },
+    ]) {
+      const request = vi.fn(async (input: RequestInfo | URL) =>
+        String(input).includes("/places/")
+          ? Response.json({ universeId: 200 })
+          : Response.json(details),
+      );
+      await expect(verifyDraftOwnership("experience", gameLink, "42", request)).rejects.toThrow();
+      expect(request).toHaveBeenCalledTimes(2);
+    }
+  });
   it("uses Cloudflare-compatible manual redirects on every API request", async () => {
     const fixture = requestFor("Group");
     const request: typeof fetch = async (input, init) => {
@@ -121,7 +176,11 @@ describe("Production listing ownership", () => {
       String(input).includes("/places/")
         ? Response.json({ universeId: 200 })
         : Response.json({
-            data: [{ id: 201, rootPlaceId: 100, name: "Wrong", creator: { type: "User", id: 42 } }],
+            id: 201,
+            rootPlaceId: 100,
+            name: "Wrong",
+            creatorType: "User",
+            creatorTargetId: 42,
           }),
     );
     await expect(verifyDraftOwnership("experience", gameLink, "42", r)).rejects.toThrow(

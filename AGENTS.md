@@ -25,3 +25,5 @@
 - Production `/sell` uses private database-backed drafts and the live-only `verifyDraftOwnership` server helper. Always authenticate and derive the Roblox identity from the linked account; recheck ownership on every save. Never reuse demo ownership/metadata fallbacks or trust client-provided seller/verification fields. Drafts do not authorize public trading or money movement.
 
 - Cloudflare Workers does not support fetch `redirect: "error"`. Use `redirect: "manual"` and reject non-2xx responses when redirects are forbidden. Verify ownership-request changes with `node scripts/check-listing-ownership-worker.mjs`; a build/dry run alone does not execute runtime request construction.
+
+- Private experience drafts resolve the place to its universe, then read `develop.roblox.com/v1/universes/{universeId}` for `creatorType` and `creatorTargetId`; the games/v1 endpoint can return zero-ID content-restricted placeholders. Match the returned universe ID and validate positive IDs; group ownership still requires the group's current `owner.userId` to match the OAuth-linked user. A private/inactive experience is not evidence of missing ownership.
