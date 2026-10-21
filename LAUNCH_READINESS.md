@@ -1,3 +1,34 @@
+# Listing preparation release (2026-10-21)
+
+**Status: code prepared and tested; production migration is not applied.** Automatic approval review rejected the production schema change and requires explicit approval of the exact migration before it may be applied. Do not deploy this patch before the database migration succeeds. No provider has been selected; paid checkout, public publication, auctions accepting bids, purchase entitlements, instant buyer downloads, and experience/community settlement remain closed. This release does not claim those systems are operational.
+
+## Included behavior
+
+- File-product drafts without requiring a Roblox link or claiming Roblox ownership; existing experience/community ownership checks remain required.
+- Up to eight PNG/JPEG/WebP listing images (5 MB each), persistent cover selection, atomic gallery reordering, deletion confirmation, and a private listing preview showing current edits.
+- Up to three ZIP/Roblox model/place deliverables (50 MB each) attached to private drafts; pending uploads are visible for recovery/removal. Seller download links expire after 60 seconds and force attachment downloads. No file content is extracted or executed. Uploaded deliverables are not malware-scanned or approved for sale.
+- Two private Storage buckets, no client Storage policies, service-authorized scoped uploads without overwrite. Finalization compares actual Storage size/content type to the reservation and checks image signatures. Auth and MFA are checked for every operation; table RLS restricts seller reads, and direct client writes/RPC execution are denied.
+- Account quota 150 MB across recorded reservations; per-draft counts are enforced inside a serialized server-only SQL function. Signed upload capabilities last two hours per Supabase, and signed image previews last one hour. Removing a draft deletes tracked Storage objects first. Production lifecycle cleanup of expired reservations/unreferenced objects should be added before high-volume launch, since an already issued upload capability can outlive a removed draft.
+- Auction closing dates can be selected exactly in the seller's local timezone or as 1/3/7/14/30 days from saving. The canonical database value is an absolute epoch timestamp; server saves reject a past selected time. Drafts do not start auctions. Publication must revalidate the closing time and use fresh authoritative ownership verification.
+- Preparation checklist for title/description, images, positive price, closing time, deliverables and pending uploads. Checkout and publication controls remain disabled.
+
+## Deployment sequence
+
+1. Obtain explicit approval and apply `supabase/migrations/20261021222550_listing_preparation_media.sql` to the owner-controlled project. It relaxes Roblox-only fields solely for the new file kind and adds an equivalent stricter identity check for existing kinds, two draft columns, the asset table/RLS/indexes, server-only quota/order RPCs and two private buckets. No existing rows, support data or account settings are deleted.
+2. Verify the production schema, private bucket settings, function grants and advisor output. Record the remote migration version and align the source filename if Supabase assigned a different timestamp; never apply the same migration twice.
+3. Apply `bestottr-listing-preparation.patch` on a branch from main `dc1c00a`, then push/merge after checks pass. Existing Worker Supabase variables suffice. This release does not require new keys.
+4. Live test with the actual account: save a file draft, add an image and ZIP/model, refresh, reorder/select cover, inspect preview, test seller download, remove an upload, and confirm an unrelated account cannot read it. Also retest the existing experience and community drafts. Verify local-time auction end survives reload.
+
+## Verification
+
+208 unit/UI tests, TypeScript, production build and Cloudflare dry run pass. Local PostgreSQL (PGlite 0.5.11) executed the original and new migration and transactional SQL checks for file identity, quotas, ordering, owner reads, cross-account denial and blocked direct client writes/RPC calls. The baseline draft RLS regression also passes. Storage API behavior and deployed browser flow remain unverified until the production migration is approved and applied. No live payment test is possible before provider integration.
+
+## Remaining launch work
+
+Choose an approved marketplace payment/escrow provider for these product types, then implement seller onboarding, authoritative signed webhook processing with idempotency, paid order/auction settlement, immutable purchased file versions, buyer entitlements and signed downloads, refunds/disputes, authoritative Roblox transfer monitoring, moderated publication and scheduled auction closure. A file draft or client success screen must never grant a purchase entitlement. Keep the mock provider and demo transfer engine out of production money movement.
+
+---
+
 ## Group lookup update (2026-10-21)
 
 Production logs confirmed GROUP HTTP 429 from the single-group v1 lookup after the countdown update. Private draft verification now requests the documented groups v2 batch endpoint with exactly one group ID, validates exactly one returned group with the requested ID, and matches owner.id only when owner.type is User. Empty, duplicate, malformed, non-user and wrong-owner results fail closed. This replaces the v1 call; it does not retry alternate endpoints after a 429 or bypass cooldowns. No environment or database changes. The real Evergames response returned owner 18091355; deployed Cloudflare behavior still needs verification. If throttling persists, investigate shared request origins and an authenticated Open Cloud integration rather than repeatedly changing endpoints.

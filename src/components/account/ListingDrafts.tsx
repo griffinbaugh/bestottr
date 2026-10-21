@@ -1,4 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { DraftMedia } from "./DraftMedia";
+import {
+  defaultEndLocal,
+  toLocalInputValue,
+  validateAuctionEnd,
+  localTimezone,
+  formatAuctionEnd,
+} from "@/lib/auction-end";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "./AuthProvider";
 import { RequireAccount, Field, Message } from "./AccountLayout";
@@ -20,6 +28,7 @@ const empty = (): DraftInput => ({
   format: "buy_now",
   priceCents: 0,
   reserveCents: null,
+  auctionEndsAt: null,
 });
 export function ListingDrafts() {
   const { session } = useAuth();
@@ -38,6 +47,10 @@ function DraftEditor() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [coverId, setCoverId] = useState<string | null>(null);
+  const [endLocal, setEndLocal] = useState("");
+  const [endMode, setEndMode] = useState<"duration" | "datetime">("datetime");
+  const [durationDays, setDurationDays] = useState(7);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [retryAt, setRetryAt] = useState(() => {
     try {
@@ -85,18 +98,24 @@ function DraftEditor() {
     };
   }, [token, session?.user.email_confirmed_at]);
   function edit(row: ListingDraft) {
+    setCoverId(row.cover_asset_id);
+    setEndLocal(row.auction_ends_at ? toLocalInputValue(row.auction_ends_at) : "");
+    setEndMode("datetime");
     setDraft({
       id: row.id,
       kind: row.kind,
       url:
-        row.kind === "experience"
-          ? `https://www.roblox.com/games/${row.place_id}`
-          : `https://www.roblox.com/communities/${row.asset_id}`,
+        row.kind === "file"
+          ? ""
+          : row.kind === "experience"
+            ? `https://www.roblox.com/games/${row.place_id}`
+            : `https://www.roblox.com/communities/${row.asset_id}`,
       title: row.title,
       description: row.description,
       format: row.format,
       priceCents: row.price_cents,
       reserveCents: row.reserve_cents,
+      auctionEndsAt: row.auction_ends_at,
     });
     setSuccess("");
     setError("");
@@ -104,10 +123,23 @@ function DraftEditor() {
   }
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (!token || busy || retryAt > Date.now()) return;
+    if (!token || busy || (draft.kind !== "file" && retryAt > Date.now())) return;
     setError("");
     setSuccess("");
-    const parsed = draftFields.safeParse(draft);
+    let toSave = draft;
+    if (draft.format === "auction") {
+      if (endMode === "datetime" && !endLocal) {
+        setError("Choose when the auction should end.");
+        return;
+      }
+      const end = validateAuctionEnd(endMode, durationDays, endLocal);
+      if (!end.ok) {
+        setError(end.error ?? "Choose a future auction end.");
+        return;
+      }
+      toSave = { ...draft, auctionEndsAt: end.endsAt };
+    }
+    const parsed = draftFields.safeParse(toSave);
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Check the listing details.");
       return;
@@ -128,7 +160,7 @@ function DraftEditor() {
         }
         return;
       }
-      up({ id: result.id });
+      up({ id: result.id, auctionEndsAt: parsed.data.auctionEndsAt });
       setSuccess("Draft saved. It is private and is not listed for sale.");
       setDrafts(await getListingDrafts({ data: { token } }));
     } catch {
@@ -148,6 +180,8 @@ function DraftEditor() {
       await deleteListingDraft({ data: { token, id } });
       setDrafts((rows) => rows.filter((row) => row.id !== id));
       if (draft.id === id) setDraft(empty());
+      setCoverId(null);
+      setEndLocal("");
       setDeleteId(null);
       setSuccess("Draft deleted.");
     } catch {
@@ -161,8 +195,9 @@ function DraftEditor() {
       <p className="eyebrow mb-3">Selling on bestottr</p>
       <h1 className="text-3xl font-semibold tracking-tight">Prepare your listing</h1>
       <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
-        Save a private draft for an experience or community you own. Roblox ownership is verified
-        before saving. Public listings and transactions will open when checkout is ready.
+        Prepare an experience, community or downloadable file listing. Roblox ownership is verified
+        before saving an experience or community. Public listings and transactions will open when
+        checkout is ready.
       </p>
       {!session?.user.email_confirmed_at ? (
         <div className="mt-8">
@@ -182,137 +217,219 @@ function DraftEditor() {
             </div>
           )}
           <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
-            <form className="surface space-y-5 p-5 md:p-6" onSubmit={save}>
-              <h2 className="text-lg font-semibold">{draft.id ? "Edit draft" : "New draft"}</h2>
-              <Message error={error} success={success} />
-              <fieldset
-                disabled={busy || !roblox || loading}
-                className="space-y-5 disabled:opacity-60"
-              >
-                <Field label="Listing type">
-                  <select
-                    className="field"
-                    value={draft.kind}
-                    onChange={(e) => up({ kind: e.target.value as DraftInput["kind"], url: "" })}
-                  >
-                    <option value="experience">Experience</option>
-                    <option value="community">Community</option>
-                  </select>
-                </Field>
-                <Field
-                  label="Roblox link"
-                  hint="Use the public game or community page link. Group-owned games require you to own the group."
-                >
-                  <input
-                    className="field"
-                    type="url"
-                    required
-                    maxLength={500}
-                    value={draft.url}
-                    onChange={(e) => up({ url: e.target.value })}
-                    placeholder={
-                      draft.kind === "experience"
-                        ? "https://www.roblox.com/games/…"
-                        : "https://www.roblox.com/communities/…"
-                    }
-                  />
-                </Field>
-                <Field label="Listing title">
-                  <input
-                    className="field"
-                    required
-                    minLength={3}
-                    maxLength={120}
-                    value={draft.title}
-                    onChange={(e) => up({ title: e.target.value })}
-                  />
-                </Field>
-                <Field
-                  label="Description"
-                  hint="Describe what is included, the current condition and any known risks."
-                >
-                  <textarea
-                    className="field min-h-40"
-                    maxLength={10000}
-                    value={draft.description}
-                    onChange={(e) => up({ description: e.target.value })}
-                  />
-                </Field>
-                <Field label="Planned sale format">
-                  <select
-                    className="field"
-                    value={draft.format}
-                    onChange={(e) =>
-                      up({ format: e.target.value as DraftInput["format"], reserveCents: null })
-                    }
-                  >
-                    <option value="buy_now">Fixed price</option>
-                    <option value="auction">Auction</option>
-                  </select>
-                </Field>
-                <Field
-                  label={draft.format === "auction" ? "Starting bid (USD)" : "Asking price (USD)"}
-                  hint="You can leave the price at zero while drafting."
-                >
-                  <CurrencyInput
-                    valueCents={draft.priceCents}
-                    onChange={(priceCents) => up({ priceCents })}
-                  />
-                </Field>
-                {draft.format === "auction" && (
-                  <>
-                    <label className="flex items-center gap-2 text-sm">
+            <div className="min-w-0 space-y-6">
+              <form className="surface space-y-5 p-5 md:p-6" onSubmit={save}>
+                <h2 className="text-lg font-semibold">{draft.id ? "Edit draft" : "New draft"}</h2>
+                <Message error={error} success={success} />
+                <fieldset disabled={busy || loading} className="space-y-5 disabled:opacity-60">
+                  <Field label="Listing type">
+                    <select
+                      className="field"
+                      disabled={!!draft.id}
+                      value={draft.kind}
+                      onChange={(e) => up({ kind: e.target.value as DraftInput["kind"], url: "" })}
+                    >
+                      <option value="experience">Experience</option>
+                      <option value="community">Community</option>
+                      <option value="file">Downloadable files</option>
+                    </select>
+                  </Field>
+                  {draft.kind !== "file" && (
+                    <Field
+                      label="Roblox link"
+                      hint="Use the public game or community page link. Group-owned games require you to own the group."
+                    >
                       <input
-                        type="checkbox"
-                        checked={draft.reserveCents !== null}
-                        onChange={(e) =>
-                          up({ reserveCents: e.target.checked ? draft.priceCents : null })
+                        className="field"
+                        type="url"
+                        required
+                        maxLength={500}
+                        value={draft.url}
+                        onChange={(e) => up({ url: e.target.value })}
+                        placeholder={
+                          draft.kind === "experience"
+                            ? "https://www.roblox.com/games/…"
+                            : "https://www.roblox.com/communities/…"
                         }
                       />
-                      Set a reserve price
-                    </label>
-                    {draft.reserveCents !== null && (
-                      <Field label="Reserve price (USD)">
-                        <CurrencyInput
-                          valueCents={draft.reserveCents}
-                          onChange={(reserveCents) => up({ reserveCents })}
+                    </Field>
+                  )}
+                  <Field label="Listing title">
+                    <input
+                      className="field"
+                      required
+                      minLength={3}
+                      maxLength={120}
+                      value={draft.title}
+                      onChange={(e) => up({ title: e.target.value })}
+                    />
+                  </Field>
+                  <Field
+                    label="Description"
+                    hint="Describe what is included, the current condition and any known risks."
+                  >
+                    <textarea
+                      className="field min-h-40"
+                      maxLength={10000}
+                      value={draft.description}
+                      onChange={(e) => up({ description: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Planned sale format">
+                    <select
+                      className="field"
+                      value={draft.format}
+                      onChange={(e) =>
+                        up({ format: e.target.value as DraftInput["format"], reserveCents: null })
+                      }
+                    >
+                      <option value="buy_now">Fixed price</option>
+                      <option value="auction">Auction</option>
+                    </select>
+                  </Field>
+                  <Field
+                    label={draft.format === "auction" ? "Starting bid (USD)" : "Asking price (USD)"}
+                    hint="You can leave the price at zero while drafting."
+                  >
+                    <CurrencyInput
+                      valueCents={draft.priceCents}
+                      onChange={(priceCents) => up({ priceCents })}
+                    />
+                  </Field>
+                  {draft.format === "auction" && (
+                    <>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={draft.reserveCents !== null}
+                          onChange={(e) =>
+                            up({ reserveCents: e.target.checked ? draft.priceCents : null })
+                          }
                         />
+                        Set a reserve price
+                      </label>
+                      {draft.reserveCents !== null && (
+                        <Field label="Reserve price (USD)">
+                          <CurrencyInput
+                            valueCents={draft.reserveCents}
+                            onChange={(reserveCents) => up({ reserveCents })}
+                          />
+                        </Field>
+                      )}
+                      <Field label="Auction end">
+                        <select
+                          className="field"
+                          value={endMode}
+                          onChange={(e) => setEndMode(e.target.value as "duration" | "datetime")}
+                        >
+                          <option value="datetime">Exact date and time</option>
+                          <option value="duration">Days from saving</option>
+                        </select>
                       </Field>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Auction end dates will be set before publication. Saving a draft does not
-                      start an auction.
+                      {endMode === "duration" ? (
+                        <Field label="Duration">
+                          <select
+                            className="field"
+                            value={durationDays}
+                            onChange={(e) => setDurationDays(Number(e.target.value))}
+                          >
+                            {[1, 3, 7, 14, 30].map((n) => (
+                              <option value={n} key={n}>
+                                {n} {n === 1 ? "day" : "days"}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
+                      ) : (
+                        <Field label={`Closing date and time (${localTimezone()})`}>
+                          <input
+                            className="field"
+                            type="datetime-local"
+                            required
+                            value={endLocal}
+                            onChange={(e) => {
+                              setEndLocal(e.target.value);
+                              const end = validateAuctionEnd("datetime", 7, e.target.value);
+                              up({ auctionEndsAt: end.endsAt });
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const value = defaultEndLocal();
+                              setEndLocal(value);
+                              up({
+                                auctionEndsAt: validateAuctionEnd("datetime", 7, value).endsAt,
+                              });
+                            }}
+                          >
+                            One week from now
+                          </Button>
+                        </Field>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Dates are saved in your local timezone. Saving a draft does not start an
+                        auction. A past date must be updated before saving or publishing.
+                      </p>
+                    </>
+                  )}
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={draft.kind !== "file" && (retryIn > 0 || !roblox)}
+                  >
+                    {busy
+                      ? "Checking ownership and saving…"
+                      : draft.kind !== "file" && retryIn > 0
+                        ? `Try again in ${retryIn}s`
+                        : draft.kind === "file"
+                          ? "Save file draft"
+                          : "Verify ownership & save draft"}
+                  </Button>
+                  {draft.kind !== "file" && retryIn > 0 && (
+                    <p role="status" className="text-xs text-muted-foreground">
+                      This save hasn’t completed. You can keep editing while waiting.
                     </p>
-                  </>
+                  )}
+                </fieldset>
+                {draft.id && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => {
+                      setDraft(empty());
+                      setCoverId(null);
+                      setEndLocal("");
+                      setSuccess("");
+                      setError("");
+                    }}
+                  >
+                    Start another draft
+                  </Button>
                 )}
-                <Button type="submit" className="w-full" disabled={retryIn > 0}>
-                  {busy
-                    ? "Checking ownership and saving…"
-                    : retryIn > 0
-                      ? `Try again in ${retryIn}s`
-                      : "Verify ownership & save draft"}
-                </Button>
-                {retryIn > 0 && (
-                  <p role="status" className="text-xs text-muted-foreground">
-                    This save hasn’t completed. You can keep editing while waiting.
-                  </p>
-                )}
-              </fieldset>
-              {draft.id && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => {
-                    setDraft(empty());
-                    setSuccess("");
-                    setError("");
+              </form>
+              {draft.id && token ? (
+                <DraftMedia
+                  key={draft.id}
+                  token={token}
+                  draft={{ ...draft, id: draft.id }}
+                  coverId={coverId}
+                  onCoverChange={(id) => {
+                    setCoverId(id);
+                    setDrafts((rows) =>
+                      rows.map((r) => (r.id === draft.id ? { ...r, cover_asset_id: id } : r)),
+                    );
                   }}
-                >
-                  Start another draft
-                </Button>
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Save your draft first, then add images and deliverable files.
+                </p>
               )}
-            </form>
+            </div>
             <aside className="space-y-4">
               <h2 className="text-lg font-semibold">Your drafts</h2>
               {loading ? (
@@ -326,14 +443,26 @@ function DraftEditor() {
                   <section key={row.id} className="surface p-4">
                     <h3 className="break-words font-medium">{row.title}</h3>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Private draft · {row.kind === "experience" ? "Experience" : "Community"}
+                      Private draft ·{" "}
+                      {row.kind === "experience"
+                        ? "Experience"
+                        : row.kind === "community"
+                          ? "Community"
+                          : "Files"}
                     </p>
                     <p className="mt-2 text-sm">
                       {centsToDisplay(row.price_cents)}{" "}
                       {row.format === "auction" ? "starting bid" : "asking price"}
                     </p>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Ownership last checked {new Date(row.ownership_checked_at).toLocaleString()}
+                      {row.ownership_checked_at
+                        ? `Ownership last checked ${new Date(row.ownership_checked_at).toLocaleString()}`
+                        : "File listing · seller-provided content"}
+                      {row.auction_ends_at && (
+                        <span className="mt-1 block">
+                          Planned end {formatAuctionEnd(row.auction_ends_at)}
+                        </span>
+                      )}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Button
@@ -377,8 +506,8 @@ function DraftEditor() {
                 ))
               )}
               <p className="text-xs leading-relaxed text-muted-foreground">
-                Files and instant delivery are being prepared separately. Drafts do not accept bids
-                or payments.
+                Images and deliverables stay private. Public listings, bids and checkout will open
+                after payment setup.
               </p>
             </aside>
           </div>

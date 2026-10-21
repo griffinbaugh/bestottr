@@ -17,6 +17,7 @@ vi.mock("@tanstack/react-start", () => ({
   }),
 }));
 vi.mock("./account.server", () => ({ verifiedAccount: mocks.verifiedAccount }));
+vi.mock("./listing-assets.server", () => ({ deleteDraftAssets: vi.fn() }));
 vi.mock("./listing-draft-verifier.server", () => ({
   verifyListingDraftOwnership: mocks.verifyDraftOwnership,
 }));
@@ -70,7 +71,10 @@ beforeEach(() => {
         data: table === "roblox_accounts" ? { roblox_user_id: "42" } : { id },
         error: null,
       }),
-      maybeSingle: async () => ({ data: mocks.existing ? { id } : null, error: null }),
+      maybeSingle: async () => ({
+        data: mocks.existing ? { id, kind: "experience" } : null,
+        error: null,
+      }),
       then: (resolve: (x: unknown) => unknown) => Promise.resolve({ error: null }).then(resolve),
     };
     return builder;
@@ -140,4 +144,38 @@ describe("Draft server authorization", () => {
     expect(mocks.insert).not.toHaveBeenCalled();
     expect(mocks.update).not.toHaveBeenCalled();
   });
+});
+
+it("saves file drafts without claiming Roblox ownership", async () => {
+  const r = await saveListingDraft({
+    data: { token, draft: { ...input, kind: "file", url: "", roblox_user_id: "forged" } as any },
+  });
+  expect(r.ok).toBe(true);
+  expect(mocks.verifyDraftOwnership).not.toHaveBeenCalled();
+  expect(mocks.insert).toHaveBeenCalledWith(
+    expect.objectContaining({
+      kind: "file",
+      asset_id: null,
+      creator_id: null,
+      roblox_user_id: null,
+      ownership_checked_at: null,
+    }),
+  );
+});
+it("rejects past auction timestamps on the server before checking Roblox", async () => {
+  const r = await saveListingDraft({
+    data: { token, draft: { ...input, format: "auction", auctionEndsAt: Date.now() - 1 } },
+  });
+  expect(r).toMatchObject({ ok: false, error: "Choose an auction end in the future." });
+  expect(mocks.verifyDraftOwnership).not.toHaveBeenCalled();
+  expect(mocks.insert).not.toHaveBeenCalled();
+});
+it("stores absolute auction time and clears it for fixed price", async () => {
+  const ends = Date.now() + 86400000;
+  await saveListingDraft({
+    data: { token, draft: { ...input, format: "auction", auctionEndsAt: ends } },
+  });
+  expect(mocks.insert).toHaveBeenLastCalledWith(expect.objectContaining({ auction_ends_at: ends }));
+  await saveListingDraft({ data: { token, draft: { ...input, auctionEndsAt: ends } } });
+  expect(mocks.insert).toHaveBeenLastCalledWith(expect.objectContaining({ auction_ends_at: null }));
 });
