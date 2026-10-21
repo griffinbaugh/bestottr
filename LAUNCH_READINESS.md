@@ -1,5 +1,17 @@
 # BestOttr account release and launch readiness
 
+## Private listing drafts
+
+Production `/sell` now lets a signed-in, email-confirmed user with a linked Roblox account create, edit and delete private experience/community drafts. The server loads the OAuth-linked identity and checks live Roblox ownership on every save. Direct ownership or ownership of the creator group is required; membership/admin roles, demo fixtures and browser-supplied identity never authorize a draft. A draft records when the ownership check happened; this does not establish perpetual ownership or transfer readiness.
+
+Drafts contain a title, description, proposed fixed price or auction starting bid, and an optional reserve. Prices stay in integer USD cents. Drafts are private to their seller, persist across devices and cannot receive bids/payments or appear in public search. Auction timing, galleries, file uploads, moderation/publication, checkout and settlement remain separate launch work.
+
+The additive `production_listing_drafts` migration was already applied to the owner-controlled project. Do not reapply it manually. Its source version matches remote migration history. Deploy the supplied `bestottr-listing-drafts.patch` on a new branch from current `main`; no additional environment variables are needed beyond the working Roblox link and Supabase server key.
+
+Validation: 164 unit tests, TypeScript, production build and Cloudflare dry run pass. The 21 new checks cover live ownership, unsafe URLs, malformed responses, group roles, session authorization, forged fields, cross-account edit denial and exact cents. Transactional SQL checks in `supabase/tests/listing_drafts_rls.sql` verify owner reads, cross-account/anonymous denial and blocked direct client writes; all temporary QA data is rolled back. Security advisors show no finding for the new table. Existing notices concern the deliberately callable support RPC, the inaccessible private payment table, and [leaked-password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+After deployment, visit `/sell`, save an owned experience, reload to confirm persistence, edit it, and test a different owner's game is rejected. These provider/API tests should be repeated with the actual linked account; automated network mocks cannot prove Roblox availability from Cloudflare.
+
 This release adds real Supabase accounts. It does **not** open trading or accept money. No escrow or payment provider has been selected. Production ignores local demo settings and starts with no sample listings, balances, deals or reviews.
 
 ## Included
@@ -56,7 +68,7 @@ The connection button stays disabled until server configuration is present. Link
 These are launch blockers, not features completed by this account release:
 
 1. Select a payment/escrow provider that explicitly supports the business model, countries, Roblox digital-asset transactions and the required holding/release arrangement. Complete business onboarding and provider approval. Decide supported currencies, funding, refunds, disputes and payout rules before writing the adapter. Do not describe a conventional payment hold as escrow.
-2. Implement production listings, upload storage, moderation, bids and deal records with server authorization and ownership verification. The old local marketplace remains available only for deliberate local development/tests.
+2. Extend the private production draft foundation to public listings, upload storage, moderation, bids and deal records with server authorization and ownership verification. The old local marketplace remains available only for deliberate local development/tests.
 3. Implement the provider adapter, authenticated checkout, verified and idempotent webhooks, integer-cent ledger, reconciliation and provider-managed payment/payout destinations. Never store raw card numbers or bank credentials. Connect the existing pure transfer engine to durable transactions and a server scheduler; require verified ownership and exactly-once release/refund.
 4. Exercise sandbox success/failure, duplicate events, concurrent bids, timeout, cancellation, refund and transfer mismatch. Keep money features closed until live credentials and provider onboarding are confirmed.
 5. Complete business terms, privacy notice and transaction/refund policies for the actual operating model. Publish them before inviting users to transact.
