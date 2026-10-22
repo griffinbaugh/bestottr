@@ -36,8 +36,10 @@ import { Route as DealIdRouteImport } from './routes/deal.$id'
 import { Route as ListingIdRouteImport } from './routes/listing.$id'
 import { Route as UserHandleRouteImport } from './routes/user.$handle'
 import { Route as ApiRobloxCallbackRouteImport } from './routes/api.roblox.callback'
+import { Route as ApiTrustapCallbackRouteImport } from './routes/api.trustap.callback'
 import { Route as ListingIdEditRouteImport } from './routes/listing.$id_.edit'
-import { Route as ApiEscrowSandboxWebhookRouteImport } from './routes/api.escrow.sandbox.webhook'
+import { Route as ApiTrustapSandboxSyncRouteImport } from './routes/api.trustap.sandbox.sync'
+import { Route as ApiTrustapSandboxWebhookRouteImport } from './routes/api.trustap.sandbox.webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -174,16 +176,27 @@ const ApiRobloxCallbackRoute = ApiRobloxCallbackRouteImport.update({
   path: '/api/roblox/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTrustapCallbackRoute = ApiTrustapCallbackRouteImport.update({
+  id: '/api/trustap/callback',
+  path: '/api/trustap/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ListingIdEditRoute = ListingIdEditRouteImport.update({
   id: '/listing/$id_/edit',
   path: '/listing/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiEscrowSandboxWebhookRoute = ApiEscrowSandboxWebhookRouteImport.update({
-  id: '/api/escrow/sandbox/webhook',
-  path: '/api/escrow/sandbox/webhook',
+const ApiTrustapSandboxSyncRoute = ApiTrustapSandboxSyncRouteImport.update({
+  id: '/api/trustap/sandbox/sync',
+  path: '/api/trustap/sandbox/sync',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTrustapSandboxWebhookRoute =
+  ApiTrustapSandboxWebhookRouteImport.update({
+    id: '/api/trustap/sandbox/webhook',
+    path: '/api/trustap/sandbox/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -213,8 +226,10 @@ export interface FileRoutesByFullPath {
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
   '/api/roblox/callback': typeof ApiRobloxCallbackRoute
+  '/api/trustap/callback': typeof ApiTrustapCallbackRoute
   '/listing/$id/edit': typeof ListingIdEditRoute
-  '/api/escrow/sandbox/webhook': typeof ApiEscrowSandboxWebhookRoute
+  '/api/trustap/sandbox/sync': typeof ApiTrustapSandboxSyncRoute
+  '/api/trustap/sandbox/webhook': typeof ApiTrustapSandboxWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -244,8 +259,10 @@ export interface FileRoutesByTo {
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
   '/api/roblox/callback': typeof ApiRobloxCallbackRoute
+  '/api/trustap/callback': typeof ApiTrustapCallbackRoute
   '/listing/$id/edit': typeof ListingIdEditRoute
-  '/api/escrow/sandbox/webhook': typeof ApiEscrowSandboxWebhookRoute
+  '/api/trustap/sandbox/sync': typeof ApiTrustapSandboxSyncRoute
+  '/api/trustap/sandbox/webhook': typeof ApiTrustapSandboxWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -276,8 +293,10 @@ export interface FileRoutesById {
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
   '/api/roblox/callback': typeof ApiRobloxCallbackRoute
+  '/api/trustap/callback': typeof ApiTrustapCallbackRoute
   '/listing/$id_/edit': typeof ListingIdEditRoute
-  '/api/escrow/sandbox/webhook': typeof ApiEscrowSandboxWebhookRoute
+  '/api/trustap/sandbox/sync': typeof ApiTrustapSandboxSyncRoute
+  '/api/trustap/sandbox/webhook': typeof ApiTrustapSandboxWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -309,8 +328,10 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/user/$handle'
     | '/api/roblox/callback'
+    | '/api/trustap/callback'
     | '/listing/$id/edit'
-    | '/api/escrow/sandbox/webhook'
+    | '/api/trustap/sandbox/sync'
+    | '/api/trustap/sandbox/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -340,8 +361,10 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/user/$handle'
     | '/api/roblox/callback'
+    | '/api/trustap/callback'
     | '/listing/$id/edit'
-    | '/api/escrow/sandbox/webhook'
+    | '/api/trustap/sandbox/sync'
+    | '/api/trustap/sandbox/webhook'
   id:
     | '__root__'
     | '/'
@@ -371,8 +394,10 @@ export interface FileRouteTypes {
     | '/listing/$id'
     | '/user/$handle'
     | '/api/roblox/callback'
+    | '/api/trustap/callback'
     | '/listing/$id_/edit'
-    | '/api/escrow/sandbox/webhook'
+    | '/api/trustap/sandbox/sync'
+    | '/api/trustap/sandbox/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -403,8 +428,10 @@ export interface RootRouteChildren {
   ListingIdRoute: typeof ListingIdRoute
   UserHandleRoute: typeof UserHandleRoute
   ApiRobloxCallbackRoute: typeof ApiRobloxCallbackRoute
+  ApiTrustapCallbackRoute: typeof ApiTrustapCallbackRoute
   ListingIdEditRoute: typeof ListingIdEditRoute
-  ApiEscrowSandboxWebhookRoute: typeof ApiEscrowSandboxWebhookRoute
+  ApiTrustapSandboxSyncRoute: typeof ApiTrustapSandboxSyncRoute
+  ApiTrustapSandboxWebhookRoute: typeof ApiTrustapSandboxWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -598,6 +625,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRobloxCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/trustap/callback': {
+      id: '/api/trustap/callback'
+      path: '/api/trustap/callback'
+      fullPath: '/api/trustap/callback'
+      preLoaderRoute: typeof ApiTrustapCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/listing/$id_/edit': {
       id: '/listing/$id_/edit'
       path: '/listing/$id/edit'
@@ -605,11 +639,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListingIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/escrow/sandbox/webhook': {
-      id: '/api/escrow/sandbox/webhook'
-      path: '/api/escrow/sandbox/webhook'
-      fullPath: '/api/escrow/sandbox/webhook'
-      preLoaderRoute: typeof ApiEscrowSandboxWebhookRouteImport
+    '/api/trustap/sandbox/sync': {
+      id: '/api/trustap/sandbox/sync'
+      path: '/api/trustap/sandbox/sync'
+      fullPath: '/api/trustap/sandbox/sync'
+      preLoaderRoute: typeof ApiTrustapSandboxSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/trustap/sandbox/webhook': {
+      id: '/api/trustap/sandbox/webhook'
+      path: '/api/trustap/sandbox/webhook'
+      fullPath: '/api/trustap/sandbox/webhook'
+      preLoaderRoute: typeof ApiTrustapSandboxWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -643,8 +684,10 @@ const rootRouteChildren: RootRouteChildren = {
   ListingIdRoute: ListingIdRoute,
   UserHandleRoute: UserHandleRoute,
   ApiRobloxCallbackRoute: ApiRobloxCallbackRoute,
+  ApiTrustapCallbackRoute: ApiTrustapCallbackRoute,
   ListingIdEditRoute: ListingIdEditRoute,
-  ApiEscrowSandboxWebhookRoute: ApiEscrowSandboxWebhookRoute,
+  ApiTrustapSandboxSyncRoute: ApiTrustapSandboxSyncRoute,
+  ApiTrustapSandboxWebhookRoute: ApiTrustapSandboxWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

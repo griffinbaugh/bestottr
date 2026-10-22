@@ -1,3 +1,5 @@
+> **Superseded:** Use [TRUSTAP_SETUP.md](TRUSTAP_SETUP.md). Do not configure or deploy the old Escrow.com sandbox integration. The instructions below are retained as historical documentation.
+
 # BestOttr escrow sandbox setup
 
 This release adds test checkout, provider status reconciliation, private file delivery and Roblox transfer observations. It never sends money to a live endpoint. Public purchases and auctions remain disabled.
