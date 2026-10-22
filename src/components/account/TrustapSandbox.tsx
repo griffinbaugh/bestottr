@@ -1,6 +1,8 @@
+import { Link } from "@tanstack/react-router";
+import { getAccountOrder } from "@/lib/account-orders.functions";
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "./AuthProvider";
-import { AccountLayout, AccountPanel, Field, Message } from "./AccountLayout";
+import { AccountLayout, AccountPanel, Field, Message, RequireAccount } from "./AccountLayout";
 import { Button, buttonVariants } from "@/components/sb/ui";
 import {
   getTrustapSandbox,
@@ -28,7 +30,36 @@ export function TrustapSandbox() {
     </AccountLayout>
   );
 }
-function Content() {
+export function PrivateOrderPage({ id }: { id: string }) {
+  const { session } = useAuth();
+  return (
+    <RequireAccount>
+      <div className="mx-auto max-w-5xl space-y-5 px-5 py-10">
+        <h1 className="text-3xl font-semibold">Private order</h1>
+        <div className="flex gap-4 text-sm underline">
+          <Link to="/dashboard">Buying</Link>
+          <Link to="/seller">Selling</Link>
+        </div>
+        <Content key={(session?.user.id ?? "") + id} orderId={id} />
+      </div>
+    </RequireAccount>
+  );
+}
+async function load(accessToken: string, orderId?: string) {
+  if (orderId) {
+    const r = await getAccountOrder({ data: { token: accessToken, id: orderId } });
+    return {
+      orders: [r.order],
+      admin: r.admin,
+      configured: false,
+      connected: false,
+      payoutUrl: null,
+    };
+  }
+  return getTrustapSandbox({ data: { token: accessToken } });
+}
+
+function Content({ orderId }: { orderId?: string } = {}) {
   const { session } = useAuth(),
     token = session?.access_token;
   const [orders, setOrders] = useState<SandboxOrderView[]>([]),
@@ -51,13 +82,13 @@ function Content() {
     [discard, setDiscard] = useState<string | null>(null);
   async function refresh() {
     if (!token) return;
-    const r = await getTrustapSandbox({ data: { token } });
+    const r = await load(token, orderId);
     setOrders(r.orders);
     setAdmin(r.admin);
     setConfigured(r.configured);
     setConnected(r.connected);
     setPayoutUrl(r.payoutUrl ?? null);
-    if (r.admin) setDrafts(await getListingDrafts({ data: { token } }));
+    if (r.admin && !orderId) setDrafts(await getListingDrafts({ data: { token } }));
   }
   useEffect(() => {
     let active = true;
@@ -65,7 +96,7 @@ function Content() {
       setLoading(false);
       return;
     }
-    void getTrustapSandbox({ data: { token } })
+    void load(token, orderId)
       .then(async (r) => {
         if (!active) return;
         setOrders(r.orders);
@@ -73,7 +104,7 @@ function Content() {
         setConfigured(r.configured);
         setConnected(r.connected);
         setPayoutUrl(r.payoutUrl ?? null);
-        if (r.admin) {
+        if (r.admin && !orderId) {
           const rows = await getListingDrafts({ data: { token } });
           if (active) setDrafts(rows);
         }
@@ -85,7 +116,7 @@ function Content() {
         if (active) setLoading(false);
       });
     const result = new URL(window.location.href).searchParams.get("trustap");
-    if (result) {
+    if (result && !orderId) {
       setSuccess(result === "connected" ? "Trustap sandbox account connected." : "");
       if (result === "failed")
         setError(
@@ -96,7 +127,7 @@ function Content() {
     return () => {
       active = false;
     };
-  }, [token]);
+  }, [token, orderId]);
   async function run(work: () => Promise<void>) {
     if (busy) return;
     setBusy(true);
@@ -134,48 +165,50 @@ function Content() {
         </p>
       </div>
       <Message error={error} success={success} />
-      <AccountPanel
-        title="Trustap account"
-        description="Connect your own sandbox account. Identity checks and bank details stay with Trustap."
-      >
-        <p className="mb-3 text-sm">
-          {connected
-            ? "Your Trustap sandbox identity is connected."
-            : "Both buyer and seller must connect their own Trustap sandbox identities before a test order can be created."}
-        </p>
-        {!configured && (
-          <p className="mb-3 text-sm text-muted-foreground">
-            Sandbox credentials have not been configured yet. Your saved drafts are unchanged.
-          </p>
-        )}
-        <Button
-          variant="outline"
-          disabled={busy || !configured}
-          onClick={() =>
-            void run(async () => {
-              const r = await startTrustapConnection({ data: { token } });
-              window.location.assign(r.url);
-            })
-          }
+      {!orderId && (
+        <AccountPanel
+          title="Trustap account"
+          description="Connect your own sandbox account. Identity checks and bank details stay with Trustap."
         >
-          {connected ? "Reconnect Trustap" : "Connect Trustap sandbox"}
-        </Button>
-        {payoutUrl && (
-          <a
-            className="ml-4 text-sm underline"
-            href={payoutUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <p className="mb-3 text-sm">
+            {connected
+              ? "Your Trustap sandbox identity is connected."
+              : "Both buyer and seller must connect their own Trustap sandbox identities before a test order can be created."}
+          </p>
+          {!configured && (
+            <p className="mb-3 text-sm text-muted-foreground">
+              Sandbox credentials have not been configured yet. Your saved drafts are unchanged.
+            </p>
+          )}
+          <Button
+            variant="outline"
+            disabled={busy || !configured}
+            onClick={() =>
+              void run(async () => {
+                const r = await startTrustapConnection({ data: { token } });
+                window.location.assign(r.url);
+              })
+            }
           >
-            Complete sandbox payout setup
-          </a>
-        )}
-        <p className="mt-3 text-xs text-muted-foreground">
-          Connecting authorizes this integration through Trustap. No card numbers, banking
-          credentials, or identity documents are stored by BestOttr.
-        </p>
-      </AccountPanel>
-      {admin && (
+            {connected ? "Reconnect Trustap" : "Connect Trustap sandbox"}
+          </Button>
+          {payoutUrl && (
+            <a
+              className="ml-4 text-sm underline"
+              href={payoutUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Complete sandbox payout setup
+            </a>
+          )}
+          <p className="mt-3 text-xs text-muted-foreground">
+            Connecting authorizes this integration through Trustap. No card numbers, banking
+            credentials, or identity documents are stored by BestOttr.
+          </p>
+        </AccountPanel>
+      )}
+      {admin && !orderId && (
         <AccountPanel
           title="Prepare a test purchase"
           description="Choose a saved fixed-price draft and another BestOttr account. Fees come from Trustap; this step does not charge the buyer."
@@ -232,6 +265,20 @@ function Content() {
             seller = o.seller_id === session.user.id;
           return (
             <AccountPanel key={o.id} title={o.title} description={stateLabel[o.state]}>
+              {!orderId && (
+                <Link
+                  to="/deal/$id"
+                  params={{ id: o.id }}
+                  className="mb-3 inline-block text-sm underline"
+                >
+                  Open private order
+                </Link>
+              )}
+              <p className="mb-3 text-sm text-muted-foreground">
+                {o.kind === "file"
+                  ? "Downloadable project: files become available after a fresh payment check. Confirm receipt only after checking them."
+                  : "Roblox ownership transfer: the seller transfers the experience or community to the pinned buyer. No game-file upload or download is required."}
+              </p>
               <p className="text-sm">
                 Price {centsToDisplay(o.amount_cents)} · Buyer fee {centsToDisplay(o.fees_buyer)} ·
                 Seller fee {centsToDisplay(o.fees_seller)}

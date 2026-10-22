@@ -1,3 +1,5 @@
+import { IS_DEMO } from "@/lib/app-mode";
+import { PrivateOrderPage } from "@/components/account/TrustapSandbox";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2, Download } from "lucide-react";
 import { toast } from "sonner";
@@ -10,6 +12,7 @@ import { useAppState } from "@/lib/store";
 export const Route = createFileRoute("/deal/$id")({
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex" },
       { title: "Acquisition room — bestottr" },
       { name: "description", content: "Acquisition room: protected funds, locked destination account and automatic Roblox ownership verification." },
       { property: "og:title", content: "Deal room — bestottr" },
@@ -18,7 +21,7 @@ export const Route = createFileRoute("/deal/$id")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: DealRoom,
+  component: () => IS_DEMO ? <DealRoom/> : <ProductionOrderRoute/>,
 });
 
 /** File transactions are fulfilled instantly: this is a receipt/access page, not a staged deal room. */
@@ -79,3 +82,5 @@ function DealRoom() {
   if (d.acquisition) return <AcquisitionRoom d={d} l={l} s={s} />;
   return <div className="mx-auto max-w-3xl px-4 py-16"><Empty title="This deal needs support review" body="It was created before automated ownership verification." action={<Link to="/support" className={buttonVariants({ variant: "outline" })}>Contact support</Link>} /></div>;
 }
+
+function ProductionOrderRoute() { const {id}=Route.useParams(); return <PrivateOrderPage id={id}/>; }
