@@ -37,7 +37,7 @@ export function HeroBackdrop({ images }: { images: string[] }) {
   }, [i, images]);
 
   if (!images.length) return null;
-  const active = reduced ? 0 : i;
+  const active = reduced ? 0 : i % images.length;
   const next = (active + 1) % images.length;
   const prev = (active - 1 + images.length) % images.length;
 

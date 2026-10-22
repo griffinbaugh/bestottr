@@ -1,10 +1,9 @@
 import { IS_DEMO } from "@/lib/app-mode";
-import { coverImage } from "@/lib/gallery";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, BadgeCheck, FileSignature, Workflow } from "lucide-react";
 import { useState } from "react";
 import { HeroBackdrop } from "@/components/sb/HeroBackdrop";
-import { heroListings } from "@/lib/hero";
+import { heroBackgroundImages } from "@/lib/hero";
 import { CountUpStat } from "@/components/sb/CountUpStat";
 import { ListingCard } from "@/components/sb/ListingCard";
 import { SearchBox } from "@/components/sb/SearchBox";
@@ -46,7 +45,7 @@ function Home() {
   const buyNow = live.filter((l) => l.kind === "experience" && l.format === "buy_now");
   const files = live.filter((l) => l.kind === "file");
   const communities = live.filter((l) => l.kind === "community");
-  const heroImages = heroListings(listings).map(coverImage);
+  const heroImages = heroBackgroundImages(listings);
 
   return (
     <>
