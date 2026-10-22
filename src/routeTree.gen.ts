@@ -23,6 +23,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as AccountConnectionsRouteImport } from './routes/account_.connections'
+import { Route as AccountEscrowRouteImport } from './routes/account_.escrow'
 import { Route as AccountNotificationsRouteImport } from './routes/account_.notifications'
 import { Route as AccountPaymentsRouteImport } from './routes/account_.payments'
 import { Route as AccountPayoutsRouteImport } from './routes/account_.payouts'
@@ -36,6 +37,7 @@ import { Route as ListingIdRouteImport } from './routes/listing.$id'
 import { Route as UserHandleRouteImport } from './routes/user.$handle'
 import { Route as ApiRobloxCallbackRouteImport } from './routes/api.roblox.callback'
 import { Route as ListingIdEditRouteImport } from './routes/listing.$id_.edit'
+import { Route as ApiEscrowSandboxWebhookRouteImport } from './routes/api.escrow.sandbox.webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -107,6 +109,11 @@ const AccountConnectionsRoute = AccountConnectionsRouteImport.update({
   path: '/account/connections',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountEscrowRoute = AccountEscrowRouteImport.update({
+  id: '/account_/escrow',
+  path: '/account/escrow',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountNotificationsRoute = AccountNotificationsRouteImport.update({
   id: '/account_/notifications',
   path: '/account/notifications',
@@ -172,6 +179,11 @@ const ListingIdEditRoute = ListingIdEditRouteImport.update({
   path: '/listing/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiEscrowSandboxWebhookRoute = ApiEscrowSandboxWebhookRouteImport.update({
+  id: '/api/escrow/sandbox/webhook',
+  path: '/api/escrow/sandbox/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -188,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof SupportRoute
   '/verify-email': typeof VerifyEmailRoute
   '/account/connections': typeof AccountConnectionsRoute
+  '/account/escrow': typeof AccountEscrowRoute
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/payments': typeof AccountPaymentsRoute
   '/account/payouts': typeof AccountPayoutsRoute
@@ -201,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/user/$handle': typeof UserHandleRoute
   '/api/roblox/callback': typeof ApiRobloxCallbackRoute
   '/listing/$id/edit': typeof ListingIdEditRoute
+  '/api/escrow/sandbox/webhook': typeof ApiEscrowSandboxWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -217,6 +231,7 @@ export interface FileRoutesByTo {
   '/support': typeof SupportRoute
   '/verify-email': typeof VerifyEmailRoute
   '/account/connections': typeof AccountConnectionsRoute
+  '/account/escrow': typeof AccountEscrowRoute
   '/account/notifications': typeof AccountNotificationsRoute
   '/account/payments': typeof AccountPaymentsRoute
   '/account/payouts': typeof AccountPayoutsRoute
@@ -230,6 +245,7 @@ export interface FileRoutesByTo {
   '/user/$handle': typeof UserHandleRoute
   '/api/roblox/callback': typeof ApiRobloxCallbackRoute
   '/listing/$id/edit': typeof ListingIdEditRoute
+  '/api/escrow/sandbox/webhook': typeof ApiEscrowSandboxWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -247,6 +263,7 @@ export interface FileRoutesById {
   '/support': typeof SupportRoute
   '/verify-email': typeof VerifyEmailRoute
   '/account_/connections': typeof AccountConnectionsRoute
+  '/account_/escrow': typeof AccountEscrowRoute
   '/account_/notifications': typeof AccountNotificationsRoute
   '/account_/payments': typeof AccountPaymentsRoute
   '/account_/payouts': typeof AccountPayoutsRoute
@@ -260,6 +277,7 @@ export interface FileRoutesById {
   '/user/$handle': typeof UserHandleRoute
   '/api/roblox/callback': typeof ApiRobloxCallbackRoute
   '/listing/$id_/edit': typeof ListingIdEditRoute
+  '/api/escrow/sandbox/webhook': typeof ApiEscrowSandboxWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -278,6 +296,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/verify-email'
     | '/account/connections'
+    | '/account/escrow'
     | '/account/notifications'
     | '/account/payments'
     | '/account/payouts'
@@ -291,6 +310,7 @@ export interface FileRouteTypes {
     | '/user/$handle'
     | '/api/roblox/callback'
     | '/listing/$id/edit'
+    | '/api/escrow/sandbox/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -307,6 +327,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/verify-email'
     | '/account/connections'
+    | '/account/escrow'
     | '/account/notifications'
     | '/account/payments'
     | '/account/payouts'
@@ -320,6 +341,7 @@ export interface FileRouteTypes {
     | '/user/$handle'
     | '/api/roblox/callback'
     | '/listing/$id/edit'
+    | '/api/escrow/sandbox/webhook'
   id:
     | '__root__'
     | '/'
@@ -336,6 +358,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/verify-email'
     | '/account_/connections'
+    | '/account_/escrow'
     | '/account_/notifications'
     | '/account_/payments'
     | '/account_/payouts'
@@ -349,6 +372,7 @@ export interface FileRouteTypes {
     | '/user/$handle'
     | '/api/roblox/callback'
     | '/listing/$id_/edit'
+    | '/api/escrow/sandbox/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -366,6 +390,7 @@ export interface RootRouteChildren {
   SupportRoute: typeof SupportRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   AccountConnectionsRoute: typeof AccountConnectionsRoute
+  AccountEscrowRoute: typeof AccountEscrowRoute
   AccountNotificationsRoute: typeof AccountNotificationsRoute
   AccountPaymentsRoute: typeof AccountPaymentsRoute
   AccountPayoutsRoute: typeof AccountPayoutsRoute
@@ -379,6 +404,7 @@ export interface RootRouteChildren {
   UserHandleRoute: typeof UserHandleRoute
   ApiRobloxCallbackRoute: typeof ApiRobloxCallbackRoute
   ListingIdEditRoute: typeof ListingIdEditRoute
+  ApiEscrowSandboxWebhookRoute: typeof ApiEscrowSandboxWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -481,6 +507,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountConnectionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account_/escrow': {
+      id: '/account_/escrow'
+      path: '/account/escrow'
+      fullPath: '/account/escrow'
+      preLoaderRoute: typeof AccountEscrowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account_/notifications': {
       id: '/account_/notifications'
       path: '/account/notifications'
@@ -572,6 +605,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListingIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/escrow/sandbox/webhook': {
+      id: '/api/escrow/sandbox/webhook'
+      path: '/api/escrow/sandbox/webhook'
+      fullPath: '/api/escrow/sandbox/webhook'
+      preLoaderRoute: typeof ApiEscrowSandboxWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -590,6 +630,7 @@ const rootRouteChildren: RootRouteChildren = {
   SupportRoute: SupportRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   AccountConnectionsRoute: AccountConnectionsRoute,
+  AccountEscrowRoute: AccountEscrowRoute,
   AccountNotificationsRoute: AccountNotificationsRoute,
   AccountPaymentsRoute: AccountPaymentsRoute,
   AccountPayoutsRoute: AccountPayoutsRoute,
@@ -603,6 +644,7 @@ const rootRouteChildren: RootRouteChildren = {
   UserHandleRoute: UserHandleRoute,
   ApiRobloxCallbackRoute: ApiRobloxCallbackRoute,
   ListingIdEditRoute: ListingIdEditRoute,
+  ApiEscrowSandboxWebhookRoute: ApiEscrowSandboxWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
