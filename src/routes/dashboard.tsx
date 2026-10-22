@@ -1,3 +1,5 @@
+import { IS_DEMO } from "@/lib/app-mode";
+import { AccountOrdersDashboard } from "@/components/account/AccountOrdersDashboard";
 import { MarketplaceGate } from "@/components/account/MarketplaceGate";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ListingCard } from "@/components/sb/ListingCard";
@@ -12,6 +14,7 @@ export const Route = createFileRoute("/dashboard")({
   validateSearch: (s: Record<string, unknown>): { tab?: Tab } => ({ tab: (s["tab"] as Tab) || undefined }),
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex" },
       { title: "Buyer dashboard — bestottr" },
       { name: "description", content: "Your active bids, won auctions, watchlist and transactions." },
       { property: "og:title", content: "Buyer dashboard — bestottr" },
@@ -20,7 +23,7 @@ export const Route = createFileRoute("/dashboard")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <MarketplaceGate><Buyer /></MarketplaceGate>,
+  component: () => IS_DEMO ? <MarketplaceGate><Buyer /></MarketplaceGate> : <AccountOrdersDashboard side="buying"/>,
 });
 
 function Buyer() {

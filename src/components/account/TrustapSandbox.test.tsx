@@ -2,13 +2,24 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { it, expect, vi, beforeEach } from "vitest";
 import type { ReactNode } from "react";
 import { trustapOrder } from "@/test/trustap-fixture";
-const h = vi.hoisted(() => ({ get: vi.fn(), confirm: vi.fn(), drafts: vi.fn(), create: vi.fn() }));
+const h = vi.hoisted(() => ({
+  get: vi.fn(),
+  confirm: vi.fn(),
+  drafts: vi.fn(),
+  create: vi.fn(),
+  order: vi.fn(),
+}));
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
+}));
+vi.mock("@/lib/account-orders.functions", () => ({ getAccountOrder: h.order }));
 vi.mock("./AuthProvider", () => ({
   useAuth: () => ({
     session: { user: { id: "12345678-1234-4234-8234-123456789015" }, access_token: "token" },
   }),
 }));
 vi.mock("./AccountLayout", () => ({
+  RequireAccount: ({ children }: { children: ReactNode }) => <>{children}</>,
   AccountLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   AccountPanel: ({ children, title }: { children: ReactNode; title: string }) => (
     <section>
@@ -41,7 +52,7 @@ vi.mock("@/lib/trustap-sandbox.functions", () => ({
   discardSandboxPreparation: vi.fn(),
   startTrustapConnection: vi.fn(),
 }));
-import { TrustapSandbox } from "./TrustapSandbox";
+import { TrustapSandbox, PrivateOrderPage } from "./TrustapSandbox";
 beforeEach(() => {
   vi.clearAllMocks();
   h.get.mockResolvedValue({
@@ -83,4 +94,33 @@ it("requires a separate confirmation before reporting file delivery", async () =
       data: { token: "token", id: trustapOrder.id, confirm: true },
     }),
   );
+});
+
+it("opens only the requested private order without loading the general payment setup", async () => {
+  h.order.mockResolvedValue({
+    admin: false,
+    order: {
+      ...trustapOrder,
+      files: [],
+      events: [],
+      complaint_deadline: null,
+      kind: "experience",
+      target_roblox_id: "42",
+    },
+  });
+  render(<PrivateOrderPage id={trustapOrder.id} />);
+  await screen.findByText("Test project");
+  expect(h.order).toHaveBeenCalledWith({ data: { token: "token", id: trustapOrder.id } });
+  expect(h.get).not.toHaveBeenCalled();
+  expect(h.drafts).not.toHaveBeenCalled();
+  expect(screen.queryByText("Trustap account")).not.toBeInTheDocument();
+  expect(screen.getByText(/No game-file upload or download is required/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Confirm files received" })).not.toBeInTheDocument();
+});
+it("shows denied order access without falling back to the account order list", async () => {
+  h.order.mockRejectedValue(new Error("This sandbox order could not be found."));
+  render(<PrivateOrderPage id={trustapOrder.id} />);
+  expect(await screen.findByText("This sandbox order could not be found.")).toBeInTheDocument();
+  expect(h.get).not.toHaveBeenCalled();
+  expect(screen.queryByText("Test project")).not.toBeInTheDocument();
 });

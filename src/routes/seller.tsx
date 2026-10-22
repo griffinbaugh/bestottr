@@ -1,3 +1,5 @@
+import { IS_DEMO } from "@/lib/app-mode";
+import { AccountOrdersDashboard } from "@/components/account/AccountOrdersDashboard";
 import { MarketplaceGate } from "@/components/account/MarketplaceGate";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Badge, Empty, PageHeader, Stat, buttonVariants } from "@/components/sb/ui";
@@ -10,6 +12,7 @@ import { useAppState } from "@/lib/store";
 export const Route = createFileRoute("/seller")({
   head: () => ({
     meta: [
+      { name: "robots", content: "noindex" },
       { title: "Seller dashboard — bestottr" },
       { name: "description", content: "Manage listings, bids, sales and transfers." },
       { property: "og:title", content: "Seller dashboard — bestottr" },
@@ -18,7 +21,7 @@ export const Route = createFileRoute("/seller")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <MarketplaceGate><Seller /></MarketplaceGate>,
+  component: () => IS_DEMO ? <MarketplaceGate><Seller /></MarketplaceGate> : <AccountOrdersDashboard side="selling"/>,
 });
 
 function Seller() {
