@@ -16,6 +16,11 @@ import c1 from "@/assets/c1.jpg";
 import c2 from "@/assets/c2.jpg";
 import c3 from "@/assets/c3.jpg";
 import cb1 from "@/assets/cb1.jpg";
+import legendaryFusion from "@/assets/homepage/legendary-fusion.jpeg";
+import jungleAdventure from "@/assets/homepage/jungle-adventure.jpeg";
+import winterAction from "@/assets/homepage/winter-action.jpeg";
 
-export const IMAGES: Record<string, string> = { g1, g2, g3, g4, g5, g6, g7, g8, f1, f2, f3, f4, f5, f6, c1, c2, c3, cb1 };
+export const DEFAULT_HERO_IMAGES = ["legendaryFusion", "jungleAdventure", "winterAction"];
+
+export const IMAGES: Record<string, string> = { g1, g2, g3, g4, g5, g6, g7, g8, f1, f2, f3, f4, f5, f6, c1, c2, c3, cb1, legendaryFusion, jungleAdventure, winterAction };
 export const img = (key: string) => IMAGES[key] ?? (/^https:\/\//.test(key) ? key : g1);
