@@ -36,6 +36,15 @@ export const saveListingDraft = createServerFn({ method: "POST" })
         .maybeSingle();
       if (error || !existing || existing.kind !== data.draft.kind)
         return { ok: false as const, error: "This draft could not be found." };
+      const { editableDraft } = await import("./listing-review.server");
+      try {
+        await editableDraft(user.id, data.draft.id);
+      } catch (e) {
+        return {
+          ok: false as const,
+          error: e instanceof Error ? e.message : "This draft is locked for review.",
+        };
+      }
     }
     if (
       data.draft.format === "auction" &&
@@ -128,6 +137,8 @@ export const deleteListingDraft = createServerFn({ method: "POST" })
     const { verifiedAccount } = await import("./account.server");
     const user = await verifiedAccount(data.token);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { editableDraft } = await import("./listing-review.server");
+    await editableDraft(user.id, data.id);
     const { deleteDraftAssets } = await import("./listing-assets.server");
     await deleteDraftAssets(user.id, data.id);
     const { error } = await supabaseAdmin

@@ -1,0 +1,75 @@
+import type { ListingDraft } from "@/lib/listing-drafts";
+import type { ListingAsset } from "@/lib/listing-assets";
+import type { ListingReview, ReviewDetails } from "@/lib/listing-review";
+import { reviewSummary } from "@/lib/listing-review";
+export const draft: ListingDraft = {
+  id: "a2000000-0000-4000-8000-000000000001",
+  seller_id: "seller",
+  kind: "file",
+  asset_id: null,
+  place_id: null,
+  roblox_user_id: null,
+  creator_type: null,
+  creator_id: null,
+  asset_name: "Project",
+  title: "Test project",
+  description: "A downloadable Roblox project",
+  format: "buy_now",
+  price_cents: 5000,
+  reserve_cents: null,
+  ownership_checked_at: null,
+  auction_ends_at: null,
+  cover_asset_id: null,
+  created_at: "2026-10-22T12:00:00Z",
+  updated_at: "2026-10-22T12:00:00Z",
+};
+export const image: ListingAsset = {
+  id: "a3000000-0000-4000-8000-000000000001",
+  draft_id: draft.id,
+  seller_id: draft.seller_id,
+  category: "image",
+  filename: "cover.png",
+  content_type: "image/png",
+  size_bytes: 100,
+  path: "private/image",
+  status: "ready",
+  position: 0,
+  created_at: draft.created_at,
+};
+export const file: ListingAsset = {
+  ...image,
+  id: "a3000000-0000-4000-8000-000000000002",
+  category: "file",
+  filename: "private-project.zip",
+  content_type: "application/octet-stream",
+  path: "private/deliverable",
+  position: 1,
+};
+export const review: ListingReview = {
+  id: "a4000000-0000-4000-8000-000000000001",
+  draft_id: draft.id,
+  seller_id: draft.seller_id,
+  state: "approved",
+  version: 2,
+  snapshot: { ...draft, assets: [image, file] },
+  rights_confirmed_at: draft.created_at,
+  reviewer_id: "moderator",
+  reviewed_at: draft.created_at,
+  decision_note: "Internal feedback",
+  ownership_checked_at: null,
+  published_at: null,
+  created_at: draft.created_at,
+  updated_at: draft.updated_at,
+};
+export const details: ReviewDetails = {
+  review: reviewSummary(review),
+  description: draft.description,
+  seller_handle: "seller",
+  ownership_checked_at: null,
+  auction_ends_at: null,
+  reserve_cents: null,
+  roblox_url: null,
+  images: [],
+  files: [],
+  events: [],
+};

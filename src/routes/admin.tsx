@@ -1,3 +1,6 @@
+import { IS_DEMO } from "@/lib/app-mode";
+import { RequireAccount } from "@/components/account/AccountLayout";
+import { ListingReviewAdmin } from "@/components/account/ListingReviewAdmin";
 import { MarketplaceGate } from "@/components/account/MarketplaceGate";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -11,6 +14,7 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "Moderation — bestottr" },
+      { name: "robots", content: "noindex" },
       { name: "description", content: "Listing review, verification, disputes and transaction review." },
       { property: "og:title", content: "Moderation — bestottr" },
       { property: "og:description", content: "bestottr admin console." },
@@ -18,7 +22,7 @@ export const Route = createFileRoute("/admin")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: () => <MarketplaceGate admin><Admin /></MarketplaceGate>,
+  component: () => IS_DEMO ? <MarketplaceGate admin><Admin /></MarketplaceGate> : <RequireAccount admin><ListingReviewAdmin /></RequireAccount>,
 });
 
 type T = "listings" | "users" | "disputes" | "flags" | "txn";

@@ -1,3 +1,5 @@
+import { IS_DEMO } from "@/lib/app-mode";
+import { PublishedListing } from "@/components/sb/PublishedListings";
 import { normalizeGallery } from "@/lib/gallery";
 import { ExperienceGallery } from "@/components/sb/ExperienceGallery";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -31,8 +33,13 @@ export const Route = createFileRoute("/listing/$id")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: ListingPage,
+  component: ListingRoute,
 });
+
+function ListingRoute() {
+  const { id } = Route.useParams();
+  return IS_DEMO ? <ListingPage /> : <PublishedListing id={id} />;
+}
 
 function ListingPage() {
   const { id } = Route.useParams();

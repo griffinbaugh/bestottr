@@ -1,4 +1,6 @@
 import { Blob as NodeBlob } from "node:buffer";
+import { editableDraft } from "./listing-review.server";
+vi.mock("./listing-review.server", () => ({ editableDraft: vi.fn() }));
 import { beforeEach, expect, it, vi } from "vitest";
 const h = vi.hoisted(() => ({
   user: vi.fn(),
@@ -197,4 +199,24 @@ it("checks image bytes before attaching a pending image", async () => {
   });
   await finishDraftUpload({ data: { token, id } });
   expect(h.update).toHaveBeenCalledWith({ status: "ready" });
+});
+
+it("blocks signed uploads while a draft is frozen for review", async () => {
+  vi.mocked(editableDraft).mockRejectedValueOnce(new Error("Withdraw first"));
+  await expect(
+    prepareDraftUpload({
+      data: {
+        token,
+        upload: {
+          draftId,
+          category: "image",
+          filename: "cover.png",
+          contentType: "image/png",
+          size: 100,
+        },
+      },
+    }),
+  ).rejects.toThrow("Withdraw first");
+  expect(h.upload).not.toHaveBeenCalled();
+  expect(h.rpc).not.toHaveBeenCalled();
 });

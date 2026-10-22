@@ -8,6 +8,25 @@ export type Database = {
   };
   public: {
     Tables: {
+      listing_reviews: {
+        Row: import("@/lib/listing-review").ListingReview;
+        Insert: Partial<import("@/lib/listing-review").ListingReview>;
+        Update: Partial<import("@/lib/listing-review").ListingReview>;
+        Relationships: [];
+      };
+      listing_review_assets: {
+        Row: import("@/lib/listing-review").ReviewAsset;
+        Insert: import("@/lib/listing-review").ReviewAsset;
+        Update: Partial<import("@/lib/listing-review").ReviewAsset>;
+        Relationships: [];
+      };
+      listing_review_events: {
+        Row: import("@/lib/listing-review").ReviewEvent;
+        Insert: Omit<import("@/lib/listing-review").ReviewEvent, "id" | "created_at">;
+        Update: never;
+        Relationships: [];
+      };
+
       trustap_sandbox_accounts: {
         Row: { user_id: string; provider_user_id: string; connected_at: string };
         Insert: { user_id: string; provider_user_id: string; connected_at?: string };
@@ -224,6 +243,30 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      reserve_listing_review: {
+        Args: {
+          p_review: string;
+          p_draft: string;
+          p_actor: string;
+          p_updated: string;
+          p_proof: Json;
+          p_rights: boolean;
+        };
+        Returns: Json;
+      };
+      transition_listing_review: {
+        Args: {
+          p_review: string;
+          p_actor: string;
+          p_version: number;
+          p_action: string;
+          p_note?: string;
+          p_publish_allowed?: boolean;
+          p_proof?: Json;
+        };
+        Returns: import("@/lib/listing-review").ListingReview;
+      };
+
       claim_trustap_sandbox_sync: {
         Args: { p_order: string; p_force?: boolean };
         Returns: string | null;

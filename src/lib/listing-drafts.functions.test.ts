@@ -1,3 +1,5 @@
+import { editableDraft } from "./listing-review.server";
+vi.mock("./listing-review.server", () => ({ editableDraft: vi.fn() }));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   verifiedAccount: vi.fn(),
@@ -178,4 +180,15 @@ it("stores absolute auction time and clears it for fixed price", async () => {
   expect(mocks.insert).toHaveBeenLastCalledWith(expect.objectContaining({ auction_ends_at: ends }));
   await saveListingDraft({ data: { token, draft: { ...input, auctionEndsAt: ends } } });
   expect(mocks.insert).toHaveBeenLastCalledWith(expect.objectContaining({ auction_ends_at: null }));
+});
+
+it("blocks reviewed draft edits before Roblox or database writes", async () => {
+  mocks.existing = true;
+  vi.mocked(editableDraft).mockRejectedValueOnce(new Error("Withdraw first"));
+  expect(await saveListingDraft({ data: { token, draft: { ...input, id } } })).toMatchObject({
+    ok: false,
+    error: "Withdraw first",
+  });
+  expect(mocks.verifyDraftOwnership).not.toHaveBeenCalled();
+  expect(mocks.update).not.toHaveBeenCalled();
 });

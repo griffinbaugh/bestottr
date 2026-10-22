@@ -1,3 +1,5 @@
+import { IS_DEMO } from "@/lib/app-mode";
+import { PublishedCatalog } from "@/components/sb/PublishedListings";
 import { createFileRoute } from "@tanstack/react-router";
 import { SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -20,8 +22,13 @@ export const Route = createFileRoute("/browse")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: Browse,
+  component: BrowseRoute,
 });
+
+function BrowseRoute() {
+  const { q } = Route.useSearch();
+  return IS_DEMO ? <Browse /> : <PublishedCatalog initialQuery={q} />;
+}
 
 type Format = "all" | "auction" | "buy_now";
 type Kind = "all" | "experience" | "community" | "file";
