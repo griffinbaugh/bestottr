@@ -20,6 +20,7 @@ const links = [
   { to: "/account/verification", label: "Verification", icon: Check },
   { to: "/account/connections", label: "Connected accounts", icon: Link2 },
   { to: "/account/payments", label: "Payment methods", icon: CreditCard },
+  { to: "/account/escrow", label: "Escrow sandbox", icon: ShieldCheck },
   { to: "/account/payouts", label: "Deposits & payouts", icon: Landmark },
   { to: "/account/notifications", label: "Notifications", icon: Bell },
 ] as const;
@@ -88,7 +89,7 @@ export function AccountLayout({
   title: string;
   description: string;
 }) {
-  const { profile, session, accountError, refresh } = useAuth();
+  const { profile, session, accountError, refresh, isAdmin } = useAuth();
   return (
     <RequireAccount>
       <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-12">
@@ -112,18 +113,20 @@ export function AccountLayout({
         <div className="grid items-start gap-8 md:grid-cols-[205px_minmax(0,1fr)]">
           <aside className="overflow-x-auto">
             <nav aria-label="Account settings" className="flex gap-1 md:flex-col">
-              {links.map(({ to, label, icon: Icon }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  activeOptions={{ exact: true }}
-                  className="flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  activeProps={{ className: "bg-secondary text-foreground font-medium" }}
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </Link>
-              ))}
+              {links
+                .filter((link) => link.to !== "/account/escrow" || isAdmin)
+                .map(({ to, label, icon: Icon }) => (
+                  <Link
+                    key={to}
+                    to={to}
+                    activeOptions={{ exact: true }}
+                    className="flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2.5 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    activeProps={{ className: "bg-secondary text-foreground font-medium" }}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Link>
+                ))}
             </nav>
             <p className="mt-5 hidden break-all px-3 text-xs text-muted-foreground md:block">
               {session?.user.email}

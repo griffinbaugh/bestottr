@@ -8,6 +8,36 @@ export type Database = {
   };
   public: {
     Tables: {
+      escrow_sandbox_orders: {
+        Row: import("@/lib/escrow-sandbox").SandboxOrder;
+        Insert: Pick<
+          import("@/lib/escrow-sandbox").SandboxOrder,
+          | "request_id"
+          | "reference"
+          | "seller_id"
+          | "buyer_id"
+          | "title"
+          | "kind"
+          | "amount_cents"
+          | "buyer_email"
+          | "seller_email"
+        > &
+          Partial<import("@/lib/escrow-sandbox").SandboxOrder>;
+        Update: Partial<import("@/lib/escrow-sandbox").SandboxOrder>;
+        Relationships: [];
+      };
+      escrow_sandbox_files: {
+        Row: import("@/lib/escrow-sandbox").SandboxFile;
+        Insert: import("@/lib/escrow-sandbox").SandboxFile;
+        Update: Partial<import("@/lib/escrow-sandbox").SandboxFile>;
+        Relationships: [];
+      };
+      escrow_sandbox_events: {
+        Row: import("@/lib/escrow-sandbox").SandboxEvent;
+        Insert: Omit<import("@/lib/escrow-sandbox").SandboxEvent, "id" | "created_at">;
+        Update: Partial<import("@/lib/escrow-sandbox").SandboxEvent>;
+        Relationships: [];
+      };
       listing_assets: {
         Row: import("@/lib/listing-assets").ListingAsset;
         Insert: Omit<
@@ -184,6 +214,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      claim_escrow_sandbox_sync: {
+        Args: { p_order: string; p_force?: boolean };
+        Returns: string | null;
+      };
+      commit_escrow_sandbox_sync: {
+        Args: { p_order: string; p_claim: string; p_state: string; p_summary: Json };
+        Returns: boolean;
+      };
       reserve_listing_asset: {
         Args: {
           p_seller: string;

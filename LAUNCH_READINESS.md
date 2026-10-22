@@ -1,6 +1,21 @@
+# Escrow sandbox integration (2026-10-21)
+
+Implemented a staff-created sandbox checkout at `/account/escrow` for fixed-price experience, community and file drafts. This is a test integration; public checkout and live funds remain disabled. See [ESCROW_SANDBOX_SETUP.md](ESCROW_SANDBOX_SETUP.md) for deployment and the two-account test.
+
+- Fixed sandbox API origin, hosted buyer checkout, stable request IDs and reference-based GET recovery after uncertain creation. No blind payment-creation retries.
+- Authenticated provider reads bind transaction ID/reference, buyer/seller, currency, exact cents, goods and inspection terms before any funding state or download entitlement is accepted. Webhooks and return URLs are hints only.
+- Private order-specific file copies survive draft attachment edits/deletion. Only the authenticated buyer can request a short-lived attachment URL after a fresh provider funds check. Dispute, rejection, cancellation and refund states block delivery.
+- Experience/community orders pin the target Roblox account and support fresh ownership observations after funding. Observations do not accept goods or release funds. Acceptance, returns and disputes stay with Escrow sandbox.
+- Three new sandbox tables, participant RLS, restricted column reads, service-only state leases and a private deliverables bucket. The production migration is already applied as `20261022004300_escrow_sandbox_orders`; do not reapply it. The previous preparation migration filename is aligned to its actual remote version `20261021231743`.
+- Transactional SQL checks passed on local PostgreSQL and the owner-controlled database, with QA rows rolled back. The policy-free sandbox files table is intentionally inaccessible to clients; its advisor INFO is expected. Existing unrelated advisor warnings remain unchanged.
+
+Provider-hosted end-to-end validation still requires sandbox credentials and two test accounts. Automated tests use provider fixtures and do not prove account eligibility, live approval, actual funding or real transfer completion. Sandbox file copies are not malware-scanned; lifecycle cleanup and aggregate order-storage quotas remain live-launch work. Auctions, automatic settlement, live commissions and public purchase flows remain closed.
+
+---
+
 # Listing preparation release (2026-10-21)
 
-**Status: code prepared and tested; production migration is not applied.** Automatic approval review rejected the production schema change and requires explicit approval of the exact migration before it may be applied. Do not deploy this patch before the database migration succeeds. No provider has been selected; paid checkout, public publication, auctions accepting bids, purchase entitlements, instant buyer downloads, and experience/community settlement remain closed. This release does not claim those systems are operational.
+**Listing preparation status: production migration applied after explicit owner approval, and the UI deployed in PR #11.** The source migration filename is aligned to recorded version `20261021231743`; never reapply that migration. No provider has been selected; paid checkout, public publication, auctions accepting bids, purchase entitlements, instant buyer downloads, and experience/community settlement remain closed. This release does not claim those systems are operational.
 
 ## Included behavior
 
@@ -14,7 +29,7 @@
 
 ## Deployment sequence
 
-1. Obtain explicit approval and apply `supabase/migrations/20261021222550_listing_preparation_media.sql` to the owner-controlled project. It relaxes Roblox-only fields solely for the new file kind and adds an equivalent stricter identity check for existing kinds, two draft columns, the asset table/RLS/indexes, server-only quota/order RPCs and two private buckets. No existing rows, support data or account settings are deleted.
+1. Obtain explicit approval and apply `supabase/migrations/20261021231743_listing_preparation_media.sql` to the owner-controlled project. It relaxes Roblox-only fields solely for the new file kind and adds an equivalent stricter identity check for existing kinds, two draft columns, the asset table/RLS/indexes, server-only quota/order RPCs and two private buckets. No existing rows, support data or account settings are deleted.
 2. Verify the production schema, private bucket settings, function grants and advisor output. Record the remote migration version and align the source filename if Supabase assigned a different timestamp; never apply the same migration twice.
 3. Apply `bestottr-listing-preparation.patch` on a branch from main `dc1c00a`, then push/merge after checks pass. Existing Worker Supabase variables suffice. This release does not require new keys.
 4. Live test with the actual account: save a file draft, add an image and ZIP/model, refresh, reorder/select cover, inspect preview, test seller download, remove an upload, and confirm an unrelated account cannot read it. Also retest the existing experience and community drafts. Verify local-time auction end survives reload.
