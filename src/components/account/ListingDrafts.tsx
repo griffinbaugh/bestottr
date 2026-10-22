@@ -1,5 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { DraftMedia } from "./DraftMedia";
+import { ListingReviewPanel } from "./ListingReviewPanel";
+import { getSellerReviews } from "@/lib/listing-review.functions";
+import { reviewLabel, reviewLocked, type ReviewSummary } from "@/lib/listing-review";
 import {
   defaultEndLocal,
   toLocalInputValue,
@@ -43,6 +46,7 @@ function DraftEditor() {
   const cooldownKey = `bestottr-listing-retry:${session?.user.id}`;
   const [draft, setDraft] = useState(empty);
   const [drafts, setDrafts] = useState<ListingDraft[]>([]);
+  const [reviews, setReviews] = useState<ReviewSummary[]>([]);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -63,6 +67,18 @@ function DraftEditor() {
   const [retryIn, setRetryIn] = useState(0);
   const up = (patch: Partial<DraftInput>) => setDraft((d) => ({ ...d, ...patch }));
   const token = session?.access_token;
+  const currentReview = reviews.find((r) => r.draft_id === draft.id);
+  const locked = reviewLocked(currentReview?.state);
+  const savedDraft = drafts.find((r) => r.id === draft.id);
+  async function refreshSaved() {
+    if (!token) return;
+    const [rows, statuses] = await Promise.all([
+      getListingDrafts({ data: { token } }),
+      getSellerReviews({ data: { token } }),
+    ]);
+    setDrafts(rows);
+    setReviews(statuses);
+  }
   useEffect(() => {
     const tick = () => {
       const remaining = Math.max(0, Math.ceil((retryAt - Date.now()) / 1000));
@@ -83,9 +99,12 @@ function DraftEditor() {
       setLoading(false);
       return;
     }
-    void getListingDrafts({ data: { token } })
-      .then((rows) => {
-        if (active) setDrafts(rows);
+    void Promise.all([getListingDrafts({ data: { token } }), getSellerReviews({ data: { token } })])
+      .then(([rows, statuses]) => {
+        if (active) {
+          setDrafts(rows);
+          setReviews(statuses);
+        }
       })
       .catch(() => {
         if (active) setError("Your drafts could not be loaded. Refresh to try again.");
@@ -123,7 +142,7 @@ function DraftEditor() {
   }
   async function save(e: FormEvent) {
     e.preventDefault();
-    if (!token || busy || (draft.kind !== "file" && retryAt > Date.now())) return;
+    if (!token || busy || locked || (draft.kind !== "file" && retryAt > Date.now())) return;
     setError("");
     setSuccess("");
     let toSave = draft;
@@ -162,7 +181,7 @@ function DraftEditor() {
       }
       up({ id: result.id, auctionEndsAt: parsed.data.auctionEndsAt });
       setSuccess("Draft saved. It is private and is not listed for sale.");
-      setDrafts(await getListingDrafts({ data: { token } }));
+      await refreshSaved();
     } catch {
       setError(
         "Your request could not be completed. Refresh your session and try again. If a save already completed, your draft will appear below.",
@@ -196,8 +215,8 @@ function DraftEditor() {
       <h1 className="text-3xl font-semibold tracking-tight">Prepare your listing</h1>
       <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
         Prepare an experience, community or downloadable file listing. Roblox ownership is verified
-        before saving an experience or community. Public listings and transactions will open when
-        checkout is ready.
+        before saving an experience or community. Submit a completed saved version for review.
+        Approval is separate from public publication; checkout remains closed.
       </p>
       {!session?.user.email_confirmed_at ? (
         <div className="mt-8">
@@ -221,7 +240,10 @@ function DraftEditor() {
               <form className="surface space-y-5 p-5 md:p-6" onSubmit={save}>
                 <h2 className="text-lg font-semibold">{draft.id ? "Edit draft" : "New draft"}</h2>
                 <Message error={error} success={success} />
-                <fieldset disabled={busy || loading} className="space-y-5 disabled:opacity-60">
+                <fieldset
+                  disabled={busy || loading || locked}
+                  className="space-y-5 disabled:opacity-60"
+                >
                   <Field label="Listing type">
                     <select
                       className="field"
@@ -411,10 +433,21 @@ function DraftEditor() {
                   </Button>
                 )}
               </form>
+              {savedDraft && token && (
+                <ListingReviewPanel
+                  key={savedDraft.id}
+                  token={token}
+                  draft={savedDraft}
+                  review={currentReview}
+                  onChanged={refreshSaved}
+                />
+              )}
               {draft.id && token ? (
                 <DraftMedia
                   key={draft.id}
                   token={token}
+                  readOnly={locked}
+                  onMutation={refreshSaved}
                   draft={{ ...draft, id: draft.id }}
                   coverId={coverId}
                   onCoverChange={(id) => {
@@ -431,7 +464,7 @@ function DraftEditor() {
               )}
             </div>
             <aside className="space-y-4">
-              <h2 className="text-lg font-semibold">Your drafts</h2>
+              <h2 className="text-lg font-semibold">Your listings</h2>
               {loading ? (
                 <p role="status" className="text-sm text-muted-foreground">
                   Loading drafts…
@@ -443,7 +476,10 @@ function DraftEditor() {
                   <section key={row.id} className="surface p-4">
                     <h3 className="break-words font-medium">{row.title}</h3>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Private draft ·{" "}
+                      {reviews.find((r) => r.draft_id === row.id)
+                        ? reviewLabel[reviews.find((r) => r.draft_id === row.id)!.state]
+                        : "Private draft"}{" "}
+                      ·{" "}
                       {row.kind === "experience"
                         ? "Experience"
                         : row.kind === "community"
@@ -472,13 +508,17 @@ function DraftEditor() {
                         disabled={busy}
                         onClick={() => edit(row)}
                       >
-                        Edit
+                        {reviewLocked(reviews.find((r) => r.draft_id === row.id)?.state)
+                          ? "View version"
+                          : "Edit"}
                       </Button>
                       <Button
                         type="button"
                         size="sm"
                         variant="ghost"
-                        disabled={busy}
+                        disabled={
+                          busy || reviewLocked(reviews.find((r) => r.draft_id === row.id)?.state)
+                        }
                         onClick={() => setDeleteId(row.id)}
                       >
                         Delete

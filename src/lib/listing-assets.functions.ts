@@ -18,6 +18,8 @@ export const prepareDraftUpload = createServerFn({ method: "POST" })
     const user = await verifiedAccount(data.token);
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     const v = data.upload;
+    const { editableDraft } = await import("./listing-review.server");
+    await editableDraft(user.id, v.draftId);
     const { data: item, error } = await db.rpc("reserve_listing_asset", {
       p_seller: user.id,
       p_draft: v.draftId,
@@ -50,7 +52,10 @@ export const finishDraftUpload = createServerFn({ method: "POST" })
     const { verifiedAccount } = await import("./account.server");
     const user = await verifiedAccount(data.token);
     const { ownedAsset, completeAsset } = await import("./listing-assets.server");
-    await completeAsset(await ownedAsset(user.id, data.id));
+    const item = await ownedAsset(user.id, data.id);
+    const { editableDraft } = await import("./listing-review.server");
+    await editableDraft(user.id, item.draft_id);
+    await completeAsset(item);
     return { ok: true };
   });
 export const deleteDraftUpload = createServerFn({ method: "POST" })
@@ -59,7 +64,10 @@ export const deleteDraftUpload = createServerFn({ method: "POST" })
     const { verifiedAccount } = await import("./account.server");
     const user = await verifiedAccount(data.token);
     const { ownedAsset, removeAsset } = await import("./listing-assets.server");
-    await removeAsset(await ownedAsset(user.id, data.id));
+    const item = await ownedAsset(user.id, data.id);
+    const { editableDraft } = await import("./listing-review.server");
+    await editableDraft(user.id, item.draft_id);
+    await removeAsset(item);
     return { ok: true };
   });
 export const setDraftCover = createServerFn({ method: "POST" })
@@ -69,6 +77,8 @@ export const setDraftCover = createServerFn({ method: "POST" })
     const user = await verifiedAccount(data.token);
     const { ownedAsset } = await import("./listing-assets.server");
     const item = await ownedAsset(user.id, data.id);
+    const { editableDraft } = await import("./listing-review.server");
+    await editableDraft(user.id, item.draft_id);
     if (item.category !== "image" || item.status !== "ready")
       throw new Error("Choose a completed image for the cover.");
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
@@ -87,6 +97,8 @@ export const moveDraftImage = createServerFn({ method: "POST" })
     const user = await verifiedAccount(data.token);
     const { ownedAsset } = await import("./listing-assets.server");
     const item = await ownedAsset(user.id, data.id);
+    const { editableDraft } = await import("./listing-review.server");
+    await editableDraft(user.id, item.draft_id);
     if (item.category !== "image" || item.status !== "ready")
       throw new Error("Choose a completed image.");
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");

@@ -22,11 +22,15 @@ export function DraftMedia({
   draft,
   coverId,
   onCoverChange,
+  readOnly = false,
+  onMutation,
 }: {
   token: string;
   draft: DraftInput & { id: string };
   coverId: string | null;
   onCoverChange: (id: string | null) => void;
+  readOnly?: boolean;
+  onMutation?: () => Promise<void>;
 }) {
   const [assets, setAssets] = useState<AssetView[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +72,7 @@ export function DraftMedia({
     try {
       await work();
       await refresh();
+      await onMutation?.();
     } catch (e) {
       setStatus("");
       setError(e instanceof Error ? e.message : "This request could not be completed.");
@@ -125,86 +130,173 @@ export function DraftMedia({
         </Button>
       </div>
       <Message error={error} success={status} />
-      {loading ? (
-        <p role="status">Loading uploads…</p>
-      ) : (
-        <>
-          <label className="block text-sm font-medium">
-            Add listing images
-            <input
-              className="field mt-2"
-              aria-label="Add listing images"
-              type="file"
-              multiple
-              accept="image/png,image/jpeg,image/webp"
-              disabled={busy}
-              onChange={(e) => {
-                void upload(e.target.files, "image");
-                e.target.value = "";
-              }}
-            />
-          </label>
-          <p className="text-xs text-muted-foreground">
-            Up to 8 PNG, JPEG or WebP images, 5 MB each. The selected cover appears first in your
-            preview.
-          </p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {images.map((item, index) => (
-              <div key={item.id} className="min-w-0 rounded-md border border-border p-2">
-                <img
-                  src={item.url ?? undefined}
-                  alt={item.filename}
-                  className="aspect-video w-full rounded object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.opacity = "0.3";
-                  }}
-                />
-                <p className="mt-2 truncate text-xs">{item.filename}</p>
-                <div className="mt-2 flex flex-wrap gap-1">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={cover?.id === item.id ? "primary" : "outline"}
-                    disabled={busy}
-                    onClick={() =>
-                      void action(async () => {
-                        await setDraftCover({ data: { token, id: item.id } });
-                        onCoverChange(item.id);
-                      })
-                    }
-                  >
-                    {cover?.id === item.id ? "Cover" : "Set cover"}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    aria-label={`Move ${item.filename} earlier`}
-                    disabled={busy || index === 0}
-                    onClick={() =>
-                      void action(async () => {
-                        await moveDraftImage({
-                          data: { token, id: item.id, direction: "earlier" },
-                        });
-                      })
-                    }
-                  >
-                    ←
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    aria-label={`Move ${item.filename} later`}
-                    disabled={busy || index === images.length - 1}
-                    onClick={() =>
-                      void action(async () => {
-                        await moveDraftImage({ data: { token, id: item.id, direction: "later" } });
-                      })
-                    }
-                  >
-                    →
-                  </Button>
+      {readOnly && (
+        <p className="text-sm text-muted-foreground">
+          These attachments are frozen for review. Use View submitted version to inspect the
+          snapshot, or withdraw before editing.
+        </p>
+      )}
+      <fieldset disabled={readOnly} className="space-y-5">
+        {loading ? (
+          <p role="status">Loading uploads…</p>
+        ) : (
+          <>
+            <label className="block text-sm font-medium">
+              Add listing images
+              <input
+                className="field mt-2"
+                aria-label="Add listing images"
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/webp"
+                disabled={busy}
+                onChange={(e) => {
+                  void upload(e.target.files, "image");
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Up to 8 PNG, JPEG or WebP images, 5 MB each. The selected cover appears first in your
+              preview.
+            </p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {images.map((item, index) => (
+                <div key={item.id} className="min-w-0 rounded-md border border-border p-2">
+                  <img
+                    src={item.url ?? undefined}
+                    alt={item.filename}
+                    className="aspect-video w-full rounded object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.opacity = "0.3";
+                    }}
+                  />
+                  <p className="mt-2 truncate text-xs">{item.filename}</p>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={cover?.id === item.id ? "primary" : "outline"}
+                      disabled={busy}
+                      onClick={() =>
+                        void action(async () => {
+                          await setDraftCover({ data: { token, id: item.id } });
+                          onCoverChange(item.id);
+                        })
+                      }
+                    >
+                      {cover?.id === item.id ? "Cover" : "Set cover"}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Move ${item.filename} earlier`}
+                      disabled={busy || index === 0}
+                      onClick={() =>
+                        void action(async () => {
+                          await moveDraftImage({
+                            data: { token, id: item.id, direction: "earlier" },
+                          });
+                        })
+                      }
+                    >
+                      ←
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Move ${item.filename} later`}
+                      disabled={busy || index === images.length - 1}
+                      onClick={() =>
+                        void action(async () => {
+                          await moveDraftImage({
+                            data: { token, id: item.id, direction: "later" },
+                          });
+                        })
+                      }
+                    >
+                      →
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => setRemoveId(item.id)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <label className="block text-sm font-medium">
+              Add deliverable files
+              <input
+                className="field mt-2"
+                aria-label="Add deliverable files"
+                type="file"
+                multiple
+                accept=".zip,.rbxm,.rbxl,.rbxmx,.rbxlx"
+                disabled={busy}
+                onChange={(e) => {
+                  void upload(e.target.files, "file");
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Up to 3 ZIP or Roblox model/place files, 50 MB each. Only upload work you have the
+              right to sell. Files remain private; checkout and buyer delivery are not open.
+            </p>
+            {assets
+              .filter((a) => a.category === "file" || a.status === "pending")
+              .map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-wrap items-center gap-3 border-t border-border py-3 text-sm"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="break-all">{item.filename}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {bytesLabel(item.size_bytes)} ·{" "}
+                      {item.status === "pending"
+                        ? "Incomplete upload"
+                        : "Stored privately · not reviewed"}
+                    </p>
+                  </div>
+                  {item.status === "pending" ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() =>
+                        void action(async () => {
+                          await finishDraftUpload({ data: { token, id: item.id } });
+                        })
+                      }
+                    >
+                      Check upload
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() =>
+                        void action(async () => {
+                          const r = await downloadDraftFile({ data: { token, id: item.id } });
+                          window.location.assign(r.url);
+                        })
+                      }
+                    >
+                      Download
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     size="sm"
@@ -215,128 +307,51 @@ export function DraftMedia({
                     Remove
                   </Button>
                 </div>
-              </div>
-            ))}
-          </div>
-          <label className="block text-sm font-medium">
-            Add deliverable files
-            <input
-              className="field mt-2"
-              aria-label="Add deliverable files"
-              type="file"
-              multiple
-              accept=".zip,.rbxm,.rbxl,.rbxmx,.rbxlx"
-              disabled={busy}
-              onChange={(e) => {
-                void upload(e.target.files, "file");
-                e.target.value = "";
-              }}
-            />
-          </label>
-          <p className="text-xs text-muted-foreground">
-            Up to 3 ZIP or Roblox model/place files, 50 MB each. Only upload work you have the right
-            to sell. Files remain private; checkout and buyer delivery are not open.
-          </p>
-          {assets
-            .filter((a) => a.category === "file" || a.status === "pending")
-            .map((item) => (
-              <div
-                key={item.id}
-                className="flex flex-wrap items-center gap-3 border-t border-border py-3 text-sm"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="break-all">{item.filename}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {bytesLabel(item.size_bytes)} ·{" "}
-                    {item.status === "pending"
-                      ? "Incomplete upload"
-                      : "Stored privately · not reviewed"}
-                  </p>
+              ))}
+            {removeId && (
+              <div className="rounded-md border border-border p-3 text-sm">
+                <p>Remove this upload permanently?</p>
+                <div className="mt-2 flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() =>
+                      void action(async () => {
+                        await deleteDraftUpload({ data: { token, id: removeId } });
+                        if (coverId === removeId) onCoverChange(null);
+                        setRemoveId(null);
+                      })
+                    }
+                  >
+                    Remove upload
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => setRemoveId(null)}
+                  >
+                    Keep upload
+                  </Button>
                 </div>
-                {item.status === "pending" ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() =>
-                      void action(async () => {
-                        await finishDraftUpload({ data: { token, id: item.id } });
-                      })
-                    }
-                  >
-                    Check upload
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() =>
-                      void action(async () => {
-                        const r = await downloadDraftFile({ data: { token, id: item.id } });
-                        window.location.assign(r.url);
-                      })
-                    }
-                  >
-                    Download
-                  </Button>
-                )}
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  disabled={busy}
-                  onClick={() => setRemoveId(item.id)}
-                >
-                  Remove
-                </Button>
               </div>
-            ))}
-          {removeId && (
-            <div className="rounded-md border border-border p-3 text-sm">
-              <p>Remove this upload permanently?</p>
-              <div className="mt-2 flex gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  disabled={busy}
-                  onClick={() =>
-                    void action(async () => {
-                      await deleteDraftUpload({ data: { token, id: removeId } });
-                      if (coverId === removeId) onCoverChange(null);
-                      setRemoveId(null);
-                    })
-                  }
-                >
-                  Remove upload
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => setRemoveId(null)}
-                >
-                  Keep upload
-                </Button>
-              </div>
-            </div>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            disabled={busy}
-            onClick={() => {
-              setSelected(cover?.id ?? null);
-              setPreview(true);
-            }}
-          >
-            Preview listing
-          </Button>
-        </>
-      )}
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy}
+              onClick={() => {
+                setSelected(cover?.id ?? null);
+                setPreview(true);
+              }}
+            >
+              Preview listing
+            </Button>
+          </>
+        )}
+      </fieldset>
       <div className="rounded-md border border-border p-4">
         <h3 className="font-medium">Before publication</h3>
         <ul className="mt-3 space-y-2 text-sm">
@@ -350,8 +365,8 @@ export function DraftMedia({
           {checks.every((c) => c.done)
             ? "Your listing details are prepared. "
             : "Complete the remaining details above. "}
-          Publication will open after checkout is connected. Experiences and communities will
-          require a fresh ownership check when published.
+          Save your changes, then use Listing review to submit the saved version. Moderator approval
+          and public publication are separate; Roblox ownership is checked again before publication.
         </p>
         <Button type="button" className="mt-3" disabled>
           Publish not open

@@ -35,6 +35,7 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as DealIdRouteImport } from './routes/deal.$id'
 import { Route as ListingIdRouteImport } from './routes/listing.$id'
 import { Route as UserHandleRouteImport } from './routes/user.$handle'
+import { Route as ApiListingMediaIdRouteImport } from './routes/api.listing-media.$id'
 import { Route as ApiRobloxCallbackRouteImport } from './routes/api.roblox.callback'
 import { Route as ApiTrustapCallbackRouteImport } from './routes/api.trustap.callback'
 import { Route as ListingIdEditRouteImport } from './routes/listing.$id_.edit'
@@ -171,6 +172,11 @@ const UserHandleRoute = UserHandleRouteImport.update({
   path: '/user/$handle',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiListingMediaIdRoute = ApiListingMediaIdRouteImport.update({
+  id: '/api/listing-media/$id',
+  path: '/api/listing-media/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRobloxCallbackRoute = ApiRobloxCallbackRouteImport.update({
   id: '/api/roblox/callback',
   path: '/api/roblox/callback',
@@ -225,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/deal/$id': typeof DealIdRoute
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
+  '/api/listing-media/$id': typeof ApiListingMediaIdRoute
   '/api/roblox/callback': typeof ApiRobloxCallbackRoute
   '/api/trustap/callback': typeof ApiTrustapCallbackRoute
   '/listing/$id/edit': typeof ListingIdEditRoute
@@ -258,6 +265,7 @@ export interface FileRoutesByTo {
   '/deal/$id': typeof DealIdRoute
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
+  '/api/listing-media/$id': typeof ApiListingMediaIdRoute
   '/api/roblox/callback': typeof ApiRobloxCallbackRoute
   '/api/trustap/callback': typeof ApiTrustapCallbackRoute
   '/listing/$id/edit': typeof ListingIdEditRoute
@@ -292,6 +300,7 @@ export interface FileRoutesById {
   '/deal/$id': typeof DealIdRoute
   '/listing/$id': typeof ListingIdRoute
   '/user/$handle': typeof UserHandleRoute
+  '/api/listing-media/$id': typeof ApiListingMediaIdRoute
   '/api/roblox/callback': typeof ApiRobloxCallbackRoute
   '/api/trustap/callback': typeof ApiTrustapCallbackRoute
   '/listing/$id_/edit': typeof ListingIdEditRoute
@@ -327,6 +336,7 @@ export interface FileRouteTypes {
     | '/deal/$id'
     | '/listing/$id'
     | '/user/$handle'
+    | '/api/listing-media/$id'
     | '/api/roblox/callback'
     | '/api/trustap/callback'
     | '/listing/$id/edit'
@@ -360,6 +370,7 @@ export interface FileRouteTypes {
     | '/deal/$id'
     | '/listing/$id'
     | '/user/$handle'
+    | '/api/listing-media/$id'
     | '/api/roblox/callback'
     | '/api/trustap/callback'
     | '/listing/$id/edit'
@@ -393,6 +404,7 @@ export interface FileRouteTypes {
     | '/deal/$id'
     | '/listing/$id'
     | '/user/$handle'
+    | '/api/listing-media/$id'
     | '/api/roblox/callback'
     | '/api/trustap/callback'
     | '/listing/$id_/edit'
@@ -427,6 +439,7 @@ export interface RootRouteChildren {
   DealIdRoute: typeof DealIdRoute
   ListingIdRoute: typeof ListingIdRoute
   UserHandleRoute: typeof UserHandleRoute
+  ApiListingMediaIdRoute: typeof ApiListingMediaIdRoute
   ApiRobloxCallbackRoute: typeof ApiRobloxCallbackRoute
   ApiTrustapCallbackRoute: typeof ApiTrustapCallbackRoute
   ListingIdEditRoute: typeof ListingIdEditRoute
@@ -618,6 +631,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserHandleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/listing-media/$id': {
+      id: '/api/listing-media/$id'
+      path: '/api/listing-media/$id'
+      fullPath: '/api/listing-media/$id'
+      preLoaderRoute: typeof ApiListingMediaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/roblox/callback': {
       id: '/api/roblox/callback'
       path: '/api/roblox/callback'
@@ -683,6 +703,7 @@ const rootRouteChildren: RootRouteChildren = {
   DealIdRoute: DealIdRoute,
   ListingIdRoute: ListingIdRoute,
   UserHandleRoute: UserHandleRoute,
+  ApiListingMediaIdRoute: ApiListingMediaIdRoute,
   ApiRobloxCallbackRoute: ApiRobloxCallbackRoute,
   ApiTrustapCallbackRoute: ApiTrustapCallbackRoute,
   ListingIdEditRoute: ListingIdEditRoute,
