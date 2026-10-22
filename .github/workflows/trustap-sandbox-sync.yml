@@ -1,0 +1,28 @@
+name: Trustap sandbox reconciliation
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/10 * * * *"
+permissions:
+  contents: read
+concurrency:
+  group: trustap-sandbox-reconciliation
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    if: vars.TRUSTAP_SANDBOX_SYNC_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Reconcile pending sandbox orders
+        env:
+          SYNC_SECRET: ${{ secrets.TRUSTAP_SYNC_SECRET }}
+        run: |
+          if [ -z "$SYNC_SECRET" ]; then
+            echo 'Configure the repository Trustap sandbox sync secret first.'
+            exit 1
+          fi
+          curl --silent --show-error --fail --connect-timeout 10 --max-time 120 \
+            --request POST \
+            --header "Authorization: Bearer $SYNC_SECRET" \
+            https://bestottr.com/api/trustap/sandbox/sync

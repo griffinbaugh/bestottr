@@ -36,8 +36,8 @@ function Payouts() {
           <Landmark className="mx-auto h-7 w-7 text-muted-foreground" />
           <p className="mt-4 text-sm font-medium">No payout account connected</p>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Payout onboarding will open after a provider is selected. You’ll complete identity
-            checks and add your bank account directly with that provider.
+            Trustap is the selected provider. Sandbox account linking and hosted payout setup are
+            available from the Payments page. Live payouts remain closed.
           </p>
         </div>
       </AccountPanel>
@@ -46,17 +46,18 @@ function Payouts() {
           <ShieldCheck className="h-5 w-5 shrink-0 text-muted-foreground" />
           <div className="text-sm leading-relaxed text-muted-foreground">
             <p>
-              No escrow service is currently connected. Your account does not hold funds in escrow.
+              The Trustap integration is in sandbox testing. BestOttr does not hold your funds or
+              accept live payments.
             </p>
             <p className="mt-2">
-              Funding, release conditions, refunds and disputes must be defined with the selected
-              provider before trading opens.
+              Trustap’s account configuration controls payment protection, complaints and release.
+              Roblox delivery confirmation requires independent ownership verification.
             </p>
           </div>
         </div>
       </AccountPanel>
-      <Link to="/account/verification" className="text-sm underline underline-offset-4">
-        Review your verification status
+      <Link to="/account/payments" className="text-sm underline underline-offset-4">
+        Open Trustap payment setup
       </Link>
     </AccountLayout>
   );

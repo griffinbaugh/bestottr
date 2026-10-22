@@ -8,10 +8,16 @@ export type Database = {
   };
   public: {
     Tables: {
-      escrow_sandbox_orders: {
-        Row: import("@/lib/escrow-sandbox").SandboxOrder;
+      trustap_sandbox_accounts: {
+        Row: { user_id: string; provider_user_id: string; connected_at: string };
+        Insert: { user_id: string; provider_user_id: string; connected_at?: string };
+        Update: { provider_user_id?: string; connected_at?: string };
+        Relationships: [];
+      };
+      trustap_sandbox_orders: {
+        Row: import("@/lib/trustap-sandbox").SandboxOrder;
         Insert: Pick<
-          import("@/lib/escrow-sandbox").SandboxOrder,
+          import("@/lib/trustap-sandbox").SandboxOrder,
           | "request_id"
           | "reference"
           | "seller_id"
@@ -19,23 +25,27 @@ export type Database = {
           | "title"
           | "kind"
           | "amount_cents"
-          | "buyer_email"
-          | "seller_email"
+          | "buyer_provider_id"
+          | "seller_provider_id"
+          | "client_id"
+          | "fees_buyer"
+          | "fees_seller"
+          | "fees_config"
         > &
-          Partial<import("@/lib/escrow-sandbox").SandboxOrder>;
-        Update: Partial<import("@/lib/escrow-sandbox").SandboxOrder>;
+          Partial<import("@/lib/trustap-sandbox").SandboxOrder>;
+        Update: Partial<import("@/lib/trustap-sandbox").SandboxOrder>;
         Relationships: [];
       };
-      escrow_sandbox_files: {
-        Row: import("@/lib/escrow-sandbox").SandboxFile;
-        Insert: import("@/lib/escrow-sandbox").SandboxFile;
-        Update: Partial<import("@/lib/escrow-sandbox").SandboxFile>;
+      trustap_sandbox_files: {
+        Row: import("@/lib/trustap-sandbox").SandboxFile;
+        Insert: import("@/lib/trustap-sandbox").SandboxFile;
+        Update: Partial<import("@/lib/trustap-sandbox").SandboxFile>;
         Relationships: [];
       };
-      escrow_sandbox_events: {
-        Row: import("@/lib/escrow-sandbox").SandboxEvent;
-        Insert: Omit<import("@/lib/escrow-sandbox").SandboxEvent, "id" | "created_at">;
-        Update: Partial<import("@/lib/escrow-sandbox").SandboxEvent>;
+      trustap_sandbox_events: {
+        Row: import("@/lib/trustap-sandbox").SandboxEvent;
+        Insert: Omit<import("@/lib/trustap-sandbox").SandboxEvent, "id" | "created_at">;
+        Update: Partial<import("@/lib/trustap-sandbox").SandboxEvent>;
         Relationships: [];
       };
       listing_assets: {
@@ -214,14 +224,20 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      claim_escrow_sandbox_sync: {
+      claim_trustap_sandbox_sync: {
         Args: { p_order: string; p_force?: boolean };
         Returns: string | null;
       };
-      commit_escrow_sandbox_sync: {
-        Args: { p_order: string; p_claim: string; p_state: string; p_summary: Json };
+      commit_trustap_sandbox_sync: {
+        Args: {
+          p_order: string;
+          p_claim: string;
+          p_state: string;
+          p_summary: import("@/lib/trustap-sandbox").SandboxOrder["provider_summary"];
+        };
         Returns: boolean;
       };
+
       reserve_listing_asset: {
         Args: {
           p_seller: string;

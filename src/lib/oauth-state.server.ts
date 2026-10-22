@@ -24,11 +24,11 @@ async function key(secret: string) {
     ["encrypt", "decrypt"],
   );
 }
-export async function sealFlow(flow: OAuthFlow, secret: string) {
+export async function sealFlow(flow: OAuthFlow, secret: string, context = "bestottr-roblox-v1") {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const cipher = new Uint8Array(
     await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv, additionalData: enc.encode("bestottr-roblox-v1") },
+      { name: "AES-GCM", iv, additionalData: enc.encode(context) },
       await key(secret),
       enc.encode(JSON.stringify(flow)),
     ),
@@ -38,11 +38,16 @@ export async function sealFlow(flow: OAuthFlow, secret: string) {
   bytes.set(cipher, iv.length);
   return base64url(bytes);
 }
-export async function openFlow(value: string, secret: string, now = Date.now()) {
+export async function openFlow(
+  value: string,
+  secret: string,
+  now = Date.now(),
+  context = "bestottr-roblox-v1",
+) {
   if (value.length > 20000) throw new Error("Invalid flow.");
   const bytes = unbase64(value);
   const plain = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: bytes.slice(0, 12), additionalData: enc.encode("bestottr-roblox-v1") },
+    { name: "AES-GCM", iv: bytes.slice(0, 12), additionalData: enc.encode(context) },
     await key(secret),
     bytes.slice(12),
   );
