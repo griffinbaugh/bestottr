@@ -1,3 +1,4 @@
+import { NotificationInbox } from "@/components/account/Notifications";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, type FormEvent } from "react";
 import { AccountLayout, AccountPanel, Field, Message } from "@/components/account/AccountLayout";
@@ -49,7 +50,7 @@ function Notifications() {
         .single();
       if (error || !data) throw error;
       await refresh();
-      setSuccess("Preferences saved. Marketplace notifications will begin when trading opens.");
+      setSuccess("Email preferences saved. In-app notifications are unchanged.");
     } catch {
       setError("Your preferences could not be saved. Try again.");
     } finally {
@@ -57,7 +58,11 @@ function Notifications() {
     }
   }
   return (
-    <AccountLayout title="Notifications" description="Choose your email preferences and time zone.">
+    <AccountLayout
+      title="Notifications"
+      description="Your listing updates, email preferences and time zone."
+    >
+      <NotificationInbox />
       <AccountPanel
         title="Email preferences"
         description="Security, receipt and support messages are always sent when needed."

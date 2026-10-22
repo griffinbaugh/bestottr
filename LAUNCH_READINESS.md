@@ -161,3 +161,9 @@ Validation: 296 automated tests, TypeScript, targeted lint (test double `any` ex
 ## Account purchase and sale pages — October 22, 2026
 
 Buying (`/dashboard`), Selling (`/seller`) and private orders (`/deal/<id>`) now use account-backed data in production. See ACCOUNT_ORDER_PAGES_SETUP.md. Selling includes saved listings, moderation feedback and status; order lists use account-derived participant filters and pagination. Private details require buyer/seller participation before files/history are read. Existing Trustap controls are reused without enabling live money. Ownership transfers and downloadable-project delivery are explained separately. No new database migration or runtime variable is required. Validation passed: 310 tests, TypeScript, targeted lint, production build and Cloudflare dry run. Two-account provider acceptance checks remain pending sandbox access.
+
+## In-app notifications — October 22, 2026
+
+The header bell now shows a red dot for unread notifications, a compact recent-items popover and a full inbox at `/account/notifications`. Read state persists in Supabase. Listing approvals, requests for changes, publications and moderator unpublications notify the seller atomically with the review event. Self-unpublication and withdrawal do not generate redundant alerts. Recent existing decisions (up to 30 days) are backfilled once. No emails, push permissions or Trustap settings are required.
+
+Migration `20261022151931_in_app_notifications.sql` is already applied. Notifications are private per recipient, including for admins; client writes are limited to own read status. Full verification passed: 326 automated tests, TypeScript, targeted lint, production build, Cloudflare dry run and transactional database isolation/trigger tests. Database fixtures were rolled back and security advisors show no new warnings. See NOTIFICATIONS_SETUP.md for deployment and signed-in acceptance checks.
