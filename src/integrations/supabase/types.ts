@@ -8,6 +8,17 @@ export type Database = {
   };
   public: {
     Tables: {
+      account_notifications: {
+        Row: import("@/lib/notifications.functions").AccountNotification & {
+          user_id: string;
+          source_event_id: number;
+          review_id: string;
+          kind: "approve" | "reject" | "publish" | "unpublish";
+        };
+        Insert: never;
+        Update: { read_at?: string | null };
+        Relationships: [];
+      };
       listing_reviews: {
         Row: import("@/lib/listing-review").ListingReview;
         Insert: Partial<import("@/lib/listing-review").ListingReview>;

@@ -1,3 +1,4 @@
+import { NotificationBell } from "@/components/account/Notifications";
 import { Link } from "@tanstack/react-router";
 import lockup from "@/assets/bestottr-primary-white.png";
 import {
@@ -67,10 +68,11 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          {!IS_DEMO && !loading && <NotificationBell />}
           <Link
             to="/dashboard"
             search={{ tab: "watchlist" }}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="hidden h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground sm:flex"
             aria-label="Watchlist"
           >
             <Heart className="h-4 w-4" />
